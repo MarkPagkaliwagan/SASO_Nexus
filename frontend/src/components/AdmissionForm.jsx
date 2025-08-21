@@ -1,274 +1,222 @@
-// src/components/AdmissionForm.jsx 
+// AdmissionForm.jsx
 import React, { useState } from "react";
-import spcLogo from "../images/SPC.png";
-import axios from "axios";
 
-// Generate academic years
-const generateAcademicYears = (start = 2015, end = 2035) => {
-  const years = [];
-  for (let y = start; y <= end; y++) {
-    years.push(`${y}-${y + 1}`);
-  }
-  return years;
-};
-
-export default function AdmissionForm() {
+const AdmissionForm = () => {
+  const [applicationType, setApplicationType] = useState("");
+  const [transferee, setTransferee] = useState(false);
+  const [gradeLevel, setGradeLevel] = useState("");
+  const [track, setTrack] = useState("");
+  const [consent, setConsent] = useState(false);
   const [formData, setFormData] = useState({
-    application_type: "",
-    semester: "",
-    academic_year: "",
-    course_choice1: "",
-    course_choice2: "",
-    strand: "",
-    grade_level: "",
-    is_transferee: "",
-    // Personal Data
-    name: "",
-    address: "",
-    residence: "",
-    tel_no: "",
-    mobile_no: "",
-    email: "",
-    birth_date: "",
-    birth_place: "",
-    age: "",
-    religion: "",
-    civil_status: "",
-    citizenship: "",
-    // Family Background
-    father_name: "",
-    father_address: "",
-    father_contact: "",
-    father_citizenship: "",
-    father_occupation: "",
-    father_office_address: "",
-    father_office_tel: "",
-    father_education: "",
-    father_last_school: "",
-    mother_name: "",
-    mother_address: "",
-    mother_contact: "",
-    mother_citizenship: "",
-    mother_occupation: "",
-    mother_office_address: "",
-    mother_office_tel: "",
-    mother_education: "",
-    mother_last_school: "",
-    // Educational Background
-    lrn_no: "",
-    last_school: "",
-    last_school_address: "",
-    shs_strand: "",
-    school_year_attended: "",
-    graduation_date: "",
-    // Alumni Data
-    alumni_parent: "",
-    alumni_year: "",
-    alumni_course: "",
-    // Achievements
-    honors_awards: "",
-    organizations: "",
-    // Transferee
-    transferee_school: "",
-    transferee_course: "",
-    transferee_major: "",
-    transferee_school_address: "",
-    transferee_school_year: "",
-    // Consent
-    consent: false,
+    personalData: {},
+    familyBackground: {},
+    educationalBackground: {},
+    transfereeData: {},
   });
-
-  const [errors, setErrors] = useState({});
-  const academicYears = generateAcademicYears();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
-    // Clear error kapag nagbago yung field
-    setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (type === "checkbox") {
+      setFormData({ ...formData, [name]: checked });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
-  const handleReset = () => {
-    setFormData({
-      application_type: "",
-      semester: "",
-      academic_year: "",
-      course_choice1: "",
-      course_choice2: "",
-      strand: "",
-      grade_level: "",
-      is_transferee: "",
-      name: "",
-      address: "",
-      residence: "",
-      tel_no: "",
-      mobile_no: "",
-      email: "",
-      birth_date: "",
-      birth_place: "",
-      age: "",
-      religion: "",
-      civil_status: "",
-      citizenship: "",
-      father_name: "",
-      father_address: "",
-      father_contact: "",
-      father_citizenship: "",
-      father_occupation: "",
-      father_office_address: "",
-      father_office_tel: "",
-      father_education: "",
-      father_last_school: "",
-      mother_name: "",
-      mother_address: "",
-      mother_contact: "",
-      mother_citizenship: "",
-      mother_occupation: "",
-      mother_office_address: "",
-      mother_office_tel: "",
-      mother_education: "",
-      mother_last_school: "",
-      lrn_no: "",
-      last_school: "",
-      last_school_address: "",
-      shs_strand: "",
-      school_year_attended: "",
-      graduation_date: "",
-      alumni_parent: "",
-      alumni_year: "",
-      alumni_course: "",
-      honors_awards: "",
-      organizations: "",
-      transferee_school: "",
-      transferee_course: "",
-      transferee_major: "",
-      transferee_school_address: "",
-      transferee_school_year: "",
-      consent: false,
-    });
-    setErrors({});
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    const requiredFields = [
-      "name","address","mobile_no","email","birth_date","birth_place","age",
-      "religion","civil_status","citizenship",
-      "father_name","father_address","father_contact","father_citizenship",
-      "father_occupation","father_office_address","father_office_tel",
-      "father_education","father_last_school",
-      "mother_name","mother_address","mother_contact","mother_citizenship",
-      "mother_occupation","mother_office_address","mother_office_tel",
-      "mother_education","mother_last_school",
-      "lrn_no","last_school","last_school_address","school_year_attended","graduation_date",
-      "residence","alumni_parent","alumni_year","alumni_course","honors_awards","organizations"
-    ];
-
-    let newErrors = {};
-    requiredFields.forEach((field) => {
-      if (!formData[field]) {
-        newErrors[field] = "This field is required.";
-      }
-    });
-
-    if (!formData.consent) {
-      newErrors["consent"] = "You must agree before submitting.";
+    if (!consent) {
+      alert("Please provide consent to submit.");
+      return;
     }
-
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length > 0) {
-      return; // may error, wag muna i-submit
-    }
-
-    try {
-      const res = await axios.post("http://127.0.0.1:8000/api/admissions", formData);
-      alert(res.data.message || "Application submitted successfully!");
-      handleReset();
-    } catch (err) {
-      console.error(err);
-      alert("Error submitting form!");
-    }
+    // Send data to Laravel API
+    fetch("/api/admissions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ applicationType, transferee, gradeLevel, track, ...formData }),
+    })
+      .then((res) => res.json())
+      .then((data) => alert("Form submitted successfully!"))
+      .catch((err) => console.error(err));
   };
 
   return (
-    <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg p-6 sm:p-8 my-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-center justify-center mb-6 border-b pb-4 text-center sm:text-left">
-        <img src={spcLogo} alt="SPC Logo" className="w-20 h-20 mr-0 sm:mr-4 mb-4 sm:mb-0" />
+    <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md">
+      <h1 className="text-2xl font-bold mb-4">Admission Form</h1>
+      <form onSubmit={handleSubmit} className="space-y-6">
+
+        {/* Application Type */}
         <div>
-          <h1 className="text-2xl font-bold">SAN PABLO COLLEGES</h1>
-          <p className="text-sm italic">San Pablo City, Laguna</p>
-          <h2 className="text-lg font-semibold mt-2">Admission Form</h2>
-        </div>
-      </div>
-
-      {/* Toolbar */}
-      <div className="flex justify-end gap-4 mb-6">
-        <button
-          onClick={handleReset}
-          type="button"
-          className="px-4 py-2 bg-gray-600 text-white rounded-lg shadow hover:bg-gray-700"
-        >
-          Reset
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        {/* Example of error handling in inputs */}
-        <div className="mb-6">
-          <label className="font-bold block mb-2">APPLICATION TYPE</label>
+          <label className="block font-semibold mb-1">APPLICATION TYPE</label>
           <select
-            name="application_type"
-            value={formData.application_type}
-            onChange={handleChange}
-            className={`w-full border p-2 rounded-lg ${errors.application_type ? "border-red-500" : ""}`}
+            value={applicationType}
+            onChange={(e) => setApplicationType(e.target.value)}
+            className="w-full border rounded p-2"
           >
-            <option value="">-- Select --</option>
+            <option value="">Select Application Type</option>
             <option value="college">College</option>
             <option value="shs">Senior High School</option>
             <option value="jhs">Junior High School</option>
             <option value="gs">Grade School</option>
           </select>
-          {errors.application_type && <p className="text-red-500 text-sm">{errors.application_type}</p>}
         </div>
 
-        {/* (💡 Note: For brevity, hindi ko na inulit lahat ng fields dito sa sagot ko — 
-          pero ang gagawin mo lang ay idagdag yung 
-          `{errors.fieldName && <p className="text-red-500 text-sm">{errors.fieldName}</p>}` 
-          sa ilalim ng bawat input na required. 
-          Same pattern sa lahat ng sections.)
-        */}
+        {/* Conditional Sections */}
+        {applicationType === "college" && (
+          <div className="p-4 border rounded bg-gray-50">
+            <h2 className="font-bold mb-2">College Section</h2>
+            <label>Academic Year</label>
+            <select className="w-full border rounded p-2 mb-2" name="collegeAcademicYear" onChange={handleChange}>
+              <option value="">Select Year</option>
+              <option value="2025-2026">2025-2026</option>
+              <option value="2026-2027">2026-2027</option>
+            </select>
+            <label>Semester</label>
+            <select className="w-full border rounded p-2 mb-2" name="collegeSemester" onChange={handleChange}>
+              <option value="">Select Semester</option>
+              <option value="1st">1st</option>
+              <option value="2nd">2nd</option>
+            </select>
+            <label>Transferee</label>
+            <select className="w-full border rounded p-2 mb-2" onChange={(e) => setTransferee(e.target.value === "yes")}>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+            <label>1st Choice</label>
+            <input type="text" className="w-full border rounded p-2 mb-2" name="collegeFirstChoice" onChange={handleChange} />
+            <label>2nd Choice</label>
+            <input type="text" className="w-full border rounded p-2 mb-2" name="collegeSecondChoice" onChange={handleChange} />
+          </div>
+        )}
 
-        {/* Consent Error */}
-        <div className="flex items-center gap-3 mt-6">
-          <input
-            type="checkbox"
-            name="consent"
-            checked={formData.consent}
-            onChange={handleChange}
-            className="w-5 h-5"
-          />
-          <label htmlFor="consent" className="text-sm">
+        {applicationType === "shs" && (
+          <div className="p-4 border rounded bg-gray-50">
+            <h2 className="font-bold mb-2">Senior High School Section</h2>
+            <label>Grade Level</label>
+            <select className="w-full border rounded p-2 mb-2" onChange={(e) => setGradeLevel(e.target.value)}>
+              <option value="">Select Grade Level</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+            <label>Transferee</label>
+            <select className="w-full border rounded p-2 mb-2" onChange={(e) => setTransferee(e.target.value === "yes")}>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+            <label>Track / Strand</label>
+            <select className="w-full border rounded p-2 mb-2" onChange={(e) => setTrack(e.target.value)}>
+              <optgroup label="GENERAL ACADEMIC TRACK">
+                <option value="STEM">STEM</option>
+                <option value="HUMSS">HUMSS</option>
+                <option value="ABM">ABM</option>
+                <option value="GAS">GAS</option>
+              </optgroup>
+              <optgroup label="TECHNICAL VOCATIONAL AND LIVELIHOOD TRACK">
+                <option value="Home Economics">Home Economics</option>
+                <option value="ICT">ICT</option>
+              </optgroup>
+              <optgroup label="ARTS AND DESIGN TRACK">
+                <option value="Performing Arts">Performing Arts</option>
+                <option value="Art Production">Art Production</option>
+              </optgroup>
+              <optgroup label="SPORTS TRACK">
+                <option value="Sports">Sports</option>
+              </optgroup>
+            </select>
+          </div>
+        )}
+
+        {applicationType === "jhs" && (
+          <div className="p-4 border rounded bg-gray-50">
+            <h2 className="font-bold mb-2">Junior High School Section</h2>
+            <label>Grade Level</label>
+            <select className="w-full border rounded p-2 mb-2" name="jhsGradeLevel" onChange={handleChange}>
+              {[6, 7, 8, 9, 10].map((g) => <option key={g} value={g}>Grade {g}</option>)}
+            </select>
+            <label>Transferee</label>
+            <select className="w-full border rounded p-2 mb-2" onChange={(e) => setTransferee(e.target.value === "yes")}>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+        )}
+
+        {applicationType === "gs" && (
+          <div className="p-4 border rounded bg-gray-50">
+            <h2 className="font-bold mb-2">Grade School Section</h2>
+            <label>Grade Level</label>
+            <select className="w-full border rounded p-2 mb-2" name="gsGradeLevel" onChange={handleChange}>
+              {["Nursery", "Kinder", "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6"].map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+            </select>
+            <label>Transferee</label>
+            <select className="w-full border rounded p-2 mb-2" onChange={(e) => setTransferee(e.target.value === "yes")}>
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+          </div>
+        )}
+
+        {/* Personal Data */}
+        <div className="p-4 border rounded bg-gray-50">
+          <h2 className="font-bold mb-2">Personal Data</h2>
+          <label>Name (Family, Given, Middle)</label>
+          <input type="text" className="w-full border rounded p-2 mb-2" name="name" onChange={handleChange} />
+          <label>Gender</label>
+          <select className="w-full border rounded p-2 mb-2" name="gender" onChange={handleChange}>
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+          <label>Permanent Address</label>
+          <textarea className="w-full border rounded p-2 mb-2" name="address" onChange={handleChange}></textarea>
+          <label>Tel No.</label>
+          <input type="text" className="w-full border rounded p-2 mb-2" name="telNo" onChange={handleChange} />
+          <label>Mobile No.</label>
+          <input type="text" className="w-full border rounded p-2 mb-2" name="mobileNo" onChange={handleChange} />
+          <label>Email</label>
+          <input type="email" className="w-full border rounded p-2 mb-2" name="email" onChange={handleChange} />
+          <label>Date of Birth</label>
+          <input type="date" className="w-full border rounded p-2 mb-2" name="dob" onChange={handleChange} />
+          <label>Place of Birth</label>
+          <input type="text" className="w-full border rounded p-2 mb-2" name="placeOfBirth" onChange={handleChange} />
+          <label>Age</label>
+          <input type="number" className="w-full border rounded p-2 mb-2" name="age" onChange={handleChange} />
+          <label>Religion</label>
+          <input type="text" className="w-full border rounded p-2 mb-2" name="religion" onChange={handleChange} />
+          <label>Civil Status</label>
+          <input type="text" className="w-full border rounded p-2 mb-2" name="civilStatus" onChange={handleChange} />
+          <label>Citizenship</label>
+          <input type="text" className="w-full border rounded p-2 mb-2" name="citizenship" onChange={handleChange} />
+          <label>Residence</label>
+          <select className="w-full border rounded p-2 mb-2" name="residence" onChange={handleChange}>
+            <option value="">Select</option>
+            <option value="With Parents">With Parents</option>
+            <option value="With Relatives">With Relatives</option>
+            <option value="Boarding">Boarding</option>
+          </select>
+        </div>
+
+        {/* Consent */}
+        <div>
+          <label className="inline-flex items-center">
+            <input type="checkbox" className="mr-2" checked={consent} onChange={() => setConsent(!consent)} />
             I have read and fully understood the above declaration and give my consent.
           </label>
         </div>
-        {errors.consent && <p className="text-red-500 text-sm">{errors.consent}</p>}
 
-        {/* Submit Button */}
-        <div className="flex justify-end mt-10">
-          <button
-            type="submit"
-            className="px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700"
-          >
-            Submit Application
-          </button>
-        </div>
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+        >
+          Submit
+        </button>
       </form>
     </div>
   );
-}
+};
+
+export default AdmissionForm;

@@ -1,0 +1,19 @@
+/* src/pages/home.css */
+
+/* Background para lang sa EventList section */
+.eventlist-background {
+  width: 100%;
+  min-height: 400px;   /* Pwede mo i-adjust (hal. 300px, 400px, 600px) */
+
+  background-size: cover;        
+  background-position: center;   
+  background-repeat: no-repeat;  
+
+  /* Overlay effect */
+  background-color: rgba(20, 46, 0, 0.107);
+  background-blend-mode: overlay;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px; /* para hindi dikit yung content */
+}

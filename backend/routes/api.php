@@ -1,0 +1,62 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\ForgotPasswordController as AdminForgotPasswordController;
+use App\Http\Controllers\Auth\ResetPasswordController as AdminResetPasswordController;
+use App\Http\Controllers\StaffAuth\ForgotPasswordController as StaffForgotPasswordController;
+use App\Http\Controllers\StaffAuth\ResetPasswordController as StaffResetPasswordController;
+use App\Http\Controllers\StaffAuthController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\PersonnelController;
+use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\EventController;
+use App\Http\Controllers\AdmissionController;
+
+Route::post('/admissions', [AdmissionController::class, 'store']);
+
+
+// -------------------- Events --------------------
+Route::post('/events', [EventController::class, 'store']);
+Route::get('/events', [EventController::class, 'index']);
+
+
+// -------------------- Announcements --------------------
+Route::get('/announcements', [AnnouncementController::class, 'index']);
+Route::post('/announcements', [AnnouncementController::class, 'store']);
+Route::put('/announcements/{id}', [AnnouncementController::class, 'update']);
+Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy']);
+Route::post('/announcements/{id}/react', [AnnouncementController::class, 'react']);
+
+// -------------------- Admin Auth Routes --------------------
+Route::prefix('admin')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [AdminForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::post('/reset-password', [AdminResetPasswordController::class, 'reset']);
+});
+
+// -------------------- Personnel Routes --------------------
+Route::prefix('personnel')->group(function () {
+    Route::post('/', [PersonnelController::class, 'store']);            // Create
+    Route::get('/', [PersonnelController::class, 'index']);            // Get all
+    Route::get('/unit/{unit}', [PersonnelController::class, 'getByUnit']); // Get by unit
+    Route::get('/{id}', [PersonnelController::class, 'show']);         // Get single
+    Route::put('/{id}', [PersonnelController::class, 'update']);       // Update
+    Route::delete('/{id}', [PersonnelController::class, 'destroy']);   // Delete
+});
+
+// -------------------- Staff Auth Routes --------------------
+Route::prefix('staff')->group(function () {
+    Route::post('/login', [StaffAuthController::class, 'login']);
+    Route::post('/forgot-password', [StaffForgotPasswordController::class, 'sendResetLinkEmail']);
+    Route::post('/reset-password', [StaffResetPasswordController::class, 'reset']);
+
+    // Protected Staff Routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/', [StaffController::class, 'index']);          // Get all staff
+        Route::get('/{id}', [StaffController::class, 'show']);       // Get single staff
+        Route::post('/', [StaffController::class, 'store']);         // Create staff
+        Route::put('/{id}', [StaffController::class, 'update']);     // Update staff
+        Route::delete('/{id}', [StaffController::class, 'destroy']); // Delete staff
+    });
+});

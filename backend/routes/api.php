@@ -11,9 +11,14 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\AdmissionController;
+use App\Http\Controllers\AdmissionScheduleController;
 
-Route::post('/admissions', [AdmissionController::class, 'store']);
+
+
+// -------------------- Schedule --------------------
+Route::get('/schedules', [AdmissionScheduleController::class, 'index']);
+Route::post('/schedules', [AdmissionScheduleController::class, 'store']);
+Route::delete('/schedules/{admissionSchedule}', [AdmissionScheduleController::class, 'destroy']);
 
 
 // -------------------- Events --------------------

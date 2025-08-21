@@ -53,6 +53,7 @@ function App() {
           <Route path="/departments" element={<Department />} />
           <Route path="/admissions" element={<Admission />} />
           <Route path="/admission-form" element={<AdmissionForm />} />
+            
 
 
         </Routes>

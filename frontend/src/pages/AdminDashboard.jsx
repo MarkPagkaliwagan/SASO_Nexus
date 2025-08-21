@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import StaffPanel from '../AdminPanel/StaffPanel';
 import AdminPersonnel from '../AdminContent/AdminPersonnel';
 import AdminDepartment from '../AdminContent/AdminDepartment';
-import DashboardContent from '../AdminContent/AdminDashboard'; // updated import
+import DashboardContent from '../AdminContent/AdminDashboard'; // updated 
+import AdminSchedule from '../AdminContent/AdminSchedule';
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -38,7 +40,7 @@ export default function AdminDashboard() {
     { icon: <Home size={18} />, label: 'Dashboard', panel: 'dashboard' },
     { icon: <FileText size={18} />, label: 'Admission Forms' },
     { icon: <BarChart2 size={18} />, label: 'Reports' },
-    { icon: <Clipboard size={18} />, label: 'Schedule' },
+    { icon: <Clipboard size={18} />, label: 'Schedule', panel: 'schedule' },
     { icon: <Users size={18} />, label: 'Personnel', panel: 'personnel' },
     { icon: <User size={18} />, label: 'Staffs', panel: 'staffs' },
     { icon: <Activity size={18} />, label: 'Announcement', panel: 'departments' },
@@ -151,6 +153,19 @@ export default function AdminDashboard() {
         {activePanel === 'staffs' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
             <StaffPanel />
+          </motion.div>
+        )}
+
+
+        {activePanel === 'staffs' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+            <StaffPanel />
+          </motion.div>
+        )}
+
+        {activePanel === 'schedule' && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+            <AdminSchedule />
           </motion.div>
         )}
 

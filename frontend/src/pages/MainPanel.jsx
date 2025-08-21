@@ -8,7 +8,7 @@ import { EffectCoverflow, Pagination, Autoplay } from "swiper/modules";
 import spcLogo from "../images/SPC.png";
 import sasoLogo from "../images/SASO.png";
 
-export default function HomePanel() {
+export default function MainPanel() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [flipped, setFlipped] = useState({});
@@ -32,22 +32,22 @@ export default function HomePanel() {
   };
 
   return (
-    <div className="flex flex-col font-serif bg-transparent overflow-x-hidden">
-      {/* Top Main Panel */}
-      <div className="flex flex-row items-center justify-start px-4 pt-4 w-full">
-        <img src={spcLogo} alt="SPC Logo" className="w-36 md:w-40 lg:w-44 xl:w-48 object-contain" />
-        <img src={sasoLogo} alt="SASO Logo" className="w-24 md:w-28 lg:w-32 xl:w-36 object-contain ml-2 md:ml-4 lg:ml-6" />
-        <h1 className="ml-2 md:ml-4 lg:ml-6 text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-green-950 drop-shadow-lg tracking-wider uppercase border-b-4 border-gray-800 pb-0">
+    <div className="flex flex-col font-serif overflow-x-hidden">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-center justify-start px-4 pt-6 md:pt-8 w-full gap-4 md:gap-6">
+        <img src={spcLogo} alt="SPC Logo" className="w-36 md:w-44 object-contain" />
+        <img src={sasoLogo} alt="SASO Logo" className="w-24 md:w-32 object-contain" />
+        <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-green-950 drop-shadow-lg tracking-wider uppercase border-b-4 border-gray-800 pb-1">
           Student Affairs and Services Office
         </h1>
       </div>
 
-      {/* Event Swiper */}
+      {/* Events Swiper */}
       <div className="mt-6 px-4 w-full">
         {loading ? (
-          <p className="text-center mt-4">Loading events...</p>
+          <p className="text-center mt-4 text-white text-lg font-medium">Loading events...</p>
         ) : events.length === 0 ? (
-          <p className="text-center mt-4">No events found.</p>
+          <p className="text-center mt-4 text-white text-lg font-medium">No events found.</p>
         ) : (
           <Swiper
             effect={"coverflow"}
@@ -64,48 +64,54 @@ export default function HomePanel() {
               1280: { slidesPerView: 3 },
             }}
             coverflowEffect={{
-              rotate: 50,
+              rotate: 45,
               stretch: 0,
-              depth: 100,
+              depth: 120,
               modifier: 1,
               slideShadows: true,
             }}
             pagination={{ clickable: true }}
-            autoplay={{ delay: 2000, disableOnInteraction: false }}
+            autoplay={{ delay: 2500, disableOnInteraction: false }}
             modules={[EffectCoverflow, Pagination, Autoplay]}
             className="mySwiper"
           >
             {events.map((event) => (
-              <SwiperSlide
-                key={event.id}
-                className="w-full h-[400px] flex justify-center"
-              >
-                <div className="w-full h-full perspective cursor-pointer" onClick={() => handleFlip(event.id)}>
+              <SwiperSlide key={event.id} className="w-full h-[400px] flex justify-center">
+                <div
+                  className="w-full h-full perspective cursor-pointer"
+                  onClick={() => handleFlip(event.id)}
+                >
                   <div
                     className={`relative w-full h-full duration-700 [transform-style:preserve-3d] ${
                       flipped[event.id] ? "rotate-y-180" : ""
                     }`}
                   >
                     {/* Front */}
-                    <div className="absolute w-full h-full backface-hidden rounded-xl overflow-hidden shadow-lg flex justify-center items-center">
+                    <div className="absolute w-full h-full backface-hidden rounded-xl overflow-hidden shadow-xl flex justify-center items-center bg-gray-50">
                       {event.image ? (
                         <img
                           src={`http://127.0.0.1:8000/storage/${event.image}`}
                           alt={event.description}
-                          className="w-full h-full object-cover rounded-xl"
+                          className="w-full h-full object-contain rounded-xl"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
                           No Image
                         </div>
                       )}
                     </div>
 
                     {/* Back */}
-                    <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-white rounded-xl shadow-lg p-4 flex flex-col justify-center items-center">
-                      <h2 className="text-lg md:text-xl font-semibold mb-2">{event.department}</h2>
-                      <span className="text-sm md:text-base text-gray-500 mb-2">{event.academic_year}</span>
-                      <p className="text-sm md:text-base text-center text-gray-700">{event.description}</p>
+                    <div className="absolute w-full h-full backface-hidden rotate-y-180 rounded-xl shadow-xl p-6 flex flex-col justify-center items-center bg-gray-100">
+                      <h2 className="text-xl md:text-2xl font-semibold mb-2 text-green-900 text-center">
+                        {event.department}
+                      </h2>
+                      <span className="text-sm md:text-base text-gray-700 mb-2">
+                        {event.academic_year}
+                      </span>
+                      <p className="text-sm md:text-base text-center text-gray-600">
+                        {event.description}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -115,8 +121,6 @@ export default function HomePanel() {
         )}
       </div>
 
-      {/* Other content below will naturally appear here */}
-      
       <style>{`
         .perspective { perspective: 1000px; }
         .backface-hidden { backface-visibility: hidden; }

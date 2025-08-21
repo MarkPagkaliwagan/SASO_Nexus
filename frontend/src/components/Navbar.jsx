@@ -14,8 +14,8 @@ export default function Navbar() {
   const menuRef = useRef(null);
   const loginDropdownRef = useRef(null);
 
-  const adminToken = localStorage.getItem("token"); // admin
-  const staffToken = localStorage.getItem("staffToken"); // staff
+  const adminToken = localStorage.getItem("token");
+  const staffToken = localStorage.getItem("staffToken");
   const admin = localStorage.getItem("admin");
   const staff = localStorage.getItem("staff");
 
@@ -76,23 +76,36 @@ export default function Navbar() {
       initial={{ y: -60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ type: "spring", stiffness: 100, damping: 20 }}
-      className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-green-900/80 text-white shadow-lg"
+      className="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-green-900/90 text-white shadow-md"
     >
-      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
         {/* Logo Section */}
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate("/")}>
-          <img src={spcLogo} alt="SPC" className="h-10 w-10 rounded-lg shadow" />
-          <img src={sasoLogo} alt="SASO" className="h-10 w-10 rounded-lg shadow" />
-          <div>
-            <h1 className="font-bold text-sm sm:text-base">San Pablo Colleges</h1>
-            <p className="text-gray-200 text-xs">
+        <div
+          className="flex items-center gap-2 cursor-pointer min-w-0"
+          onClick={() => navigate("/")}
+        >
+          <img
+            src={spcLogo}
+            alt="SPC"
+            className="h-10 w-10 rounded-lg shadow-md object-contain flex-shrink-0"
+          />
+          <img
+            src={sasoLogo}
+            alt="SASO"
+            className="h-10 w-10 rounded-lg shadow-md object-contain flex-shrink-0"
+          />
+          <div className="flex flex-col leading-tight min-w-0">
+            <h1 className="font-bold text-sm sm:text-base md:text-lg truncate">
+              San Pablo Colleges
+            </h1>
+            <p className="text-gray-200 text-xs sm:text-sm truncate">
               Student Affairs and Services Office
             </p>
           </div>
         </div>
 
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-6">
+        {/* Desktop Nav (show only on large screens) */}
+        <nav className="hidden lg:flex items-center gap-6 flex-shrink">
           {navLinks.map((link) => (
             <motion.div
               key={link.name}
@@ -101,7 +114,7 @@ export default function Navbar() {
             >
               <Link
                 to={link.path}
-                className={`transition-colors px-1 ${
+                className={`transition-colors px-2 py-1 ${
                   isActive(link.path)
                     ? "text-yellow-400 font-semibold"
                     : "hover:text-yellow-300"
@@ -112,7 +125,7 @@ export default function Navbar() {
               {isActive(link.path) && (
                 <motion.div
                   layoutId="active-underline"
-                  className="absolute bottom-[-6px] left-0 w-full h-[2px] bg-yellow-400 rounded"
+                  className="absolute bottom-0 left-0 w-full h-[2px] bg-yellow-400 rounded"
                 />
               )}
             </motion.div>
@@ -194,16 +207,18 @@ export default function Navbar() {
             <button
               onClick={toggleDarkMode}
               className="ml-2 flex items-center justify-center p-2 rounded-full hover:bg-yellow-400 hover:text-black transition"
+              aria-label="Toggle Dark Mode"
             >
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
           </div>
         </nav>
 
-        {/* Burger Menu */}
+        {/* Burger Menu (show when lg:hidden) */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden z-20"
+          className="lg:hidden z-20 p-2 rounded hover:bg-green-800 transition ml-auto"
+          aria-label="Toggle Menu"
         >
           {menuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -218,15 +233,17 @@ export default function Navbar() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", stiffness: 200, damping: 25 }}
-            className="fixed top-0 right-0 w-full h-screen bg-green-950/95 text-white flex flex-col items-center justify-center space-y-6 z-40"
+            className="fixed top-0 right-0 w-full sm:w-3/4 md:w-1/2 h-screen bg-green-950/95 text-white flex flex-col items-center justify-center space-y-6 z-40 p-6"
           >
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
                 onClick={() => setMenuOpen(false)}
-                className={`text-2xl font-medium ${
-                  isActive(link.path) ? "text-yellow-400" : "hover:text-yellow-300"
+                className={`text-2xl sm:text-3xl font-medium transition-colors ${
+                  isActive(link.path)
+                    ? "text-yellow-400"
+                    : "hover:text-yellow-300"
                 }`}
               >
                 {link.name}
@@ -234,18 +251,18 @@ export default function Navbar() {
             ))}
 
             {!adminToken && !staffToken && (
-              <div className="flex flex-col space-y-3">
+              <div className="flex flex-col space-y-3 w-full items-center">
                 <Link
                   to="/admin/login"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg bg-yellow-400 text-green-900 px-6 py-2 rounded-full hover:bg-yellow-300"
+                  className="w-full text-center text-lg bg-yellow-400 text-green-900 px-6 py-2 rounded-full hover:bg-yellow-300 transition"
                 >
                   Admin Login
                 </Link>
                 <Link
                   to="/staff/login"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg bg-yellow-400 text-green-900 px-6 py-2 rounded-full hover:bg-yellow-300"
+                  className="w-full text-center text-lg bg-yellow-400 text-green-900 px-6 py-2 rounded-full hover:bg-yellow-300 transition"
                 >
                   Staff Login
                 </Link>
@@ -253,17 +270,17 @@ export default function Navbar() {
             )}
 
             {adminToken && admin && onAdminPage && (
-              <div className="flex flex-col space-y-3">
+              <div className="flex flex-col space-y-3 w-full items-center">
                 <Link
                   to="/admin/dashboard"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg bg-green-700 px-6 py-2 rounded-full hover:bg-green-600"
+                  className="w-full text-center text-lg bg-green-700 px-6 py-2 rounded-full hover:bg-green-600 transition"
                 >
                   Admin
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-lg bg-red-600 px-6 py-2 rounded-full hover:bg-red-500"
+                  className="w-full text-center text-lg bg-red-600 px-6 py-2 rounded-full hover:bg-red-500 transition"
                 >
                   Logout
                 </button>
@@ -271,17 +288,17 @@ export default function Navbar() {
             )}
 
             {staffToken && staff && !admin && onStaffPage && (
-              <div className="flex flex-col space-y-3">
+              <div className="flex flex-col space-y-3 w-full items-center">
                 <Link
                   to="/staff-dashboard"
                   onClick={() => setMenuOpen(false)}
-                  className="text-lg bg-green-700 px-6 py-2 rounded-full hover:bg-green-600"
+                  className="w-full text-center text-lg bg-green-700 px-6 py-2 rounded-full hover:bg-green-600 transition"
                 >
                   Staff
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-lg bg-red-600 px-6 py-2 rounded-full hover:bg-red-500"
+                  className="w-full text-center text-lg bg-red-600 px-6 py-2 rounded-full hover:bg-red-500 transition"
                 >
                   Logout
                 </button>
@@ -291,10 +308,12 @@ export default function Navbar() {
             {/* Dark Mode toggle */}
             <button
               onClick={toggleDarkMode}
-              className="mt-4 flex items-center justify-center px-6 py-2 rounded-full bg-yellow-400 text-green-900 hover:bg-yellow-300"
+              className="mt-4 flex items-center justify-center px-6 py-2 rounded-full bg-yellow-400 text-green-900 hover:bg-yellow-300 w-full text-center transition"
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              <span className="ml-2 text-lg">{darkMode ? "Light Mode" : "Dark Mode"}</span>
+              <span className="ml-2 text-lg">
+                {darkMode ? "Light Mode" : "Dark Mode"}
+              </span>
             </button>
           </motion.div>
         )}

@@ -6,22 +6,20 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('admission_schedules', function (Blueprint $table) {
+        Schema::create('schedules', function (Blueprint $table) {
             $table->id();
+            $table->date('date');
+            $table->time('time');
+            $table->unsignedInteger('limit')->default(1);
+            $table->unsignedInteger('booked')->default(0); // booked count
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('admission_schedules');
+        Schema::dropIfExists('schedules');
     }
 };

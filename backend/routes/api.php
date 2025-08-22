@@ -11,14 +11,13 @@ use App\Http\Controllers\StaffController;
 use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\EventController;
-use App\Http\Controllers\AdmissionScheduleController;
-
+use App\Http\Controllers\ScheduleController;
 
 
 // -------------------- Schedule --------------------
-Route::get('/schedules', [AdmissionScheduleController::class, 'index']);
-Route::post('/schedules', [AdmissionScheduleController::class, 'store']);
-Route::delete('/schedules/{admissionSchedule}', [AdmissionScheduleController::class, 'destroy']);
+
+Route::apiResource('schedules', ScheduleController::class)
+    ->only(['index','store','destroy']);
 
 
 // -------------------- Events --------------------

@@ -25,7 +25,7 @@ Route::post('/schedules/{id}/reserve', [ScheduleController::class, 'reserve']);
 
 // -------------------- Applications --------------------
 Route::apiResource('applications', ApplicationController::class)
-    ->only(['index', 'store']);
+    ->only(['index', 'store', 'destroy', 'show']);
 
 
 // -------------------- Events --------------------

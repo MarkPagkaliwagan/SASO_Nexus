@@ -15,6 +15,14 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+useEffect(() => {
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+
+  if (token && role === 'admin') {
+    navigate('/admin/dashboard');
+  }
+}, [navigate]);
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) navigate('/admin/dashboard');
@@ -28,6 +36,8 @@ export default function AdminLogin() {
       const res = await api.post('/admin/login', { email, password });
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('admin', JSON.stringify(res.data.admin));
+      localStorage.setItem('role', 'admin');   // 🔹 ADD THIS LINE
+
       localStorage.setItem('showPopup', 'true');
       navigate('/admin/dashboard');
     } catch (err) {

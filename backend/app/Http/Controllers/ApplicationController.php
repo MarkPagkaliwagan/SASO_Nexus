@@ -25,16 +25,12 @@ class ApplicationController extends Controller
 
         // Check if schedule is provided
         if (isset($data['schedule_id'])) {
-            $schedule = Schedule::findOrFail($data['schedule_id']);
+            $schedule = Schedule::withCount('applications')->findOrFail($data['schedule_id']);
 
             // check kung puno na
-            if ($schedule->booked >= $schedule->limit) {
+            if ($schedule->applications_count >= $schedule->limit) {
                 return response()->json(['message' => 'Selected schedule is already full'], 400);
             }
-
-            // dagdagan booked count
-            $schedule->booked += 1;
-            $schedule->save();
         }
 
         // Create the application
@@ -53,4 +49,33 @@ class ApplicationController extends Controller
     {
         return Application::with('schedule')->latest()->get();
     }
+    /**
+     * Delete application
+     */
+    public function destroy($id)
+    {
+        $application = Application::find($id);
+
+        if (!$application) {
+            return response()->json(['message' => 'Application not found'], 404);
+        }
+
+        $application->delete();
+
+        return response()->json(['message' => 'Application deleted successfully']);
+    }
+    /**
+     * Show single application
+     */
+    public function show($id)
+{
+    $application = Application::find($id);
+
+    if (!$application) {
+        return response()->json(['message' => 'Applicant not found.'], 404);
+    }
+
+    return response()->json($application);
+}
+
 }

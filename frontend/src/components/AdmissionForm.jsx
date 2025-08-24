@@ -1051,45 +1051,62 @@ export default function AdmissionForm() {
 
                   <div>
                     <label className="block text-sm">Religion</label>
-                    <input
+                    <select
                       name="religion"
                       value={formData.religion}
                       onChange={handleChange}
                       className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("religion")
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        errors.includes("religion") ? "border-red-500" : "border-gray-300"
                       }`}
-                    />
+                    >
+                      <option value="">Select Religion</option>
+                      <option value="Roman Catholic">Roman Catholic</option>
+                      <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
+                      <option value="Protestant">Protestant</option>
+                      <option value="Islam">Islam</option>
+                      <option value="Others">Others</option>
+                    </select>
                   </div>
+
 
                   <div>
                     <label className="block text-sm">Civil Status</label>
-                    <input
+                    <select
                       name="civilStatus"
                       value={formData.civilStatus}
                       onChange={handleChange}
                       className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("civilStatus")
-                          ? "border-red-500"
-                          : "border-gray-300"
+                        errors.includes("civilStatus") ? "border-red-500" : "border-gray-300"
                       }`}
-                    />
+                    >
+                      <option value="">Select Civil Status</option>
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                      <option value="Widowed">Widowed</option>
+                      <option value="Separated">Separated</option>
+                      <option value="Divorced">Divorced</option>
+                      {/* Pwede pang magdagdag ng iba pang options */}
+                    </select>
                   </div>
 
+
                   <div>
-                    <label className="block text-sm">Citizenship</label>
-                    <input
-                      name="citizenship"
-                      value={formData.citizenship}
-                      onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("citizenship")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                    />
-                  </div>
+                  <label className="block text-sm">Citizenship</label>
+                  <select
+                    name="citizenship"
+                    value={formData.citizenship}
+                    onChange={handleChange}
+                    className={`mt-1 w-full border rounded p-2 ${
+                      errors.includes("citizenship") ? "border-red-500" : "border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select Citizenship</option>
+                    <option value="Filipino">Filipino</option>
+                    <option value="Foreign">Foreign</option>
+                    {/* Pwede kang magdagdag pa ng iba pang options dito */}
+                  </select>
+                </div>
+
 
                   <div>
                     <label className="block text-sm">Residence</label>

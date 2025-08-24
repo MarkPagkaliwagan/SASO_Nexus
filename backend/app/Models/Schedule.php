@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Schedule extends Model
 {
-    protected $fillable = ['date','time','limit','booked'];
+    protected $fillable = ['date','time','limit']; // tanggal na booked
 
     protected $casts = [
         'date' => 'date',
         'time' => 'string',
         'limit' => 'integer',
-        'booked' => 'integer',
     ];
+
+    // Relation sa applications
+    public function applications()
+    {
+        return $this->hasMany(Application::class);
+    }
 }

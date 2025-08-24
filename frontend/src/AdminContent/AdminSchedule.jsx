@@ -1,16 +1,26 @@
 import React, { useEffect, useState } from "react";
 import { FiPlus, FiTrash2, FiCalendar, FiClock, FiUsers } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+
+
 
 export default function AdminSchedule() {
   const [schedules, setSchedules] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [limit, setLimit] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // New state for search & sort
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState("");
+  const navigate = useNavigate(); // 🔥 Add this
+
   useEffect(() => {
     fetchSchedules();
+    fetchApplications();
   }, []);
 
   async function fetchSchedules() {
@@ -24,6 +34,17 @@ export default function AdminSchedule() {
       setError(err.message || "Error");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchApplications() {
+    try {
+      const res = await fetch("/api/applications");
+      if (!res.ok) throw new Error("Failed to load applications");
+      const data = await res.json();
+      setApplications(data);
+    } catch (err) {
+      console.error(err.message);
     }
   }
 
@@ -70,8 +91,35 @@ export default function AdminSchedule() {
     }
   }
 
+  async function handleDeleteApplication(id) {
+    if (!confirm("Delete this application?")) return;
+    try {
+      const res = await fetch(`/api/applications/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Delete failed");
+      setApplications((a) => a.filter((x) => x.id !== id));
+    } catch (err) {
+      alert(err.message || "Could not delete");
+    }
+  }
+
+  // Filter and sort applications for display
+  const filteredAndSortedApplications = applications
+    .filter(
+      (a) =>
+        a.nameFamily.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.nameGiven.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        a.applicationType.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (!sortField) return 0;
+      if (a[sortField] < b[sortField]) return -1;
+      if (a[sortField] > b[sortField]) return 1;
+      return 0;
+    });
+
   return (
     <div className="p-2 max-w-5x5 mx-auto">
+      {/* SCHEDULE CARD */}
       <div className="bg-white shadow-lg rounded-2xl overflow-hidden">
         {/* Header */}
         <div className="px-6 py-5 border-b flex items-center justify-between gap-4">
@@ -214,6 +262,99 @@ export default function AdminSchedule() {
         {/* Footer */}
         <div className="px-6 py-3 border-t text-sm text-gray-500">
           Tip: Hover rows to reveal actions. Responsive layout — try resizing.
+        </div>
+      </div>
+
+      {/* --- Scheduled Applicants Card with Search & Sort --- */}
+      <div className="bg-white shadow-lg rounded-2xl overflow-hidden mt-8">
+        <div className="px-6 py-5 border-b flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold">Scheduled Applicants</h2>
+            <p className="text-sm text-gray-500">
+              List of applicants who booked an entrance exam
+            </p>
+          </div>
+          <button
+            onClick={fetchApplications}
+            className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 transition px-3 py-1.5 rounded-md text-sm"
+          >
+            Refresh
+          </button>
+        </div>
+
+        {/* Search & Sort */}
+        <div className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <input
+            type="text"
+            placeholder="Search by name or type..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full md:w-1/2 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          />
+          <select
+            value={sortField}
+            onChange={(e) => setSortField(e.target.value)}
+            className="w-full md:w-1/4 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+          >
+            <option value="">Sort by...</option>
+            <option value="nameFamily">Family Name</option>
+            <option value="nameGiven">Given Name</option>
+            <option value="applicationType">Application Type</option>
+            <option value="id">ID</option>
+          </select>
+        </div>
+
+        <div className="px-6 py-6">
+          {/* Table Header */}
+          <div className="grid grid-cols-12 gap-4 text-sm text-gray-600 font-medium px-2 py-2">
+            <div className="col-span-1">ID</div>
+            <div className="col-span-2">Type</div>
+            <div className="col-span-2">Family Name</div>
+            <div className="col-span-2">Given Name</div>
+            <div className="col-span-1">Middle</div>
+            <div className="col-span-1">Gender</div>
+             <div className="col-span-1">Mobile</div> {/* NEW */}
+            <div className="col-span-1 text-right">Actions</div>
+          </div>
+
+          {/* Rows */}
+          <div className="space-y-3 mt-2">
+            {filteredAndSortedApplications.length === 0 ? (
+              <div className="text-center text-gray-500 py-6">
+                No applicants found.
+              </div>
+            ) : (
+              filteredAndSortedApplications.map((a) => (
+                <div
+                  key={a.id}
+                  className="group grid grid-cols-12 gap-4 items-center bg-gray-50 hover:bg-white border border-transparent hover:border-gray-200 rounded-xl p-4 transition-shadow shadow-sm"
+                >
+                  <div className="col-span-1">{a.id}</div>
+                  <div className="col-span-2">{a.applicationType}</div>
+                  <div className="col-span-2">{a.nameFamily}</div>
+                  <div className="col-span-2">{a.nameGiven}</div>
+                  <div className="col-span-1">{a.nameMiddle}</div>
+                  <div className="col-span-1">{a.gender}</div>
+                  <div className="col-span-1">{a.mobile}</div> {/* NEW */}
+
+                  <div className="col-span-1 text-right flex justify-end gap-2">
+                    <button
+                      onClick={() =>navigate(`/admin/view-form/${a.id}`)}
+                      className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-xs hover:bg-blue-100"
+                    >
+                      View Form
+                    </button>
+                    <button
+                      onClick={() => handleDeleteApplication(a.id)}
+                      className="px-2 py-1 bg-red-50 text-red-600 rounded-md text-xs hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

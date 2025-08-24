@@ -12,9 +12,19 @@ class ScheduleController extends Controller
      */
     public function index()
     {
-        return Schedule::orderBy('date', 'desc')
-            ->orderBy('time', 'desc')
-            ->get();
+    return Schedule::withCount('applications')
+        ->orderBy('date', 'desc')
+        ->orderBy('time', 'desc')
+        ->get()
+        ->map(function ($s) {
+            return [
+                'id'      => $s->id,
+                'date'    => $s->date->format('Y-m-d'), // YYYY-MM-DD lang
+                'time'    => date('H:i', strtotime($s->time)), // HH:MM lang
+                'limit'   => $s->limit,
+                'booked'  => $s->applications_count, // computed
+            ];
+        });
     }
 
     /**
@@ -28,12 +38,7 @@ class ScheduleController extends Controller
             'limit' => 'required|integer|min:1',
         ]);
 
-        $schedule = Schedule::create([
-            'date'   => $data['date'],
-            'time'   => $data['time'],
-            'limit'  => $data['limit'],
-            'booked' => 0,
-        ]);
+        $schedule = Schedule::create($data);
 
         return response()->json($schedule, 201);
     }

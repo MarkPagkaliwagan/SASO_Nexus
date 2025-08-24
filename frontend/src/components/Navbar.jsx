@@ -71,6 +71,9 @@ export default function Navbar() {
   const onAdminPage = location.pathname.startsWith("/admin");
   const onStaffPage = location.pathname.startsWith("/staff");
 
+  // Determine if user is logged in
+  const isLoggedIn = adminToken || staffToken;
+
   return (
     <motion.header
       initial={{ y: -60, opacity: 0 }}
@@ -104,36 +107,36 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Desktop Nav (show only on large screens) */}
-        <nav className="hidden lg:flex items-center gap-6 flex-shrink">
-          {navLinks.map((link) => (
-            <motion.div
-              key={link.name}
-              className="relative"
-              whileHover={{ scale: 1.05 }}
-            >
-              <Link
-                to={link.path}
-                className={`transition-colors px-2 py-1 ${
-                  isActive(link.path)
-                    ? "text-yellow-400 font-semibold"
-                    : "hover:text-yellow-300"
-                }`}
+        {/* Desktop Nav (hidden if logged in) */}
+        {!isLoggedIn && (
+          <nav className="hidden lg:flex items-center gap-6 flex-shrink">
+            {navLinks.map((link) => (
+              <motion.div
+                key={link.name}
+                className="relative"
+                whileHover={{ scale: 1.05 }}
               >
-                {link.name}
-              </Link>
-              {isActive(link.path) && (
-                <motion.div
-                  layoutId="active-underline"
-                  className="absolute bottom-0 left-0 w-full h-[2px] bg-yellow-400 rounded"
-                />
-              )}
-            </motion.div>
-          ))}
+                <Link
+                  to={link.path}
+                  className={`transition-colors px-2 py-1 ${
+                    isActive(link.path)
+                      ? "text-yellow-400 font-semibold"
+                      : "hover:text-yellow-300"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+                {isActive(link.path) && (
+                  <motion.div
+                    layoutId="active-underline"
+                    className="absolute bottom-0 left-0 w-full h-[2px] bg-yellow-400 rounded"
+                  />
+                )}
+              </motion.div>
+            ))}
 
-          {/* Admin/Staff/Login */}
-          <div className="flex items-center gap-3 relative">
-            {!adminToken && !staffToken && (
+            {/* Login Dropdown */}
+            <div className="flex items-center gap-3 relative">
               <div className="relative" ref={loginDropdownRef}>
                 <button
                   onClick={() => setLoginDropdownOpen(!loginDropdownOpen)}
@@ -167,90 +170,58 @@ export default function Navbar() {
                   )}
                 </AnimatePresence>
               </div>
-            )}
 
-            {adminToken && admin && onAdminPage && (
-              <>
-                <Link
-                  to="/admin/dashboard"
-                  className="px-4 py-2 bg-green-700 rounded-full hover:bg-green-600 transition"
-                >
-                  Admin
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 rounded-full hover:bg-red-500 transition"
-                >
-                  Logout
-                </button>
-              </>
-            )}
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className="ml-2 flex items-center justify-center p-2 rounded-full hover:bg-yellow-400 hover:text-black transition"
+                aria-label="Toggle Dark Mode"
+              >
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            </div>
+          </nav>
+        )}
 
-            {staffToken && staff && !admin && onStaffPage && (
-              <>
-                <Link
-                  to="/staff-dashboard"
-                  className="px-4 py-2 bg-green-700 rounded-full hover:bg-green-600 transition"
-                >
-                  Staff
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 bg-red-600 rounded-full hover:bg-red-500 transition"
-                >
-                  Logout
-                </button>
-              </>
-            )}
-
-            {/* Dark Mode Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="ml-2 flex items-center justify-center p-2 rounded-full hover:bg-yellow-400 hover:text-black transition"
-              aria-label="Toggle Dark Mode"
-            >
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-          </div>
-        </nav>
-
-        {/* Burger Menu (show when lg:hidden) */}
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="lg:hidden z-20 p-2 rounded hover:bg-green-800 transition ml-auto"
-          aria-label="Toggle Menu"
-        >
-          {menuOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+        {/* Burger Menu */}
+        {!isLoggedIn && (
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="lg:hidden z-20 p-2 rounded hover:bg-green-800 transition ml-auto"
+            aria-label="Toggle Menu"
+          >
+            {menuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        )}
       </div>
 
       {/* Mobile Nav Overlay */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            ref={menuRef}
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 200, damping: 25 }}
-            className="fixed top-0 right-0 w-full sm:w-3/4 md:w-1/2 h-screen bg-green-950/95 text-white flex flex-col items-center justify-center space-y-6 z-40 p-6"
-          >
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                onClick={() => setMenuOpen(false)}
-                className={`text-2xl sm:text-3xl font-medium transition-colors ${
-                  isActive(link.path)
-                    ? "text-yellow-400"
-                    : "hover:text-yellow-300"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
+      {!isLoggedIn && (
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              ref={menuRef}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 200, damping: 25 }}
+              className="fixed top-0 right-0 w-full sm:w-3/4 md:w-1/2 h-screen bg-green-950/95 text-white flex flex-col items-center justify-center space-y-6 z-40 p-6"
+            >
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.path}
+                  onClick={() => setMenuOpen(false)}
+                  className={`text-2xl sm:text-3xl font-medium transition-colors ${
+                    isActive(link.path)
+                      ? "text-yellow-400"
+                      : "hover:text-yellow-300"
+                  }`}
+                >
+                  {link.name}
+                </Link>
 
-            {!adminToken && !staffToken && (
+                ))}
               <div className="flex flex-col space-y-3 w-full items-center">
                 <Link
                   to="/admin/login"
@@ -267,57 +238,21 @@ export default function Navbar() {
                   Staff Login
                 </Link>
               </div>
-            )}
 
-            {adminToken && admin && onAdminPage && (
-              <div className="flex flex-col space-y-3 w-full items-center">
-                <Link
-                  to="/admin/dashboard"
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full text-center text-lg bg-green-700 px-6 py-2 rounded-full hover:bg-green-600 transition"
-                >
-                  Admin
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-center text-lg bg-red-600 px-6 py-2 rounded-full hover:bg-red-500 transition"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-
-            {staffToken && staff && !admin && onStaffPage && (
-              <div className="flex flex-col space-y-3 w-full items-center">
-                <Link
-                  to="/staff-dashboard"
-                  onClick={() => setMenuOpen(false)}
-                  className="w-full text-center text-lg bg-green-700 px-6 py-2 rounded-full hover:bg-green-600 transition"
-                >
-                  Staff
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-center text-lg bg-red-600 px-6 py-2 rounded-full hover:bg-red-500 transition"
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-
-            {/* Dark Mode toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className="mt-4 flex items-center justify-center px-6 py-2 rounded-full bg-yellow-400 text-green-900 hover:bg-yellow-300 w-full text-center transition"
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              <span className="ml-2 text-lg">
-                {darkMode ? "Light Mode" : "Dark Mode"}
-              </span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              {/* Dark Mode toggle */}
+              <button
+                onClick={toggleDarkMode}
+                className="mt-4 flex items-center justify-center px-6 py-2 rounded-full bg-yellow-400 text-green-900 hover:bg-yellow-300 w-full text-center transition"
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                <span className="ml-2 text-lg">
+                  {darkMode ? "Light Mode" : "Dark Mode"}
+                </span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </motion.header>
   );
 }

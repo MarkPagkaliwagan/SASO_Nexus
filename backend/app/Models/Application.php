@@ -20,4 +20,10 @@ class Application extends Model
     protected $casts = [
         'declaration' => 'boolean', // ✅ dito dapat ilagay
     ];
+
+    public function schedule()
+{
+    return $this->belongsTo(Schedule::class);
+}
+
 }

@@ -161,3 +161,41 @@ html, body, #root {
   margin: 0;
   padding: 0;
 }
+/* ================================
+   Responsive Form Utilities
+   ================================ */
+@layer components {
+  /* Container for whole form/page */
+  .container-page {
+    @apply mx-auto w-full max-w-screen-lg px-4 md:px-6 lg:px-8;
+  }
+
+  /* Section wrapper (cards) */
+  .section-card {
+    @apply p-4 md:p-6 lg:p-8 rounded-2xl border bg-slate-50;
+  }
+
+  /* Field grids that auto-upgrade */
+  .fields-1 { @apply grid grid-cols-1 gap-3; }
+  .fields-2 { @apply grid grid-cols-1 md:grid-cols-2 gap-4; }
+  .fields-3 { @apply grid grid-cols-1 md:grid-cols-3 gap-4; }
+
+  /* Labels + inputs unified */
+  .label { @apply block font-semibold mb-1; }
+  .input { @apply w-full rounded-xl border border-slate-300 px-3 py-2 outline-none; }
+  .input:focus { @apply border-sky-400 ring-4 ring-sky-200/40; }
+  .hint { @apply text-sm text-slate-500; }
+
+  /* Inline options for radios/checkboxes */
+  .inline-options { @apply flex flex-wrap items-center gap-3 md:gap-4; }
+  .inline-options > label { @apply inline-flex items-center gap-2 font-medium; }
+
+  /* Scrollable tables on mobile */
+  .table-wrap { @apply overflow-x-auto rounded-xl border; }
+
+  /* Error state (for validation) */
+  .is-error { @apply border-orange-500 ring-4 ring-orange-200/40; }
+
+  /* Responsive image helper */
+  .img-fluid { @apply max-w-full h-auto block; }
+}

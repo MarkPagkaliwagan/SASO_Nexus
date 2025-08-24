@@ -12,12 +12,20 @@ use App\Http\Controllers\PersonnelController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\ApplicationController;
 
 
-// -------------------- Schedule --------------------
-
+// -------------------- Schedules --------------------
 Route::apiResource('schedules', ScheduleController::class)
-    ->only(['index','store','destroy']);
+    ->only(['index', 'store', 'destroy']);
+
+// Optional: manual reserve endpoint (pwede mo iwan or tanggalin)
+Route::post('/schedules/{id}/reserve', [ScheduleController::class, 'reserve']);
+
+
+// -------------------- Applications --------------------
+Route::apiResource('applications', ApplicationController::class)
+    ->only(['index', 'store']);
 
 
 // -------------------- Events --------------------
@@ -32,6 +40,7 @@ Route::put('/announcements/{id}', [AnnouncementController::class, 'update']);
 Route::delete('/announcements/{id}', [AnnouncementController::class, 'destroy']);
 Route::post('/announcements/{id}/react', [AnnouncementController::class, 'react']);
 
+
 // -------------------- Admin Auth Routes --------------------
 Route::prefix('admin')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
@@ -39,15 +48,17 @@ Route::prefix('admin')->group(function () {
     Route::post('/reset-password', [AdminResetPasswordController::class, 'reset']);
 });
 
+
 // -------------------- Personnel Routes --------------------
 Route::prefix('personnel')->group(function () {
-    Route::post('/', [PersonnelController::class, 'store']);            // Create
-    Route::get('/', [PersonnelController::class, 'index']);            // Get all
+    Route::post('/', [PersonnelController::class, 'store']);              // Create
+    Route::get('/', [PersonnelController::class, 'index']);              // Get all
     Route::get('/unit/{unit}', [PersonnelController::class, 'getByUnit']); // Get by unit
-    Route::get('/{id}', [PersonnelController::class, 'show']);         // Get single
-    Route::put('/{id}', [PersonnelController::class, 'update']);       // Update
-    Route::delete('/{id}', [PersonnelController::class, 'destroy']);   // Delete
+    Route::get('/{id}', [PersonnelController::class, 'show']);           // Get single
+    Route::put('/{id}', [PersonnelController::class, 'update']);         // Update
+    Route::delete('/{id}', [PersonnelController::class, 'destroy']);     // Delete
 });
+
 
 // -------------------- Staff Auth Routes --------------------
 Route::prefix('staff')->group(function () {

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { FaLightbulb, FaBullseye, FaFlag } from "react-icons/fa";
 
 export default function Saso() {
-  // Subtle transition variants
+  // Variants for panels
   const leftVariant = {
     hidden: { opacity: 0, x: -30 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" } },
@@ -19,13 +19,28 @@ export default function Saso() {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
   };
 
+  // Staggered animation for list items
+  const listContainer = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.2,
+      },
+    },
+  };
+
+  const listItem = {
+    hidden: { opacity: 0, x: -15 },
+    visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-12 text-gray-800">
       {/* Page Title */}
       <motion.h1
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true }}
+        viewport={{ once: false, amount: 0.2 }}
         variants={topVariant}
         className="text-4xl md:text-5xl font-extrabold text-center text-green-700 drop-shadow-sm"
       >
@@ -36,7 +51,7 @@ export default function Saso() {
       <motion.section
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.2 }}
         variants={leftVariant}
         className="bg-white/90 border-l-8 border-yellow-500 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
       >
@@ -54,7 +69,7 @@ export default function Saso() {
       <motion.section
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.2 }}
         variants={rightVariant}
         className="bg-white/90 border-l-8 border-green-500 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
       >
@@ -72,7 +87,7 @@ export default function Saso() {
       <motion.section
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
+        viewport={{ once: false, amount: 0.2 }}
         variants={leftVariant}
         className="bg-white/90 border-l-8 border-yellow-500 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
       >
@@ -80,51 +95,65 @@ export default function Saso() {
           <FaFlag className="text-3xl text-yellow-600" />
           <h2 className="text-2xl font-bold text-yellow-700">Goals</h2>
         </div>
-        <ul className="list-decimal list-inside space-y-2 pl-4 text-gray-700 leading-relaxed">
-          <li>
+
+        {/* Goals List with staggered animation */}
+        <motion.ul
+          variants={listContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: false, amount: 0.2 }}
+          className="list-decimal list-inside space-y-2 pl-4 text-gray-700 leading-relaxed"
+        >
+          <motion.li variants={listItem}>
             To organize holistic activities for the spiritual, intellectual,
             social, emotional, and physical development of the students.
-          </li>
-          <li>
+          </motion.li>
+          <motion.li variants={listItem}>
             To coordinate with different academic departments in carrying out
             the extra and co-curricular activities of the students.
-          </li>
-          <li>
+          </motion.li>
+          <motion.li variants={listItem}>
             To evaluate the effects of extra and co-curricular activities in
             relation to the students' development inside and outside the
             classroom setting.
-          </li>
-          <li>
+          </motion.li>
+          <motion.li variants={listItem}>
             To recommend changes and improvement of the students’ extra and
             co-curricular activities.
-          </li>
-        </ul>
+          </motion.li>
+        </motion.ul>
 
-        {/* Additional Functions */}
+        {/* Additional Functions with staggered effect */}
         <div className="mt-6 text-gray-700 space-y-3 leading-relaxed">
           <p className="font-semibold">
             To attain these goals, the OSA seeks to fulfill the following functions:
           </p>
-          <ul className="list-disc list-inside pl-4 space-y-1">
-            <li>
+          <motion.ul
+            variants={listContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: false, amount: 0.2 }}
+            className="list-disc list-inside pl-4 space-y-1"
+          >
+            <motion.li variants={listItem}>
               <span className="font-medium">Spiritual Function –</span> Encourages students to grow and mature with a community of believers.
-            </li>
-            <li>
+            </motion.li>
+            <motion.li variants={listItem}>
               <span className="font-medium">Health Function –</span> Provides students with medical and dental information as well as services for proper health care.
-            </li>
-            <li>
+            </motion.li>
+            <motion.li variants={listItem}>
               <span className="font-medium">Counseling Function –</span> Assists the students to become enlightened and self-actualized individuals.
-            </li>
-            <li>
+            </motion.li>
+            <motion.li variants={listItem}>
               <span className="font-medium">Leadership Function –</span> Offers students opportunities for enhancement of their leadership and organizational skills.
-            </li>
-            <li>
+            </motion.li>
+            <motion.li variants={listItem}>
               <span className="font-medium">Orientation Function –</span> Familiarizes students with the campus environment including students such academic and non-academic policies.
-            </li>
-            <li>
+            </motion.li>
+            <motion.li variants={listItem}>
               <span className="font-medium">Coordinating Function –</span> Acts as links to the various extra and co-curricular activities for the holistic development of the students.
-            </li>
-          </ul>
+            </motion.li>
+          </motion.ul>
         </div>
       </motion.section>
     </div>

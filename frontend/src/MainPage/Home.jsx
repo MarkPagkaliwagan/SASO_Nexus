@@ -1,10 +1,9 @@
 // src/pages/Home.jsx
 import React from "react";
-import SPC from "../pages/SPC";
-import SASO from "../pages/SASO";
-import MainPanel from "../pages/MainPanel";
+import SPC from "../MainPage/SPC";
+import SASO from "../MainPage/SASO";
+import MainPanel from "../MainPage/MainPanel";
 
-import "./home.css";
 
 export default function Home() {
   return (

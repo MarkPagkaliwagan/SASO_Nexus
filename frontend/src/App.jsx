@@ -1,14 +1,14 @@
 import React from 'react';
 import { Routes, Route, useLocation } from "react-router-dom";
-import AdminLogin from "./pages/AdminLogin";
-import AdminDashboard from "./pages/AdminDashboard";
-import StaffLogin from "./pages/StaffLogin";
-import StaffDashboard from "./pages/StaffDashboard";
-import Home from './pages/Home';
-import ResetPassword from './pages/ResetPassword';
-import Personnel from './pages/Personnel';
-import Department from './pages/Department';
-import Admission from './pages/Admission';
+import AdminLogin from "./MainPage/AdminLogin";
+import AdminDashboard from "./MainPage/AdminDashboard";
+import StaffLogin from "./MainPage/StaffLogin";
+import StaffDashboard from "./MainPage/StaffDashboard";
+import Home from './MainPage/Home';
+import ResetPassword from './MainPage/ResetPassword';
+import Personnel from './MainPage/Personnel';
+import Department from './MainPage/Department';
+import Admission from './MainPage/Admission';
 import AdmissionForm from "./components/AdmissionForm";
 
 

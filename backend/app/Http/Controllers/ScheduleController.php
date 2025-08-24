@@ -7,13 +7,19 @@ use App\Models\Schedule;
 
 class ScheduleController extends Controller
 {
+    /**
+     * List all schedules
+     */
     public function index()
     {
-        return Schedule::orderBy('date','desc')
-            ->orderBy('time','desc')
+        return Schedule::orderBy('date', 'desc')
+            ->orderBy('time', 'desc')
             ->get();
     }
 
+    /**
+     * Create new schedule
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -32,6 +38,9 @@ class ScheduleController extends Controller
         return response()->json($schedule, 201);
     }
 
+    /**
+     * Delete schedule
+     */
     public function destroy($id)
     {
         $s = Schedule::findOrFail($id);

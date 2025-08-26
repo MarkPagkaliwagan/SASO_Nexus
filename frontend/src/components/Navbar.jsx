@@ -60,13 +60,14 @@ export default function Navbar() {
     navigate("/");
   };
 
-  const navLinks = [
+    const navLinks = [
     { name: "Home", path: "/" },
     { name: "Admissions", path: "/admissions" },
-    { name: "Units | Announcement", path: "/departments" },
+    { name: "Units & Announcement", path: "/departments" },
+    { name: "Exit & Evaluation", path: "/evaluation" }, // Contact -> Exit & Evaluation
     { name: "Personnel", path: "/personnel" },
-    { name: "Contact", path: "/contact" },
   ];
+
 
   const onAdminPage = location.pathname.startsWith("/admin");
   const onStaffPage = location.pathname.startsWith("/staff");

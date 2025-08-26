@@ -21,11 +21,12 @@ Route::apiResource('schedules', ScheduleController::class)
 
 // Optional: manual reserve endpoint (pwede mo iwan or tanggalin)
 Route::post('/schedules/{id}/reserve', [ScheduleController::class, 'reserve']);
-
+    
 
 // -------------------- Applications --------------------
 Route::apiResource('applications', ApplicationController::class)
     ->only(['index', 'store', 'destroy', 'show']);
+Route::post('/applications/{id}/approve', [ApplicationController::class, 'approve']);
 
 
 // -------------------- Events --------------------

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Application;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
+use App\Mail\ApplicationApprovedMail;
+use Illuminate\Support\Facades\Mail;    
 
 class ApplicationController extends Controller
 {
@@ -78,4 +80,39 @@ class ApplicationController extends Controller
     return response()->json($application);
 }
 
+ public function approve(Request $request, $id)
+    {
+        $application = Application::findOrFail($id);
+
+        // Use the schedule already chosen by the applicant
+        if (empty($application->schedule_id)) {
+            return response()->json([
+                'message' => 'Applicant has not selected a schedule. Please have the applicant choose a schedule before approving.'
+            ], 422);
+        }
+
+        $schedule = $application->schedule; // may be null, but we checked schedule_id exists
+
+        $application->status = 'approved';
+        $application->approved_at = now();
+        $application->save();
+
+        // send email (consider queueing in production)
+        try {
+            Mail::to($application->email)->send(new ApplicationApprovedMail($application, $schedule));
+        } catch (\Exception $e) {
+            \Log::error('Mail send failed: '.$e->getMessage());
+            // still return success for approval but warn admin
+            return response()->json([
+                'message' => 'Application approved but failed to send email.',
+                'warning' => $e->getMessage(),
+                'application' => $application
+            ], 200);
+        }
+
+        return response()->json([
+            'message' => 'Application approved and email sent.',
+            'application' => $application
+        ], 200);
+    }
 }

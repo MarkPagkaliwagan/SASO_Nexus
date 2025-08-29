@@ -1,96 +1,165 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FaKey, FaEnvelope } from 'react-icons/fa';
-import { motion, AnimatePresence } from 'framer-motion';
-import api from '../services/api';
-import spcLogo from '../images/SPC.png';
-import sasoLogo from '/src/images/SASO.png';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  FaKey,
+  FaEnvelope,
+  FaInfoCircle,
+  FaEye,
+  FaEyeSlash,
+} from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
+import api from "../services/api";
+import spcLogo from "../images/SPC.png";
+import sasoLogo from "/src/images/SASO.png";
 
 export default function AdminLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [forgotEmail, setForgotEmail] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [forgotEmail, setForgotEmail] = useState("");
   const [showForgot, setShowForgot] = useState(false);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showBranding, setShowBranding] = useState(false);
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
-useEffect(() => {
-  const token = localStorage.getItem('token');
-  const role = localStorage.getItem('role');
-
-  if (token && role === 'admin') {
-    navigate('/admin/dashboard');
-  }
-}, [navigate]);
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) navigate('/admin/dashboard');
-  }, []);
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("role");
+    if (token && role === "admin") navigate("/admin/dashboard");
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
+    setLoading(true);
     try {
-      const res = await api.post('/admin/login', { email, password });
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('admin', JSON.stringify(res.data.admin));
-      localStorage.setItem('role', 'admin');   // 🔹 ADD THIS LINE
-
-      localStorage.setItem('showPopup', 'true');
-      navigate('/admin/dashboard');
+      const res = await api.post("/admin/login", { email, password });
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("admin", JSON.stringify(res.data.admin));
+      localStorage.setItem("role", "admin");
+      localStorage.setItem("showPopup", "true");
+      navigate("/admin/dashboard");
     } catch (err) {
-      setError('Invalid email or password.');
+      setError("Invalid email or password.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
     try {
-      await api.post('/admin/forgot-password', { email: forgotEmail });
-      setMessage('Reset token sent to your email.');
+      await api.post("/admin/forgot-password", { email: forgotEmail });
+      setMessage("Reset token sent to your email.");
     } catch (err) {
-      setError('Failed to send reset token.');
+      setError("Failed to send reset token.");
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <motion.div
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col md:flex-row w-full max-w-5xl bg-white rounded-3xl shadow-xl border border-gray-200 overflow-hidden"
-      >
-        {/* Left Panel - Branding */}
-        <div className="md:w-1/2 bg-green-900 text-white flex flex-col justify-center items-center p-14 space-y-6 text-center relative">
-          <div className="flex items-center space-x-8">
-            <motion.img
-              src={spcLogo}
-              alt="SPC Logo"
-              className="h-36 w-auto cursor-pointer"
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-            />
-            <motion.img
-              src={sasoLogo}
-              alt="SASO Logo"
-              className="h-20 w-auto cursor-pointer"
-              whileHover={{ scale: 1.1, rotate: -5 }}
-              transition={{ type: 'spring', stiffness: 300 }}
-            />
-          </div>
-          <h2 className="text-5xl font-extrabold tracking-tight select-none">SASO Nexus</h2>
-          <p className="text-lg font-semibold opacity-90 select-none">
-            Student Affairs & Services Office
-          </p>
-        </div>
+  const floatingShapes = [
+    { size: 80, top: "10%", left: "5%", color: "rgba(34,197,94,0.4)" },
+    { size: 100, top: "30%", left: "70%", color: "rgba(34,197,94,0.3)" },
+    { size: 60, top: "70%", left: "20%", color: "rgba(34,197,94,0.35)" },
+  ];
 
-        {/* Right Panel - Form */}
-        <div className="md:w-1/2 p-12">
+  return (
+    <div className="min-h-screen relative flex items-center justify-center px-4 bg-black overflow-hidden">
+      {/* Background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center z-0"
+        style={{ backgroundImage: "url('/src/images/Campus.png')" }}
+      />
+      <div className="absolute inset-0 bg-black/70 z-0"></div>
+
+      {/* Floating Shapes */}
+      {floatingShapes.map((shape, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full filter blur-2xl"
+          style={{
+            width: shape.size,
+            height: shape.size,
+            top: shape.top,
+            left: shape.left,
+            backgroundColor: shape.color,
+          }}
+          animate={{ y: [0, 20, 0], x: [0, 15, 0] }}
+          transition={{ duration: 6, repeat: Infinity, repeatType: "mirror" }}
+        />
+      ))}
+
+      {/* MAIN CARD */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.7, type: "spring", stiffness: 100 }}
+        className="relative z-10 flex w-full max-w-6xl bg-white/20 rounded-3xl shadow-2xl border border-white/30 overflow-hidden hover:scale-[1.01] transition-transform duration-500"
+      >
+        {/* LEFT PANEL (Slide Branding) */}
+        <motion.div
+          onMouseEnter={() => setShowBranding(true)}
+          onMouseLeave={() => setShowBranding(false)}
+          animate={{ width: showBranding ? "50%" : "5%" }}
+          transition={{ duration: 0.5 }}
+          className="relative flex flex-col justify-center items-center bg-gradient-to-b from-green-700/60 to-green-900/60 text-white overflow-hidden"
+        >
+          {/* Indicator Icon */}
+          {!showBranding && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-white/70"
+            >
+              <FaInfoCircle className="text-2xl animate-pulse" />
+            </motion.div>
+          )}
+
+          {/* Branding Content */}
+          {showBranding && (
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+              className="p-10 text-center space-y-6 max-w-md"
+            >
+              <div className="flex items-center justify-center space-x-6">
+                <motion.img
+                  src={spcLogo}
+                  alt="SPC Logo"
+                  className="h-28 w-auto drop-shadow-xl"
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                />
+                <motion.img
+                  src={sasoLogo}
+                  alt="SASO Logo"
+                  className="h-20 w-auto drop-shadow-xl"
+                  whileHover={{ scale: 1.1, rotate: -5 }}
+                />
+              </div>
+              <h2 className="text-4xl font-extrabold">SASO Nexus</h2>
+              <p className="text-lg font-semibold opacity-90">
+                Student Affairs & Services Office
+              </p>
+              <p className="text-sm leading-relaxed opacity-80">
+                Welcome to the Admin Portal of SASO Nexus. Here you can access
+                student services, manage important records, and oversee campus
+                activities with ease. Our system is designed to provide seamless
+                tools for admin staff, ensuring efficiency, transparency, and
+                better student engagement. Hover anytime to review guidelines,
+                updates, and key notes about managing your dashboard.
+              </p>
+            </motion.div>
+          )}
+        </motion.div>
+
+        {/* RIGHT PANEL (Form) */}
+        <div className="flex-1 p-10 md:p-14 bg-white/10 backdrop-blur-lg">
           <AnimatePresence mode="wait">
             {!showForgot ? (
               <motion.div
@@ -98,53 +167,65 @@ useEffect(() => {
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.4 }}
               >
-                <h3 className="text-3xl font-bold text-green-900 mb-3 select-none">Login</h3>
-                <p className="text-sm text-gray-600 mb-6 select-none">Sign in to your dashboard</p>
-                {error && <p className="text-red-600 text-sm mb-4 font-medium">{error}</p>}
-                {message && <p className="text-green-700 text-sm mb-4 font-medium">{message}</p>}
+                <h3 className="text-3xl font-bold text-green-400 mb-3">
+                  Admin Login
+                </h3>
+                <p className="text-sm text-gray-200 mb-6">
+                  Sign in to your dashboard
+                </p>
+                {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+                {message && (
+                  <p className="text-green-300 text-sm mb-4">{message}</p>
+                )}
 
-                <form onSubmit={handleLogin} className="space-y-6 text-base">
+                <form onSubmit={handleLogin} className="space-y-6">
                   <div>
-                    <label htmlFor="email" className="block font-semibold mb-2">
+                    <label
+                      htmlFor="email"
+                      className="block font-semibold mb-2 text-white/90"
+                    >
                       Email
                     </label>
                     <div className="relative">
-                      <FaEnvelope className="absolute left-4 top-4 text-gray-400 text-lg pointer-events-none" />
+                      <FaEnvelope className="absolute left-4 top-4 text-gray-300" />
                       <input
                         id="email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl 
-                          focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-500
-                          hover:border-green-400 transition-all duration-300 ease-in-out
-                          text-gray-900 font-medium"
+                        className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-400 bg-white/40 shadow-inner text-gray-900"
                         required
-                        autoComplete="username"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="password" className="block font-semibold mb-2">
+                    <label
+                      htmlFor="password"
+                      className="block font-semibold mb-2 text-white/90"
+                    >
                       Password
                     </label>
                     <div className="relative">
-                      <FaKey className="absolute left-4 top-4 text-gray-400 text-lg pointer-events-none" />
+                      <FaKey className="absolute left-4 top-4 text-gray-300" />
                       <input
                         id="password"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl 
-                          focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-500
-                          hover:border-green-400 transition-all duration-300 ease-in-out
-                          text-gray-900 font-medium"
+                        className="w-full pl-12 pr-12 py-3 rounded-2xl border border-gray-400 bg-white/40 shadow-inner text-gray-900"
                         required
-                        autoComplete="current-password"
                       />
+                      {/* Toggle button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-4 text-gray-600 hover:text-gray-900"
+                      >
+                        {showPassword ? <FaEyeSlash /> : <FaEye />}
+                      </button>
                     </div>
                   </div>
 
@@ -152,20 +233,23 @@ useEffect(() => {
                     <button
                       type="button"
                       onClick={() => setShowForgot(true)}
-                      className="text-sm text-green-700 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-green-400"
+                      className="text-sm text-green-200 hover:underline"
                     >
                       Forgot Password?
                     </button>
                   </div>
 
-                  <button
+                  <motion.button
                     type="submit"
-                    className="w-full bg-green-700 hover:bg-green-800 active:bg-green-900 
-                      text-white font-extrabold py-3 px-6 rounded-xl shadow-md 
-                      transition-all duration-300 ease-in-out transform hover:scale-[1.05] focus:outline-none focus:ring-4 focus:ring-green-300"
+                    disabled={loading}
+                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.05 }}
+                    className={`w-full bg-gradient-to-r from-green-400 to-green-600 text-white font-bold py-3 px-6 rounded-2xl shadow-xl ${
+                      loading ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                   >
-                    Login
-                  </button>
+                    {loading ? "Loading..." : "Login"}
+                  </motion.button>
                 </form>
               </motion.div>
             ) : (
@@ -174,51 +258,48 @@ useEffect(() => {
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -40 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.4 }}
               >
-                <div className="text-center mb-8 select-none">
-                  <FaKey className="text-green-700 text-5xl mx-auto mb-3" />
-                  <h2 className="text-3xl font-bold text-green-900">Forgot Password</h2>
+                <div className="text-center mb-8">
+                  <FaKey className="text-green-400 text-5xl mx-auto mb-3" />
+                  <h2 className="text-3xl font-bold text-green-400">
+                    Forgot Password
+                  </h2>
+                  <p className="text-sm text-gray-200">
+                    Enter your email to reset your password.
+                  </p>
                 </div>
 
-                <form onSubmit={handleForgotPassword} className="space-y-6 text-base">
-                  <div>
-                    <label htmlFor="forgotEmail" className="block font-semibold mb-2">
-                      Email Address
-                    </label>
-                    <input
-                      id="forgotEmail"
-                      type="email"
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl 
-                        focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-500
-                        hover:border-green-400 transition-all duration-300 ease-in-out
-                        text-gray-900 font-medium"
-                      required
-                      autoComplete="email"
-                    />
-                  </div>
-
-                  {error && <p className="text-red-600 text-sm font-medium">{error}</p>}
-                  {message && <p className="text-green-700 text-sm font-medium">{message}</p>}
+                <form onSubmit={handleForgotPassword} className="space-y-6">
+                  <input
+                    id="forgotEmail"
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border border-gray-400 bg-white/40 text-gray-900"
+                    required
+                  />
+                  {error && <p className="text-red-500 text-sm">{error}</p>}
+                  {message && (
+                    <p className="text-green-300 text-sm">{message}</p>
+                  )}
 
                   <div className="flex justify-between items-center">
                     <button
                       type="button"
                       onClick={() => setShowForgot(false)}
-                      className="text-sm text-gray-700 font-semibold hover:underline focus:outline-none focus:ring-2 focus:ring-gray-400"
+                      className="text-sm text-gray-200 hover:underline"
                     >
                       Back to Login
                     </button>
-                    <button
+                    <motion.button
                       type="submit"
-                      className="bg-green-700 hover:bg-green-800 active:bg-green-900 
-                        text-white font-extrabold py-3 px-6 rounded-xl shadow-md 
-                        transition-all duration-300 ease-in-out transform hover:scale-[1.05] focus:outline-none focus:ring-4 focus:ring-green-300"
+                      whileTap={{ scale: 0.95 }}
+                      whileHover={{ scale: 1.05 }}
+                      className="bg-gradient-to-r from-green-400 to-green-600 text-white font-bold py-3 px-6 rounded-2xl shadow-xl"
                     >
                       Send Reset
-                    </button>
+                    </motion.button>
                   </div>
                 </form>
               </motion.div>

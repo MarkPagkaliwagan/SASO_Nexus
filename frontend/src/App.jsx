@@ -7,7 +7,7 @@ import StaffDashboard from "./MainPage/StaffDashboard";
 import Home from './MainPage/Home';
 import ResetPassword from './MainPage/ResetPassword';
 import Personnel from './MainPage/Personnel';
-import Department from './MainPage/Department';
+import Announcement from './MainPage/Announcement';
 import Admission from './MainPage/Admission';
 import AdmissionForm from "./components/AdmissionForm";
 import ViewForm from "./AdminContent/ViewForm";
@@ -43,12 +43,13 @@ function App() {
   const role = localStorage.getItem("role"); // "admin" or "staff"
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-transparent">
       <RouteWatcher />
 
       {!hideNavbar && <Navbar />}
 
-      <div className={`${hideNavbar ? 'px-4 flex-grow mb-8' : 'pt-[100px] px-4 flex-grow mb-8'}`}>
+      {/* Clean, no padding/margin */}
+      <div className="flex-grow bg-transparent">
         <Routes>
           {/* Home route → Redirect kapag logged in */}
           <Route
@@ -86,7 +87,7 @@ function App() {
             }
           />
           <Route path="/personnel" element={<Personnel />} />
-          <Route path="/departments" element={<Department />} />
+          <Route path="/announcement" element={<Announcement />} />
           <Route path="/admissions" element={<Admission />} />
           <Route path="/admission-form" element={<AdmissionForm />} />
           <Route path="/admin/view-form/:id" element={<ViewForm />} />

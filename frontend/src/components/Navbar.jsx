@@ -147,7 +147,7 @@ export default function Navbar() {
               <div className="relative" ref={loginDropdownRef}>
                 <button
                   onClick={() => setLoginDropdownOpen(!loginDropdownOpen)}
-                  className="px-4 py-2 bg-green-700 text-white rounded-md font-medium hover:bg-green-600 transition flex items-center gap-1"
+                  className="px-4 py-2 bg-green-900/10 text-black rounded-md font-medium hover:bg-yellow-500 transition flex items-center gap-1"
                 >
                   Login ▾
                 </button>

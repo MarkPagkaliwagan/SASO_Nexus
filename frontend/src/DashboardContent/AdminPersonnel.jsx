@@ -223,7 +223,7 @@ export default function AdminPersonnel() {
   ];
 
   return (
-    <div className="p-4 sm:p-6 max-w-screen-2xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 max-w-screen-2xl mx-auto space-y-6 text-black">
       {/* Form */}
       <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-md w-full">
         <h2 className="text-xl sm:text-2xl font-bold text-green-700 mb-4">

@@ -231,8 +231,9 @@ export default function AdminSchedule() {
       </div>
     );
   }
+  
 return (
-  <div className="p-4 max-w-7xl mx-auto">
+  <div className="p-4 max-w-7xl mx-auto text-black">
     {/* SCHEDULE CARD */}
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent">
       {/* Header */}
@@ -247,15 +248,7 @@ return (
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={fetchSchedules}
-            className="px-4 py-2 rounded-lg text-sm border border-yellow-200 hover:bg-yellow-50 transition-shadow whitespace-nowrap"
-          >
-            Refresh
-          </button>
-        </div>
+
       </div>
 
       {/* FORM */}
@@ -380,22 +373,12 @@ return (
             <h3 className="text-2xl font-semibold text-gray-900">Scheduled Applicants</h3>
             <p className="text-sm text-gray-500">List of applicants who booked an entrance exam</p>
           </div>
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={fetchApplications}
-              className="px-4 py-2 rounded-lg border border-yellow-200 hover:bg-yellow-50 transition"
-              title="Refresh applications"
-            >
-              Refresh
-            </button>
-          </div>
         </div>
 
         {/* search & sort */}
         <div className="px-6 py-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
           <div className="relative md:col-span-2">
-            <FiSearch className="absolute left-3 top-3 text-gray-400" />
+            <FiSearch className="absolute left-3 top-3 text-black" />
             <input
               type="text"
               placeholder="Search by name, type or id..."

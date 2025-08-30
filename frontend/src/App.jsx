@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useLocation, useNavigate, Navigate } from "react-router-dom";
 import AdminLogin from "./MainPage/AdminLogin";
-import AdminDashboard from "./MainPage/AdminDashboard";
+import AdminLandingPage from "./MainPage/AdminLandingPage";
 import StaffLogin from "./MainPage/StaffLogin";
 import StaffDashboard from "./MainPage/StaffDashboard";
 import Home from './MainPage/Home';
 import ResetPassword from './MainPage/ResetPassword';
 import Personnel from './MainPage/Personnel';
-import Announcement from './MainPage/Announcement';
+import Announcement from './MainPage/AnnouncementView';
 import Admission from './MainPage/Admission';
 import AdmissionForm from "./components/AdmissionForm";
-import ViewForm from "./AdminContent/ViewForm";
+import ViewForm from "./DashboardContent/ViewForm";
 
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -72,7 +72,7 @@ function App() {
             path="/admin/dashboard"
             element={
               <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
+                <AdminLandingPage />
               </ProtectedRoute>
             }
           />

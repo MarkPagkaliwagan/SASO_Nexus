@@ -43,7 +43,7 @@ function App() {
   const role = localStorage.getItem("role"); // "admin" or "staff"
 
   return (
-    <div className="flex flex-col min-h-screen bg-transparent">
+    <div className="flex flex-col min-h-screen  bg-transparent">
       <RouteWatcher />
 
       {!hideNavbar && <Navbar />}

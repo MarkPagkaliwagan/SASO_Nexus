@@ -101,16 +101,16 @@ export default function Personnel() {
 
 return (
   <div
-    className="relative min-h-screen p-6 text-[15px] sm:text-[16px] bg-fixed bg-cover bg-center"
+    className="relative min-h-screen p-6 text-[15px] sm:text-[16px] bg-fixed bg-cover bg-center "
     style={{
-      backgroundImage: "url('/src/images/Campus.png')", // ilagay path ng background image mo
+      backgroundImage: "url('/src/images/Campus2.jpg')", // ilagay path ng background image mo
     }}
   >
     {/* DARK OVERLAY */}
-      <div className="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+      <div className="absolute inset-0 bg-[#003332]/50 bg-opacity-10 z-0"></div>
 
     {/* MAIN CONTENT */}
-    <div className="relative z-10">
+    <div className="relative z-10 mt-[30px]">
       <style>{`
         .person-card { 
           background: ${PALETTE.cardBg}; 
@@ -159,8 +159,8 @@ return (
 
   {/* Subtitle */}
   <p className="text-[#FFE18F] text-base md:text-lg leading-relaxed">
-    Welcome! Here you can browse and connect with our dedicated school personnel. 
-    Find their contact details, roles, and more with just a few clicks.
+    Welcome! Here you can browse and connect with our dedicated San Pablo Colleges Student Affairs and Service Office
+    personnel.Find their contact details, roles, and more with just a few clicks.
   </p>
 
 

@@ -48,15 +48,15 @@ export default function Announcements() {
   };
 return (
   <div
-    className="relative min-h-screen py-12 px-4 md:px-6 lg:px-8 text-slate-100 bg-fixed bg-cover bg-center"
+    className="relative min-h-screen py-12 px-4 md:px-6 lg:px-8 text-slate-100 bg-fixed bg-cover bg-center "
     style={{
-      backgroundImage: "url('/src/images/Campus.png')", // ilagay mo path ng pic mo
+      backgroundImage: "url('/src/images/Campus2.jpg')", // ilagay mo path ng pic mo
     }}
   >
     {/* overlay para readable yung text */}
-    <div className="absolute inset-0 bg-gradient-to-r from-[#034C36]/90 to-[#003332]/80"></div>
+      <div className="absolute inset-0 bg-[#003332]/50 bg-opacity-10 z-0"></div>
 
-    <div className="relative z-10 w-full mx-auto">
+    <div className="relative z-10 w-full mx-auto mt-[50px]">
 
       {/* Header / Title → full width */}
       <header className="w-full mb-12">

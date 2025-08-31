@@ -7,8 +7,9 @@ import {
   Shield,
   Users,
   Leaf,
+  Sun,
+  Moon,
 } from "lucide-react";
-
 import { motion, AnimatePresence } from "framer-motion";
 import spcLogo from "/src/images/SPC.png";
 import sasoLogo from "/src/images/SASO.png";
@@ -21,14 +22,12 @@ export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
   const lastScroll = useRef(0);
-
   const menuRef = useRef(null);
   const loginDropdownRef = useRef(null);
 
   const adminToken = localStorage.getItem("token");
   const staffToken = localStorage.getItem("staffToken");
-
-  const isActive = (path) => location.pathname === path;
+  const isLoggedIn = adminToken || staffToken;
 
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode") === "true";
@@ -44,6 +43,7 @@ export default function Navbar() {
     });
   };
 
+  // close menus when clicking outside
   useEffect(() => {
     const handler = (e) => {
       if (
@@ -60,19 +60,27 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  // lock body scroll when mobile menu open
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "auto";
   }, [menuOpen]);
 
+  // hide on scroll down, show on scroll up
   useEffect(() => {
     const handleScroll = () => {
       const currentScroll = window.scrollY;
-      setShowNavbar(currentScroll < lastScroll.current || currentScroll < 50);
+      setShowNavbar(currentScroll < lastScroll.current || currentScroll < 60);
       lastScroll.current = currentScroll;
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // close menus on navigation
+  useEffect(() => {
+    setMenuOpen(false);
+    setLoginDropdownOpen(false);
+  }, [location.pathname]);
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -82,184 +90,201 @@ export default function Navbar() {
     { name: "Personnel", path: "/personnel" },
   ];
 
-  const isLoggedIn = adminToken || staffToken;
+  const isActive = (path) => location.pathname === path;
 
   return (
     <>
       <motion.header
-        initial={{ y: -80 }}
-        animate={{ y: showNavbar ? 0 : -120 }}
-        transition={{ type: "spring", stiffness: 120, damping: 20 }}
-        className="fixed top-0 left-0 w-full z-50 bg-white shadow-md"
-        style={{ paddingTop: "0.75rem", paddingBottom: "0.75rem" }}
+        initial={{ y: -100 }}
+        animate={{ y: showNavbar ? 0 : -140 }}
+        transition={{ type: "spring", stiffness: 140, damping: 22 }}
+        className="fixed top-0 left-0 w-full z-50"
       >
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
-          {/* Logo Section */}
-          <div
-            className="flex items-center gap-2 cursor-pointer min-w-0"
-            onClick={() => navigate("/")}
-          >
-            <img
-              src={spcLogo}
-              alt="SPC"
-              className="h-10 w-10 object-contain flex-shrink-0"
-              style={{ background: "transparent" }}
-            />
-            <img
-              src={sasoLogo}
-              alt="SASO"
-              className="h-10 w-10 object-contain flex-shrink-0"
-              style={{ background: "transparent" }}
-            />
-            <div className="flex flex-col leading-tight min-w-0">
-              <h1 className="font-bold text-sm sm:text-base md:text-lg truncate text-gray-900">
-                San Pablo Colleges
-              </h1>
-              <p className="text-gray-700 text-xs sm:text-sm truncate">
-                Student Affairs and Services Office
-              </p>
-            </div>
-          </div>
+        {/* glass + subtle border — modern 2025 palette */}
+        <div className="backdrop-blur-sm bg-white/60 dark:bg-slate-900/50 border-b border-slate-200/30 dark:border-slate-700/40">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3 lg:py-4 flex items-center gap-4 justify-between">
+            {/* Logo / Brand */}
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-3 min-w-0 group focus:outline-none"
+              aria-label="Go home"
+            >
+              <div className="flex-shrink-0 flex items-center gap-2">
+                <img src={spcLogo} alt="SPC" className="h-10 w-10 object-contain" />
+                <img src={sasoLogo} alt="SASO" className="h-10 w-10 object-contain" />
+              </div>
 
-          {/* Desktop Nav */}
-          {!isLoggedIn && (
-            <nav className="hidden lg:flex items-center gap-6 flex-shrink">
-              {navLinks.map((link) => (
-                <motion.div
-                  key={link.name}
-                  className="relative"
-                  whileHover={{ scale: 1.05 }}
-                >
+              <div className="text-left min-w-0">
+                <h1 className="font-semibold text-sm sm:text-base md:text-lg truncate text-slate-900 dark:text-slate-100 group-hover:opacity-90">
+                  San Pablo Colleges
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 truncate">
+                  Student Affairs and Services Office
+                </p>
+              </div>
+            </button>
+
+            {/* Desktop nav */}
+            {!isLoggedIn && (
+              <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center">
+                {navLinks.map((link) => (
                   <Link
+                    key={link.name}
                     to={link.path}
-                    className={`transition-colors px-2 py-1 ${
+                    className={`group relative px-2 py-1 transition-transform transform hover:-translate-y-0.5 inline-flex items-center ${
                       isActive(link.path)
-                        ? "text-yellow-600 font-semibold"
-                        : "text-gray-900 hover:text-yellow-500"
+                        ? "text-amber-500 font-semibold"
+                        : "text-slate-800 dark:text-slate-100/90"
                     }`}
                   >
-                    {link.name}
+                    <span className="relative z-10">{link.name}</span>
+                    {/* animated underline */}
+                    <span
+                      className={`absolute left-0 -bottom-1 h-0.5 rounded-full bg-amber-400 transition-all duration-250 transform origin-left ${
+                        isActive(link.path) ? "w-full" : "w-0 group-hover:w-full"
+                      }`}
+                    />
                   </Link>
-                </motion.div>
-              ))}
+                ))}
+              </nav>
+            )}
 
-              {/* Login Dropdown */}
-              <div className="relative" ref={loginDropdownRef}>
-                <button
-                  onClick={() => setLoginDropdownOpen(!loginDropdownOpen)}
-                  className="px-4 py-2 bg-green-900/10 text-black rounded-md font-medium hover:bg-yellow-500 transition flex items-center gap-1"
-                >
-                  Login ▾
-                </button>
-                <AnimatePresence>
-                  {loginDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute right-0 mt-2 w-40 bg-white text-gray-900 rounded-xl shadow-lg z-20 overflow-hidden"
-                    >
-                      <Link
-                        to="/admin/login"
-                        className="block px-4 py-2 hover:bg-gray-100"
-                        onClick={() => setLoginDropdownOpen(false)}
-                      >
-                        Admin
-                      </Link>
-                      <Link
-                        to="/staff/login"
-                        className="block px-4 py-2 hover:bg-gray-100"
-                        onClick={() => setLoginDropdownOpen(false)}
-                      >
-                        Staff
-                      </Link>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </nav>
-          )}
+            <div className="flex items-center gap-3">
+              {/* dark mode */}
+              <button
+                onClick={toggleDarkMode}
+                aria-pressed={darkMode}
+                className="p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                title="Toggle dark mode"
+              >
+                {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
+              </button>
 
-          {/* Mobile Burger */}
-          {!isLoggedIn && (
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 rounded-md hover:bg-green-100 transition ml-auto"
-            >
-              {menuOpen ? (
-                <X size={28} className="text-black hover:text-gray-600 transition" />
-              ) : (
-                <Menu size={28} className="text-black hover:text-gray-600 transition" />
+              {/* Login + dropdown (desktop) */}
+              {!isLoggedIn && (
+                <div className="relative" ref={loginDropdownRef}>
+                  <button
+                    onClick={() => setLoginDropdownOpen((s) => !s)}
+                    aria-haspopup="true"
+                    aria-expanded={loginDropdownOpen}
+                    className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-400 text-slate-900 font-medium shadow-md hover:scale-105 transition"
+                  >
+                    Login ▾
+                  </button>
+
+                  <AnimatePresence>
+                    {loginDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.18 }}
+                        className="absolute right-0 mt-3 w-52 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200/40 overflow-hidden z-30"
+                      >
+                        <div className="p-3">
+                          <p className="text-xs text-slate-500 dark:text-slate-300 mb-2">Choose login type</p>
+                          <Link
+                            to="/admin/login"
+                            onClick={() => setLoginDropdownOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                          >
+                            <Shield className="w-4 h-4 text-amber-400" />
+                            <div>
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100">Admin</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-300">Manage site, announcements</div>
+                            </div>
+                          </Link>
+
+                          <Link
+                            to="/staff/login"
+                            onClick={() => setLoginDropdownOpen(false)}
+                            className="flex items-center gap-3 px-3 py-2 rounded-md mt-1 hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                          >
+                            <Users className="w-4 h-4 text-emerald-400" />
+                            <div>
+                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100">Staff</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-300">Access student & schedule tools</div>
+                            </div>
+                          </Link>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
-            </button>
-          )}
+
+              {/* mobile burger */}
+              {!isLoggedIn && (
+                <button
+                  onClick={() => setMenuOpen((s) => !s)}
+                  className="lg:hidden p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  aria-label="Toggle menu"
+                >
+                  {menuOpen ? <X size={22} /> : <Menu size={22} />}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Mobile Nav Overlay */}
-        {!isLoggedIn && (
-          <AnimatePresence>
-            {menuOpen && (
+        {/* Mobile drawer */}
+        <AnimatePresence>
+          {menuOpen && !isLoggedIn && (
+            <motion.div
+              ref={menuRef}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', stiffness: 220, damping: 28 }}
+              className="fixed inset-0 z-40 pointer-events-auto"
+            >
+              {/* backdrop */}
               <motion.div
-                ref={menuRef}
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                transition={{ type: "spring", stiffness: 200, damping: 25 }}
-                className="fixed top-0 right-0 w-full sm:w-3/4 md:w-1/2 h-screen 
-                   bg-gradient-to-br from-green-900 via-emerald-800 to-green-700 
-                   text-yellow-200 flex flex-col justify-between z-40 shadow-2xl"
-              >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-green-700">
-                  <h2 className="text-xl font-bold text-yellow-300 tracking-wide flex items-center gap-2">
-                    <Leaf className="w-5 h-5" /> Navigation
-                  </h2>
-                  <button
-                    onClick={() => setMenuOpen(false)}
-                    className="text-yellow-300 hover:text-yellow-400 transition"
-                  >
-                    <X className="w-7 h-7" />
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.45 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/40"
+                onClick={() => setMenuOpen(false)}
+              />
+
+              <div className="absolute right-0 top-0 h-full w-full sm:w-96 md:w-1/2 bg-gradient-to-br from-slate-900/95 via-slate-800/95 to-emerald-900/95 text-amber-100 shadow-2xl backdrop-blur-lg">
+                <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700/30">
+                  <div className="flex items-center gap-3">
+                    <Leaf className="w-5 h-5 text-amber-300" />
+                    <h3 className="text-lg font-semibold tracking-wide">Navigation</h3>
+                  </div>
+                  <button onClick={() => setMenuOpen(false)} className="p-2 rounded-md hover:bg-white/5 transition">
+                    <X />
                   </button>
                 </div>
 
-                {/* Nav Links */}
-                <motion.div
+                <motion.nav
                   initial="hidden"
                   animate="show"
-                  variants={{
-                    show: { transition: { staggerChildren: 0.15 } },
-                  }}
-                  className="flex flex-col items-center space-y-6 mt-10"
+                  variants={{ show: { transition: { staggerChildren: 0.08 } } }}
+                  className="px-6 py-8 flex flex-col gap-6"
                 >
                   {navLinks.map((link) => (
                     <motion.div
                       key={link.name}
-                      variants={{
-                        hidden: { opacity: 0, x: 30 },
-                        show: { opacity: 1, x: 0 },
-                      }}
+                      variants={{ hidden: { opacity: 0, x: 32 }, show: { opacity: 1, x: 0 } }}
                     >
                       <Link
                         to={link.path}
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 text-2xl font-medium tracking-wide 
-                           hover:text-yellow-400 hover:translate-x-2 
-                           transition-all duration-300"
+                        className="flex items-center gap-4 text-2xl font-medium hover:translate-x-2 transform transition"
                       >
                         <ChevronRight className="w-6 h-6" /> {link.name}
                       </Link>
                     </motion.div>
                   ))}
-                </motion.div>
+                </motion.nav>
 
-                {/* Footer Login Buttons */}
-                <div className="flex flex-col space-y-4 px-6 pb-8">
+                <div className="px-6 pb-10 flex flex-col gap-3">
                   <Link
                     to="/admin/login"
                     onClick={() => setMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 text-lg font-semibold 
-                       bg-gradient-to-r from-yellow-400 to-yellow-500 text-green-900 
-                       px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition"
+                    className="w-full inline-flex items-center justify-center gap-3 py-3 rounded-xl bg-amber-400 text-slate-900 font-semibold shadow hover:scale-105 transform transition"
                   >
                     <Shield className="w-5 h-5" /> Admin Login
                   </Link>
@@ -267,21 +292,17 @@ export default function Navbar() {
                   <Link
                     to="/staff/login"
                     onClick={() => setMenuOpen(false)}
-                    className="w-full flex items-center justify-center gap-2 text-lg font-semibold 
-                       bg-gradient-to-r from-yellow-400 to-yellow-500 text-green-900 
-                       px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition"
+                    className="w-full inline-flex items-center justify-center gap-3 py-3 rounded-xl bg-emerald-500 text-slate-900 font-semibold shadow hover:scale-105 transform transition"
                   >
                     <Users className="w-5 h-5" /> Staff Login
                   </Link>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.header>
 
-      {/* Padding for content */}
-      <div style={{ height: "70px" }}></div>
     </>
   );
 }

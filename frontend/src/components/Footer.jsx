@@ -23,7 +23,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-emerald-900 text-white py-8 px-6 sm:px-8 lg:px-12 w-full">
+    <footer className="bg-emerald-900 text-white py-8 px-6 sm:px-8 lg:px-12 w-full ">
       <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8">
 
         {/* Left Column */}

@@ -94,13 +94,14 @@ export default function StaffLogin() {
         />
       ))}
 
-      {/* MAIN CARD */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7, type: "spring", stiffness: 100 }}
-        className="relative z-10 flex flex-col md:flex-row w-full max-w-6xl bg-white/20 rounded-3xl shadow-2xl border border-white/30 overflow-hidden hover:scale-[1.01] transition-transform duration-500"
-      >
+<motion.div
+  initial={{ opacity: 0, scale: 0.95 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.7, type: "spring", stiffness: 100 }}
+  className="mt-[80px] mb-12 relative z-10 flex flex-col md:flex-row w-full max-w-6xl 
+             bg-white/20 rounded-3xl shadow-2xl border border-white/30 overflow-hidden 
+             hover:scale-[1.01] transition-transform duration-500"
+>
         {/* LEFT PANEL (Branding Hover for Desktop) */}
         <motion.div
           onMouseEnter={() => setShowBranding(true)}
@@ -108,7 +109,7 @@ export default function StaffLogin() {
           animate={{ width: showBranding ? "50%" : "5%" }}
           transition={{ duration: 0.5 }}
           className="relative flex flex-col justify-center items-center bg-gradient-to-b from-yellow-400/60 to-yellow-600/60 text-white overflow-hidden 
-            md:w-[5%] md:hover:w-[50%] w-full"
+            md:w-[5%] md:hover:w-[50%] w-full "
         >
           {/* Indicator Icon */}
           {!showBranding && (
@@ -116,7 +117,7 @@ export default function StaffLogin() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3 }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 text-white/70 hidden md:block"
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-white/70 hidden md:block "
             >
               <FaInfoCircle className="text-2xl animate-pulse" />
             </motion.div>
@@ -128,9 +129,9 @@ export default function StaffLogin() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
-              className="p-6 md:p-10 text-center space-y-6 max-w-md hidden md:block"
+              className="p-6 md:p-10 text-center space-y-6 max-w-md hidden md:block "
             >
-              <div className="flex items-center justify-center space-x-6">
+              <div className="flex items-center justify-center space-x-6 ">
                 <motion.img
                   src={spcLogo}
                   alt="SPC Logo"

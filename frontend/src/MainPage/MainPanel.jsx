@@ -7,13 +7,13 @@ export default function MainPanelEdge({ backgroundUrl = "/images/campus-bg.jpg",
   const [showHistory, setShowHistory] = useState(false);
 
   return (
-    <div className="relative w-full"> {/* Parent relative for global overlay */}
+    <div className="relative w-full "> {/* Parent relative for global overlay */}
       {/* GLOBAL OVERLAY */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/40 to-black/20 pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/40 to-black/20 pointer-events-none z-0 " />
 
       {/* HERO - edge-to-edge, no side padding */}
       <header
-        className="relative min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat z-10"
+        className="relative min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat z-10 "
         style={{ backgroundImage: `url('${backgroundUrl}')` }}
         role="banner"
         aria-label="San Pablo Colleges - Student Affairs and Services Office hero"
@@ -24,7 +24,7 @@ export default function MainPanelEdge({ backgroundUrl = "/images/campus-bg.jpg",
 
         {/* Content */}
         <motion.div
-          className="relative w-full h-full flex flex-col items-center justify-center text-center z-10"
+          className="relative w-full h-full flex flex-col items-center justify-center text-center z-10 mt-[80px]"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, ease: "easeOut" }}

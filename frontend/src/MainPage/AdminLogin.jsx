@@ -68,13 +68,13 @@ export default function AdminLogin() {
   ];
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center px-4 bg-black overflow-hidden">
+    <div className="min-h-screen relative flex items-center justify-center px-4 bg-black overflow-hidden ">
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center z-0"
         style={{ backgroundImage: "url('/src/images/Campus.png')" }}
       />
-      <div className="absolute inset-0 bg-black/70 z-0"></div>
+      <div className="absolute inset-0 bg-black/70 z-0 " ></div>
 
       {/* Floating Shapes */}
       {floatingShapes.map((shape, i) => (
@@ -94,12 +94,14 @@ export default function AdminLogin() {
       ))}
 
       {/* MAIN CARD */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.7, type: "spring", stiffness: 100 }}
-        className="relative z-10 flex flex-col md:flex-row w-full max-w-6xl bg-white/20 rounded-3xl shadow-2xl border border-white/30 overflow-hidden hover:scale-[1.01] transition-transform duration-500"
-      >
+<motion.div
+  initial={{ opacity: 0, scale: 0.95 }}
+  animate={{ opacity: 1, scale: 1 }}
+  transition={{ duration: 0.7, type: "spring", stiffness: 100 }}
+  className="mt-[80px] mb-12 relative z-10 flex flex-col md:flex-row w-full max-w-6xl 
+             bg-white/20 rounded-3xl shadow-2xl border border-white/30 overflow-hidden 
+             hover:scale-[1.01] transition-transform duration-500"
+>
         {/* LEFT PANEL (Branding Hover for Desktop) */}
         <motion.div
           onMouseEnter={() => setShowBranding(true)}

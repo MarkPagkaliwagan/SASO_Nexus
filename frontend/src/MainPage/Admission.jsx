@@ -156,13 +156,13 @@ export default function Admission() {
 
 return (
   <div
-    className="relative min-h-screen flex flex-col items-center p-4 sm:p-8 space-y-10 bg-fixed bg-cover bg-center"
+    className="relative min-h-screen flex flex-col items-center p-4 sm:p-8 space-y-10 bg-fixed bg-cover bg-center "
     style={{
       backgroundImage: "url('/src/images/Campus2.jpg')", // palitan mo path ng pic mo
     }}
   >
     {/* overlay */}
-    <div className="absolute inset-0 bg-gradient-to-r from-[#003332]/60 to-[#034C36]/90"></div>
+      <div className="absolute inset-0 bg-[#003332]/50 bg-opacity-10 z-0"></div>
 
     {/* main content */}
     <div className="relative z-10 w-full flex flex-col items-center space-y-10">
@@ -170,7 +170,7 @@ return (
       
       {/* Programs & Courses Offered */}
 <motion.h2
-  className="text-3xl sm:text-4xl font-extrabold text-center text-white tracking-tight mb-4"
+  className="text-3xl sm:text-4xl font-extrabold text-center text-white tracking-tight mb-4 mt-[50px]"
   initial={{ opacity: 0, y: -20 }}
   animate={{ opacity: 1, y: 0 }}
   transition={{ duration: 0.5 }}

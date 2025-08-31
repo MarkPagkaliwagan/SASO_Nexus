@@ -5,17 +5,12 @@ import {
   Edit,
   Trash2,
   Search,
-  Eye,
-  EyeOff,
   Download,
   RotateCcw,
   ChevronLeft,
   ChevronRight,
 } from "react-feather";
 import * as XLSX from "xlsx";
-
-// NOTE: This file expects the `xlsx` package to be available (npm i xlsx)
-// Export now produces a real .xlsx file using dynamic import of sheetjs (xlsx).
 
 export default function StaffPanel() {
   const [staffs, setStaffs] = useState([]);
@@ -53,12 +48,25 @@ export default function StaffPanel() {
     updated_at: true,
   });
 
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 768);
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }
+  }, []);
+
   const token = localStorage.getItem("token");
 
   const formatDate = (s) => (s ? new Date(s).toLocaleString() : "—");
 
   useEffect(() => {
     fetchStaffs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchStaffs = async () => {
@@ -81,7 +89,6 @@ export default function StaffPanel() {
     setForm({ name: "", email: "", position: "", password: "" });
     setErrors({});
     setShowPassword(false);
-    // keep page number etc intact
   };
 
   const showToast = (message, type = "info", timeout = 4000) => {
@@ -106,7 +113,6 @@ export default function StaffPanel() {
     setErrors(e);
     if (Object.keys(e).length) return;
 
-    // client-side duplicate email check when creating
     if (!editingStaff) {
       const exists = staffs.find(
         (s) => s.email?.toLowerCase() === form.email.toLowerCase()
@@ -174,7 +180,6 @@ export default function StaffPanel() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // avatar color based on id/email
   const avatarColor = (seed) => {
     const colors = [
       "bg-green-100",
@@ -229,6 +234,7 @@ export default function StaffPanel() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalPages]);
 
   const pageData = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -241,10 +247,8 @@ export default function StaffPanel() {
     }
   };
 
-  // Export Excel using sheetjs (xlsx). Uses visibleCols to export only visible columns.
   const exportExcel = async () => {
     try {
-      // Build columns in order
       const colKeys = [
         "id",
         "name",
@@ -253,7 +257,6 @@ export default function StaffPanel() {
         "created_at",
         "updated_at",
       ].filter((c) => visibleCols[c]);
-      // Prepare rows as objects with pretty headers
       const pretty = {
         id: "ID",
         name: "Name",
@@ -280,7 +283,6 @@ export default function StaffPanel() {
         header: colKeys.map((k) => pretty[k]),
       });
 
-      // set column widths for nicer look
       const cols = colKeys.map((k) => {
         if (k === "id") return { wpx: 50 };
         if (k === "name") return { wpx: 200 };
@@ -293,7 +295,6 @@ export default function StaffPanel() {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Staffs");
 
-      // Write file (this will create a .xlsx that opens in Excel)
       XLSX.writeFile(wb, "staffs.xlsx");
       showToast("Exported to staffs.xlsx", "success");
     } catch (err) {
@@ -308,24 +309,24 @@ export default function StaffPanel() {
   const toggleCol = (k) => setVisibleCols((v) => ({ ...v, [k]: !v[k] }));
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-lg text-black">
+    <div className="bg-white rounded-2xl p-4 md:p-6 shadow-lg text-black max-w-full">
       {/* header */}
-      <div className="flex items-start justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className="text-xl md:text-2xl font-bold text-gray-800">
             Staff Account Management
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-xs md:text-sm text-gray-500 mt-1">
             Please add new staffs here.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 border rounded px-2 py-1">
             <button
               title="Export Excel"
               onClick={exportExcel}
-              className="flex items-center gap-2 text-sm"
+              className="flex items-center gap-2 text-sm whitespace-nowrap"
             >
               <Download size={14} /> Export Excel
             </button>
@@ -335,29 +336,19 @@ export default function StaffPanel() {
             <button
               title="Refresh staff list"
               onClick={fetchStaffs}
-              className="flex items-center gap-2 text-sm"
+              className="flex items-center gap-2 text-sm whitespace-nowrap"
             >
               <RotateCcw size={14} /> Refresh
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 border rounded px-2 py-1">
-            <button
-              title="New staff (reset form)"
-              onClick={resetForm}
-              className="flex items-center gap-2 text-sm"
-            >
-              <PlusCircle size={14} /> New
             </button>
           </div>
         </div>
       </div>
 
       {/* top card: add / edit */}
-      <div className="bg-gradient-to-r from-white to-green-50 border border-gray-100 rounded-2xl p-5 shadow-sm mb-6">
+      <div className="bg-gradient-to-r from-white to-green-50 border border-gray-100 rounded-2xl p-4 md:p-5 shadow-sm mb-4">
         <form
           onSubmit={handleSave}
-          className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
+          className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end"
         >
           <div>
             <label className="text-xs font-medium text-gray-600">
@@ -393,7 +384,9 @@ export default function StaffPanel() {
             </label>
             <input
               value={form.position}
-              onChange={(e) => setForm({ ...form, position: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, position: e.target.value })
+              }
               className="mt-1 w-full border rounded px-3 py-2"
               placeholder="e.g. Librarian"
             />
@@ -403,22 +396,14 @@ export default function StaffPanel() {
             <label className="text-xs font-medium text-gray-600">
               {editingStaff ? "New password (optional)" : "Password"}
             </label>
-            {/* -- changed button positioning so the eye is vertically centered inside the textbox -- */}
             <input
               type={showPassword ? "text" : "password"}
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="mt-1 w-full border rounded px-3 py-2 pr-10 [appearance:none]"
+              className="mt-1 w-full border rounded px-3 py-2 [appearance:none]"
               placeholder={editingStaff ? "Leave blank to keep" : "Enter password"}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-[70%] -translate-y-1/2 text-gray-600"
-              title={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
+
             {errors.password && (
               <div className="text-rose-600 text-xs mt-1">
                 {errors.password}
@@ -426,7 +411,7 @@ export default function StaffPanel() {
             )}
           </div>
 
-          <div className="md:col-span-4 flex items-center gap-3">
+          <div className="md:col-span-4 flex flex-wrap items-center gap-2">
             <button
               type="submit"
               disabled={isSaving}
@@ -470,9 +455,7 @@ export default function StaffPanel() {
 
             <div className="ml-auto text-sm text-gray-500 flex items-center gap-2">
               <span>
-                {editingStaff
-                  ? `Editing: ${editingStaff.name}`
-                  : "Add new staff"}
+                {editingStaff ? `Editing: ${editingStaff.name}` : "Add new staff"}
               </span>
             </div>
           </div>
@@ -480,7 +463,7 @@ export default function StaffPanel() {
       </div>
 
       {/* controls: search / col toggles / page size */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-3 mb-3">
         <div className="flex items-center gap-2 w-full md:w-1/2">
           <Search size={16} />
           <input
@@ -491,20 +474,22 @@ export default function StaffPanel() {
           />
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
-          <div className="text-sm text-gray-600">Columns:</div>
-          {Object.keys(visibleCols).map((k) => (
-            <label key={k} className="flex items-center gap-1 text-sm">
-              <input
-                type="checkbox"
-                checked={visibleCols[k]}
-                onChange={() => toggleCol(k)}
-              />
-              <span className="capitalize">{k.replace("_", " ")}</span>
-            </label>
-          ))}
+        <div className="ml-auto flex flex-wrap items-center gap-3">
+          <div className="text-sm text-gray-600 mr-2">Columns:</div>
+          <div className="flex flex-wrap items-center gap-2">
+            {Object.keys(visibleCols).map((k) => (
+              <label key={k} className="flex items-center gap-1 text-sm">
+                <input
+                  type="checkbox"
+                  checked={visibleCols[k]}
+                  onChange={() => toggleCol(k)}
+                />
+                <span className="capitalize">{k.replace("_", " ")}</span>
+              </label>
+            ))}
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-2">
             <label className="text-sm text-gray-600">Page size</label>
             <select
               value={pageSize}
@@ -521,177 +506,257 @@ export default function StaffPanel() {
         </div>
       </div>
 
-      {/* table */}
-      <div className="overflow-x-auto border rounded-lg">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              {visibleCols.id && (
-                <th
-                  className="text-left p-3 border-b cursor-pointer"
-                  onClick={() => toggleSort("id")}
-                >
-                  <div className="flex items-center gap-2">
-                    ID{" "}
-                    <span className="text-xs text-gray-500">
-                      {sortKey === "id" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                    </span>
+      {/* table (desktop) or cards (mobile) */}
+      {isMobile ? (
+        // Mobile card list
+        <div className="space-y-3">
+          {isFetching ? (
+            Array.from({ length: pageSize }).map((_, i) => (
+              <div key={i} className="border rounded p-3 animate-pulse">
+                <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                <div className="mt-2 h-3 w-1/2 bg-gray-200 rounded" />
+              </div>
+            ))
+          ) : pageData.length === 0 ? (
+            <div className="p-4 text-center text-gray-500">No staff found</div>
+          ) : (
+            pageData.map((s) => (
+              <div
+                key={s.id}
+                className="border rounded-lg p-3 bg-white shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`flex items-center justify-center rounded-full h-10 w-10 text-sm font-semibold text-gray-800 ${avatarColor(
+                        s.id
+                      )}`}
+                    >
+                      {initials(s.name)}
+                    </div>
+                    <div>
+                      <div className="font-medium text-sm">{s.name}</div>
+                      {visibleCols.email && (
+                        <div className="text-xs text-gray-500 truncate">
+                          {s.email}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </th>
-              )}
+                  <div className="text-xs text-gray-500">ID #{s.id}</div>
+                </div>
 
-              {visibleCols.name && (
-                <th
-                  className="text-left p-3 border-b cursor-pointer"
-                  onClick={() => toggleSort("name")}
-                >
-                  Name{" "}
-                  <span className="text-xs text-gray-500">
-                    {sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                  </span>
-                </th>
-              )}
-
-              {visibleCols.email && (
-                <th
-                  className="text-left p-3 border-b cursor-pointer"
-                  onClick={() => toggleSort("email")}
-                >
-                  Email
-                </th>
-              )}
-              {visibleCols.position && (
-                <th
-                  className="text-left p-3 border-b cursor-pointer"
-                  onClick={() => toggleSort("position")}
-                >
-                  Position
-                </th>
-              )}
-              {visibleCols.created_at && (
-                <th
-                  className="text-left p-3 border-b cursor-pointer"
-                  onClick={() => toggleSort("created_at")}
-                >
-                  Created
-                </th>
-              )}
-              {visibleCols.updated_at && (
-                <th
-                  className="text-left p-3 border-b cursor-pointer"
-                  onClick={() => toggleSort("updated_at")}
-                >
-                  Updated
-                </th>
-              )}
-              <th className="text-left p-3 border-b">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {isFetching ? (
-              Array.from({ length: pageSize }).map((_, i) => (
-                <tr key={i} className="animate-pulse">
-                  {visibleCols.id && (
-                    <td className="p-3 border-t">
-                      <div className="h-4 w-8 bg-gray-200 rounded" />
-                    </td>
-                  )}
-                  {visibleCols.name && (
-                    <td className="p-3 border-t">
-                      <div className="h-4 w-40 bg-gray-200 rounded" />
-                    </td>
-                  )}
-                  {visibleCols.email && (
-                    <td className="p-3 border-t">
-                      <div className="h-4 w-48 bg-gray-200 rounded" />
-                    </td>
-                  )}
+                <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-700">
                   {visibleCols.position && (
-                    <td className="p-3 border-t">
-                      <div className="h-4 w-32 bg-gray-200 rounded" />
-                    </td>
+                    <div>
+                      <div className="text-xs text-gray-500">Position</div>
+                      <div>{s.position || "—"}</div>
+                    </div>
                   )}
                   {visibleCols.created_at && (
-                    <td className="p-3 border-t">
-                      <div className="h-4 w-24 bg-gray-200 rounded" />
-                    </td>
+                    <div>
+                      <div className="text-xs text-gray-500">Created</div>
+                      <div>{formatDate(s.created_at)}</div>
+                    </div>
                   )}
                   {visibleCols.updated_at && (
-                    <td className="p-3 border-t">
-                      <div className="h-4 w-24 bg-gray-200 rounded" />
-                    </td>
+                    <div>
+                      <div className="text-xs text-gray-500">Updated</div>
+                      <div>{formatDate(s.updated_at)}</div>
+                    </div>
                   )}
-                  <td className="p-3 border-t">
-                    <div className="h-4 w-24 bg-gray-200 rounded" />
-                  </td>
-                </tr>
-              ))
-            ) : pageData.length === 0 ? (
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => startEdit(s)}
+                    className="flex-1 px-3 py-2 rounded border flex items-center justify-center gap-1 text-blue-600"
+                  >
+                    <Edit size={14} /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(s.id)}
+                    className="flex-1 px-3 py-2 rounded border flex items-center justify-center gap-1 text-red-600"
+                    disabled={isDeletingId === s.id}
+                  >
+                    <Trash2 size={14} />
+                    {isDeletingId === s.id ? " Deleting..." : " Delete"}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        // Desktop table (unchanged logic)
+        <div className="overflow-x-auto border rounded-lg">
+          <table className="min-w-full text-sm">
+            <thead className="bg-gray-50">
               <tr>
-                <td colSpan={8} className="p-6 text-center text-gray-500">
-                  No staff found
-                </td>
+                {visibleCols.id && (
+                  <th
+                    className="text-left p-3 border-b cursor-pointer"
+                    onClick={() => toggleSort("id")}
+                  >
+                    <div className="flex items-center gap-2">
+                      ID{" "}
+                      <span className="text-xs text-gray-500">
+                        {sortKey === "id" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                      </span>
+                    </div>
+                  </th>
+                )}
+
+                {visibleCols.name && (
+                  <th
+                    className="text-left p-3 border-b cursor-pointer"
+                    onClick={() => toggleSort("name")}
+                  >
+                    Name{" "}
+                    <span className="text-xs text-gray-500">
+                      {sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                    </span>
+                  </th>
+                )}
+
+                {visibleCols.email && (
+                  <th
+                    className="text-left p-3 border-b cursor-pointer"
+                    onClick={() => toggleSort("email")}
+                  >
+                    Email
+                  </th>
+                )}
+                {visibleCols.position && (
+                  <th
+                    className="text-left p-3 border-b cursor-pointer"
+                    onClick={() => toggleSort("position")}
+                  >
+                    Position
+                  </th>
+                )}
+                {visibleCols.created_at && (
+                  <th
+                    className="text-left p-3 border-b cursor-pointer"
+                    onClick={() => toggleSort("created_at")}
+                  >
+                    Created
+                  </th>
+                )}
+                {visibleCols.updated_at && (
+                  <th
+                    className="text-left p-3 border-b cursor-pointer"
+                    onClick={() => toggleSort("updated_at")}
+                  >
+                    Updated
+                  </th>
+                )}
+                <th className="text-left p-3 border-b">Actions</th>
               </tr>
-            ) : (
-              pageData.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50">
-                  {visibleCols.id && <td className="p-3 border-t">{s.id}</td>}
+            </thead>
 
-                  {visibleCols.name && (
-                    <td className="p-3 border-t flex items-center gap-3">
-                      <div
-                        className={`flex items-center justify-center rounded-full h-8 w-8 text-sm font-semibold text-gray-800 ${avatarColor(
-                          s.id
-                        )}`}
-                      >
-                        {initials(s.name)}
-                      </div>
-                      <div>
-                        <div className="font-medium">{s.name}</div>
-                        {/* removed redundant small email under the name as requested */}
-                      </div>
+            <tbody>
+              {isFetching ? (
+                Array.from({ length: pageSize }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    {visibleCols.id && (
+                      <td className="p-3 border-t">
+                        <div className="h-4 w-8 bg-gray-200 rounded" />
+                      </td>
+                    )}
+                    {visibleCols.name && (
+                      <td className="p-3 border-t">
+                        <div className="h-4 w-40 bg-gray-200 rounded" />
+                      </td>
+                    )}
+                    {visibleCols.email && (
+                      <td className="p-3 border-t">
+                        <div className="h-4 w-48 bg-gray-200 rounded" />
+                      </td>
+                    )}
+                    {visibleCols.position && (
+                      <td className="p-3 border-t">
+                        <div className="h-4 w-32 bg-gray-200 rounded" />
+                      </td>
+                    )}
+                    {visibleCols.created_at && (
+                      <td className="p-3 border-t">
+                        <div className="h-4 w-24 bg-gray-200 rounded" />
+                      </td>
+                    )}
+                    {visibleCols.updated_at && (
+                      <td className="p-3 border-t">
+                        <div className="h-4 w-24 bg-gray-200 rounded" />
+                      </td>
+                    )}
+                    <td className="p-3 border-t">
+                      <div className="h-4 w-24 bg-gray-200 rounded" />
                     </td>
-                  )}
-
-                  {visibleCols.email && (
-                    <td className="p-3 border-t">{s.email}</td>
-                  )}
-                  {visibleCols.position && (
-                    <td className="p-3 border-t">{s.position || "—"}</td>
-                  )}
-                  {visibleCols.created_at && (
-                    <td className="p-3 border-t">{formatDate(s.created_at)}</td>
-                  )}
-                  {visibleCols.updated_at && (
-                    <td className="p-3 border-t">{formatDate(s.updated_at)}</td>
-                  )}
-
-                  <td className="p-3 border-t flex gap-2">
-                    <button
-                      onClick={() => startEdit(s)}
-                      className="flex items-center gap-1 text-blue-600 hover:underline"
-                    >
-                      <Edit size={14} /> Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      className="flex items-center gap-1 text-red-600 hover:underline"
-                      disabled={isDeletingId === s.id}
-                    >
-                      <Trash2 size={14} />
-                      {isDeletingId === s.id ? " Deleting..." : " Delete"}
-                    </button>
+                  </tr>
+                ))
+              ) : pageData.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="p-6 text-center text-gray-500">
+                    No staff found
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                pageData.map((s) => (
+                  <tr key={s.id} className="hover:bg-gray-50">
+                    {visibleCols.id && <td className="p-3 border-t">{s.id}</td>}
+
+                    {visibleCols.name && (
+                      <td className="p-3 border-t flex items-center gap-3">
+                        <div
+                          className={`flex items-center justify-center rounded-full h-8 w-8 text-sm font-semibold text-gray-800 ${avatarColor(
+                            s.id
+                          )}`}
+                        >
+                          {initials(s.name)}
+                        </div>
+                        <div>
+                          <div className="font-medium">{s.name}</div>
+                        </div>
+                      </td>
+                    )}
+
+                    {visibleCols.email && <td className="p-3 border-t">{s.email}</td>}
+                    {visibleCols.position && (
+                      <td className="p-3 border-t">{s.position || "—"}</td>
+                    )}
+                    {visibleCols.created_at && (
+                      <td className="p-3 border-t">{formatDate(s.created_at)}</td>
+                    )}
+                    {visibleCols.updated_at && (
+                      <td className="p-3 border-t">{formatDate(s.updated_at)}</td>
+                    )}
+
+                    <td className="p-3 border-t flex gap-2">
+                      <button
+                        onClick={() => startEdit(s)}
+                        className="flex items-center gap-1 text-blue-600 hover:underline"
+                      >
+                        <Edit size={14} /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s.id)}
+                        className="flex items-center gap-1 text-red-600 hover:underline"
+                        disabled={isDeletingId === s.id}
+                      >
+                        <Trash2 size={14} />
+                        {isDeletingId === s.id ? " Deleting..." : " Delete"}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* pagination */}
-      <div className="mt-4 flex items-center justify-between">
+      <div className="mt-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
         <div className="text-sm text-gray-600">
           Showing {Math.min((page - 1) * pageSize + 1, filtered.length)} to{" "}
           {Math.min(page * pageSize, filtered.length)} of {filtered.length}
@@ -733,7 +798,7 @@ export default function StaffPanel() {
       </div>
 
       {/* toasts */}
-      <div className="fixed right-6 bottom-6 z-50 flex flex-col gap-2">
+      <div className="fixed right-4 md:right-6 bottom-4 md:bottom-6 z-50 flex flex-col gap-2">
         {toasts.map((t) => (
           <div
             key={t.id}

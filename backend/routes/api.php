@@ -18,6 +18,7 @@ use App\Http\Controllers\ApplicationController;
 // -------------------- Schedules --------------------
 Route::apiResource('schedules', ScheduleController::class)
     ->only(['index', 'store', 'destroy']);
+Route::post('/applications/{id}/toggle-payment', [ApplicationController::class, 'togglePayment']);
 
 // Optional: manual reserve endpoint (pwede mo iwan or tanggalin)
 Route::post('/schedules/{id}/reserve', [ScheduleController::class, 'reserve']);

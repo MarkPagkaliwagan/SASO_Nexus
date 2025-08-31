@@ -14,7 +14,8 @@ class Application extends Model
         "mother_name","mother_address","mother_tel","mother_citizenship","mother_occupation","mother_office_address","mother_office_tel","mother_education","mother_last_school",
         "is_parent_alumnus","parent_alumni_year","parent_alumni_level_course",
         "lrn","last_school_name","last_school_address","track","strand","school_year_attended","date_of_graduation","honors","memberships",
-        "schedule_id","photo_path","declaration",'status', 'approved_at',
+        "schedule_id","photo_path","declaration",'status', 'approved_at','payment_type',
+
     ];
 
     protected $casts = [

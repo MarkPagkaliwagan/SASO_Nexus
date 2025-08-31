@@ -413,12 +413,12 @@ export default function AdmissionForm() {
     </>
   );
   return (
-    <div className="min-h-screen p-6 flex items-start justify-center bg-[#EAF9E7]">
+    <div className="min-h-screen p-6 flex items-start justify-center bg-[#EAF9E7] ">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-6xl bg-white text-black shadow-2xl rounded-2xl p-6 md:p-10"
+        className="w-full max-w-6xl bg-white text-black shadow-2xl rounded-2xl p-6 md:p-10 mt-[80px]"
       >
         <header className="flex flex-col items-center text-center mb-6 md:flex-row md:items-center md:justify-center md:gap-6">
           {/* Logo */}

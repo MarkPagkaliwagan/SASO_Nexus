@@ -98,6 +98,23 @@ export default function AdminSchedule() {
       alert(err.message || "Could not delete");
     }
   }
+  async function togglePayment(appId) {
+    try {
+      const res = await fetch(`/api/applications/${appId}/toggle-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error("Failed to toggle payment type");
+      const updated = await res.json();
+      setApplications((prev) =>
+        prev.map((a) =>
+          a.id === appId ? { ...a, payment_type: updated.payment_type } : a
+        )
+      );
+    } catch (err) {
+      alert(err.message || "Error toggling payment");
+    }
+  }
 
   async function handleDeleteApplication(id) {
     if (!confirm("Delete this application?")) return;
@@ -128,7 +145,13 @@ export default function AdminSchedule() {
       // update local state: set status to approved
       setApplications((prev) =>
         prev.map((a) =>
-          a.id === appId ? { ...a, status: "approved", approved_at: new Date().toISOString() } : a
+          a.id === appId
+            ? {
+                ...a,
+                status: "approved",
+                approved_at: new Date().toISOString(),
+              }
+            : a
         )
       );
       // feedback
@@ -160,10 +183,12 @@ export default function AdminSchedule() {
       return 0;
     });
 
-// --- SAFER DATE/TIME RENDERER ---
+  // --- SAFER DATE/TIME RENDERER ---
   function renderScheduleText(app) {
-    const sched = app.schedule ?? schedules.find((s) => s.id === app.schedule_id);
-    if (!sched) return <span className="text-xs text-gray-400">No schedule</span>;
+    const sched =
+      app.schedule ?? schedules.find((s) => s.id === app.schedule_id);
+    if (!sched)
+      return <span className="text-xs text-gray-400">No schedule</span>;
 
     // 1) sanitize raw values
     const rawDate = (sched.date ?? "").toString().trim(); // expect: YYYY-MM-DD or DD/MM/YYYY, etc.
@@ -199,9 +224,9 @@ export default function AdminSchedule() {
       if (parts.length === 3) {
         // assume DD/MM/YYYY
         const [dd, mm, yyyy] = parts;
-        const iso = `${yyyy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}${
-          time24 ? "T" + time24 : ""
-        }`;
+        const iso = `${yyyy}-${String(mm).padStart(2, "0")}-${String(
+          dd
+        ).padStart(2, "0")}${time24 ? "T" + time24 : ""}`;
         d = new Date(iso);
       }
     }
@@ -210,8 +235,12 @@ export default function AdminSchedule() {
     if (!d || isNaN(d.getTime())) {
       return (
         <div className="text-sm min-w-0">
-          <div className="font-medium truncate">{rawDate || "Unknown date"}</div>
-          <div className="text-xs text-gray-500 truncate">{rawTime || "Unknown time"}</div>
+          <div className="font-medium truncate">
+            {rawDate || "Unknown date"}
+          </div>
+          <div className="text-xs text-gray-500 truncate">
+            {rawTime || "Unknown time"}
+          </div>
         </div>
       );
     }
@@ -222,7 +251,10 @@ export default function AdminSchedule() {
       day: "numeric",
       year: "numeric",
     });
-    const timeStr = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    const timeStr = d.toLocaleTimeString(undefined, {
+      hour: "numeric",
+      minute: "2-digit",
+    });
 
     return (
       <div className="text-sm min-w-0 max-w-[140px]">
@@ -231,138 +263,147 @@ export default function AdminSchedule() {
       </div>
     );
   }
-  
-return (
-  <div className="p-4 max-w-7xl mx-auto text-black">
-    {/* SCHEDULE CARD */}
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 py-5 border-b">
-        <div className="flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-300 to-yellow-200 shadow-inner">
-            <FiCalendar className="text-yellow-800" size={20} />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Admission Schedule</h3>
-            <p className="text-sm text-gray-500">Manage admission date & time slots</p>
+
+  return (
+    <div className="p-4 max-w-7xl mx-auto text-black">
+      {/* SCHEDULE CARD */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 py-5 border-b">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-yellow-300 to-yellow-200 shadow-inner">
+              <FiCalendar className="text-yellow-800" size={20} />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Admission Schedule
+              </h3>
+              <p className="text-sm text-gray-500">
+                Manage admission date & time slots
+              </p>
+            </div>
           </div>
         </div>
 
+        {/* FORM */}
+        <div className="px-6 py-6">
+          <form
+            onSubmit={handleAdd}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            {/* Date */}
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700">Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+              />
+            </div>
 
-      </div>
+            {/* Time */}
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700">Time</label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+              />
+            </div>
 
-      {/* FORM */}
-      <div className="px-6 py-6">
-        <form
-          onSubmit={handleAdd}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {/* Date */}
-          <div className="w-full">
-            <label className="text-sm font-medium text-gray-700">Date</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-            />
-          </div>
+            {/* Limit */}
+            <div className="w-full">
+              <label className="text-sm font-medium text-gray-700">Limit</label>
+              <input
+                type="number"
+                min={1}
+                value={limit}
+                onChange={(e) => setLimit(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
+              />
+            </div>
 
-          {/* Time */}
-          <div className="w-full">
-            <label className="text-sm font-medium text-gray-700">Time</label>
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-            />
-          </div>
+            {/* Add Button */}
+            <div className="flex items-end">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition transform hover:-translate-y-0.5 whitespace-nowrap"
+              >
+                <FiPlus /> Add
+              </button>
+            </div>
+          </form>
 
-          {/* Limit */}
-          <div className="w-full">
-            <label className="text-sm font-medium text-gray-700">Limit</label>
-            <input
-              type="number"
-              min={1}
-              value={limit}
-              onChange={(e) => setLimit(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-300"
-            />
-          </div>
+          <div className="my-6 border-t" />
 
-          {/* Add Button */}
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition transform hover:-translate-y-0.5 whitespace-nowrap"
-            >
-              <FiPlus /> Add
-            </button>
-          </div>
-        </form>
+          {/* Schedule List */}
+          <div className="space-y-3">
+            {loading && schedules.length === 0 ? (
+              <div className="text-center text-gray-500 py-6">Loading...</div>
+            ) : schedules.length === 0 ? (
+              <div className="text-center text-gray-500 py-6">
+                No schedules yet. Add one above.
+              </div>
+            ) : (
+              schedules.map((s) => {
+                const available = (s.limit ?? 0) - (s.booked ?? 0);
+                return (
+                  <div
+                    key={s.id}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-center bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition"
+                  >
+                    {/* Date */}
+                    <div className="flex items-center gap-3 col-span-4">
+                      <FiCalendar className="text-yellow-500" />
+                      <div>
+                        <div className="font-semibold text-gray-800">
+                          {s.date}
+                        </div>
+                      </div>
+                    </div>
 
-        <div className="my-6 border-t" />
+                    {/* Time */}
+                    <div className="flex items-center gap-2 text-gray-700 col-span-2">
+                      <FiClock /> <span className="font-medium">{s.time}</span>
+                    </div>
 
-        {/* Schedule List */}
-        <div className="space-y-3">
-          {loading && schedules.length === 0 ? (
-            <div className="text-center text-gray-500 py-6">Loading...</div>
-          ) : schedules.length === 0 ? (
-            <div className="text-center text-gray-500 py-6">No schedules yet. Add one above.</div>
-          ) : (
-            schedules.map((s) => {
-              const available = (s.limit ?? 0) - (s.booked ?? 0);
-              return (
-                <div
-                  key={s.id}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-center bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition"
-                >
-                  {/* Date */}
-                  <div className="flex items-center gap-3 col-span-4">
-                    <FiCalendar className="text-yellow-500" />
-                    <div>
-                      <div className="font-semibold text-gray-800">{s.date}</div>
+                    {/* Limit */}
+                    <div className="flex items-center gap-2 text-gray-700 col-span-2">
+                      <FiUsers /> <span className="font-medium">{s.limit}</span>
+                    </div>
+
+                    {/* Availability */}
+                    <div className="col-span-2 text-sm text-gray-600">
+                      {s.booked ?? 0} booked •{" "}
+                      <span className="text-xs text-gray-400">
+                        {available} available
+                      </span>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="col-span-2 flex sm:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(s.id)}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-white border border-red-100 text-red-600 hover:bg-red-50 transition whitespace-nowrap"
+                        title="Delete schedule"
+                      >
+                        <FiTrash2 /> Delete
+                      </button>
                     </div>
                   </div>
-
-                  {/* Time */}
-                  <div className="flex items-center gap-2 text-gray-700 col-span-2">
-                    <FiClock /> <span className="font-medium">{s.time}</span>
-                  </div>
-
-                  {/* Limit */}
-                  <div className="flex items-center gap-2 text-gray-700 col-span-2">
-                    <FiUsers /> <span className="font-medium">{s.limit}</span>
-                  </div>
-
-                  {/* Availability */}
-                  <div className="col-span-2 text-sm text-gray-600">
-                    {s.booked ?? 0} booked •{" "}
-                    <span className="text-xs text-gray-400">{available} available</span>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="col-span-2 flex sm:justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(s.id)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm bg-white border border-red-100 text-red-600 hover:bg-red-50 transition whitespace-nowrap"
-                      title="Delete schedule"
-                    >
-                      <FiTrash2 /> Delete
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
-    
+
         <div className="px-6 py-3 border-t text-sm text-gray-500">
-          Tip: gold accents for focus, green for success. Hover rows for subtle shadow.
+          Tip: gold accents for focus, green for success. Hover rows for subtle
+          shadow.
         </div>
       </div>
 
@@ -370,8 +411,12 @@ return (
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent mt-8">
         <div className="px-6 py-5 border-b flex items-center justify-between">
           <div>
-            <h3 className="text-2xl font-semibold text-gray-900">Scheduled Applicants</h3>
-            <p className="text-sm text-gray-500">List of applicants who booked an entrance exam</p>
+            <h3 className="text-2xl font-semibold text-gray-900">
+              Scheduled Applicants
+            </h3>
+            <p className="text-sm text-gray-500">
+              List of applicants who booked an entrance exam
+            </p>
           </div>
         </div>
 
@@ -419,7 +464,9 @@ return (
 
           <div className="space-y-3 mt-2">
             {filteredAndSortedApplications.length === 0 ? (
-              <div className="text-center text-gray-500 py-10">No applicants found.</div>
+              <div className="text-center text-gray-500 py-10">
+                No applicants found.
+              </div>
             ) : (
               filteredAndSortedApplications.map((a) => {
                 const isApproved = a.status === "approved";
@@ -428,23 +475,35 @@ return (
                     key={a.id}
                     className={`group bg-white rounded-xl p-4 border hover:shadow-lg transition grid grid-cols-1 md:grid-cols-12 gap-4 items-start min-w-0`}
                     style={{
-                      borderLeft: isApproved ? "6px solid #16a34a" : "6px solid transparent",
+                      borderLeft: isApproved
+                        ? "6px solid #16a34a"
+                        : "6px solid transparent",
                     }}
                   >
                     {/* Desktop cells */}
-                    <div className="hidden md:flex md:items-center md:col-span-1 text-sm text-gray-700 min-w-0">{a.id}</div>
-                    <div className="hidden md:flex md:items-center md:col-span-2 text-sm text-gray-700 min-w-0">{a.applicationType}</div>
-                    <div className="hidden md:flex md:items-center md:col-span-2 text-sm font-semibold text-gray-900 min-w-0">{a.nameFamily}</div>
-                    <div className="hidden md:flex md:items-center md:col-span-2 text-sm text-gray-800 min-w-0">{a.nameGiven}</div>
-                    <div className="hidden md:flex md:items-center md:col-span-1 text-sm text-gray-700 min-w-0">{a.nameMiddle}</div>
-                    <div className="hidden md:flex md:items-center md:col-span-1 text-sm text-gray-700 min-w-0">{a.gender}</div>
+                    <div className="hidden md:flex md:items-center md:col-span-1 text-sm text-gray-700 min-w-0">
+                      {a.id}
+                    </div>
+                    <div className="hidden md:flex md:items-center md:col-span-2 text-sm text-gray-700 min-w-0">
+                      {a.applicationType}
+                    </div>
+                    <div className="hidden md:flex md:items-center md:col-span-2 text-sm font-semibold text-gray-900 min-w-0">
+                      {a.nameFamily}
+                    </div>
+                    <div className="hidden md:flex md:items-center md:col-span-2 text-sm text-gray-800 min-w-0">
+                      {a.nameGiven}
+                    </div>
+                    <div className="hidden md:flex md:items-center md:col-span-1 text-sm text-gray-700 min-w-0">
+                      {a.nameMiddle}
+                    </div>
+                    <div className="hidden md:flex md:items-center md:col-span-1 text-sm text-gray-700 min-w-0">
+                      {a.gender}
+                    </div>
 
                     {/* Schedule: visible only on md+ (reduced to 1 col to free space for actions) */}
                     <div className="hidden md:flex md:items-center md:col-span-1 text-sm text-gray-600 min-w-0 justify-end">
                       <FiCalendar className="mr-3 text-yellow-500" />
-                      <div className="min-w-0">
-                        {renderScheduleText(a)}
-                      </div>
+                      <div className="min-w-0">{renderScheduleText(a)}</div>
                     </div>
 
                     {/* Actions cell for desktop (prevents overlap, aligns right) */}
@@ -467,16 +526,53 @@ return (
                         >
                           <FiTrash2 /> Delete
                         </button>
+<div className="flex items-center gap-1">
+  {/* Switch */}
+  <div
+    onClick={() => togglePayment(a.id)}
+    className={`w-10 h-5 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-300
+      ${a.payment_type === "paid" ? "bg-blue-500" : "bg-green-500"}`}
+  >
+    <div
+      className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300
+        ${a.payment_type === "paid" ? "translate-x-5" : "translate-x-0"}`}
+    />
+  </div>
+
+  {/* Label */}
+  <span className={`text-[11px] font-medium ${
+    a.payment_type === "paid" ? "text-blue-600" : "text-green-600"
+  }`}>
+    {a.payment_type === "paid" ? "Paid" : "Free"}
+  </span>
+</div>
+
 
                         <button
                           type="button"
                           onClick={() => confirmApprove(a.id)}
                           disabled={isApproved || approvingId === a.id}
                           className={`px-3 py-1 rounded-md text-xs font-medium transition flex items-center gap-2 whitespace-nowrap shrink-0
-                            ${isApproved ? "bg-green-600 text-white" : "bg-red-500 text-white hover:opacity-95"}`}
-                          title={isApproved ? "Already approved" : "Approve application"}
+                            ${
+                              isApproved
+                                ? "bg-green-600 text-white"
+                                : "bg-red-500 text-white hover:opacity-95"
+                            }`}
+                          title={
+                            isApproved
+                              ? "Already approved"
+                              : "Approve application"
+                          }
                         >
-                          {approvingId === a.id ? "Approving..." : isApproved ? <><FiCheck /> Approved</> : "Approve"}
+                          {approvingId === a.id ? (
+                            "Approving..."
+                          ) : isApproved ? (
+                            <>
+                              <FiCheck /> Approved
+                            </>
+                          ) : (
+                            "Approve"
+                          )}
                         </button>
                       </div>
                     </div>
@@ -484,15 +580,21 @@ return (
                     {/* Mobile stacked view (NO schedule shown on mobile per request) */}
                     <div className="md:hidden w-full">
                       <div className="flex justify-between items-center">
-                        <div className="text-sm font-semibold">{a.nameFamily}, {a.nameGiven}</div>
+                        <div className="text-sm font-semibold">
+                          {a.nameFamily}, {a.nameGiven}
+                        </div>
                         <div className="text-xs text-gray-400">ID {a.id}</div>
                       </div>
 
                       <div className="flex items-center justify-between text-sm text-gray-700 mt-2">
                         <div className="flex items-center gap-2">
-                          <div className="text-xs text-gray-500">{a.applicationType}</div>
+                          <div className="text-xs text-gray-500">
+                            {a.applicationType}
+                          </div>
                           <div className="text-xs text-gray-400">•</div>
-                          <div className="text-xs text-gray-500">{a.gender}</div>
+                          <div className="text-xs text-gray-500">
+                            {a.gender}
+                          </div>
                         </div>
 
                         <div className="text-xs text-gray-500">{a.mobile}</div>
@@ -527,10 +629,26 @@ return (
                             onClick={() => confirmApprove(a.id)}
                             disabled={isApproved || approvingId === a.id}
                             className={`px-3 py-1 rounded-md text-xs font-medium transition flex items-center gap-2 whitespace-nowrap
-                              ${isApproved ? "bg-green-600 text-white" : "bg-red-500 text-white hover:opacity-95"}`}
-                            title={isApproved ? "Already approved" : "Approve application"}
+                              ${
+                                isApproved
+                                  ? "bg-green-600 text-white"
+                                  : "bg-red-500 text-white hover:opacity-95"
+                              }`}
+                            title={
+                              isApproved
+                                ? "Already approved"
+                                : "Approve application"
+                            }
                           >
-                            {approvingId === a.id ? "Approving..." : (isApproved ? <><FiCheck /> Approved</> : "Approve")}
+                            {approvingId === a.id ? (
+                              "Approving..."
+                            ) : isApproved ? (
+                              <>
+                                <FiCheck /> Approved
+                              </>
+                            ) : (
+                              "Approve"
+                            )}
                           </button>
                         </div>
                       </div>
@@ -543,7 +661,8 @@ return (
         </div>
 
         <div className="px-6 py-3 border-t text-sm text-gray-500">
-          Tip: Use the search and sort to quickly find applicants. Approved rows get a green accent on the left border.
+          Tip: Use the search and sort to quickly find applicants. Approved rows
+          get a green accent on the left border.
         </div>
       </div>
     </div>

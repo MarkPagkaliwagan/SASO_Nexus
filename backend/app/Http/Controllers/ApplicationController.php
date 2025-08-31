@@ -115,4 +115,14 @@ class ApplicationController extends Controller
             'application' => $application
         ], 200);
     }
+
+public function togglePayment($id)
+{
+    $app = Application::findOrFail($id);
+    $app->payment_type = $app->payment_type === 'free' ? 'paid' : 'free';
+    $app->save();
+
+    return response()->json($app);
+}
+
 }

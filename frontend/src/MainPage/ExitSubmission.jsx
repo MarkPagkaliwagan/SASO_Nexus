@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
-import { FaCalendarAlt, FaFileUpload, FaUser, FaUniversity, FaSpinner } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaFileUpload,
+  FaUser,
+  FaUniversity,
+  FaSpinner,
+} from "react-icons/fa";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
@@ -71,18 +77,24 @@ export default function ExitSubmission() {
         <header className="w-full mb-6 sm:mb-10">
           <div className="bg-black/20 backdrop-blur-sm rounded-xl shadow p-4 sm:p-6 md:p-8 text-center border border-yellow-500/30">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-300 flex flex-wrap items-center justify-center gap-2 mb-3">
-              <FaCalendarAlt className="text-yellow-300" /> Exit Interview Booking
+              <FaCalendarAlt className="text-yellow-300" /> Exit Interview
+              Booking
             </h1>
 
             <p className="text-xs sm:text-sm md:text-base text-slate-200 leading-relaxed max-w-3xl mx-auto">
-              Welcome to the <span className="font-semibold text-yellow-200">Exit Interview Scheduling Portal</span>.
-              Please choose your preferred date and time slot for your exit interview. Make sure to upload your updated resume
-              and double-check your personal details before submitting.
+              Welcome to the{" "}
+              <span className="font-semibold text-yellow-200">
+                Exit Interview Scheduling Portal
+              </span>
+              . Please choose your preferred date and time slot for your exit
+              interview. Make sure to upload your updated resume and
+              double-check your personal details before submitting.
             </p>
 
             <p className="mt-3 text-xs sm:text-sm md:text-base text-slate-300 leading-relaxed max-w-2xl mx-auto">
-              Slots are available on a first-come, first-served basis. Once confirmed, your booking will be reserved under your name.
-              You will also receive a confirmation notice from the department.
+              Slots are available on a first-come, first-served basis. Once
+              confirmed, your booking will be reserved under your name. You will
+              also receive a confirmation notice from the department.
             </p>
           </div>
         </header>
@@ -132,7 +144,9 @@ export default function ExitSubmission() {
               </h3>
               {filteredSlots.length > 0 ? (
                 <select
-                  onChange={(e) => setForm({ ...form, slot_id: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, slot_id: e.target.value })
+                  }
                   className="w-full border border-green-300 rounded-lg p-2 sm:p-3 focus:ring-2 focus:ring-green-600 text-sm sm:text-base"
                 >
                   <option>Select a slot</option>
@@ -149,7 +163,9 @@ export default function ExitSubmission() {
                   })}
                 </select>
               ) : (
-                <p className="text-xs sm:text-sm text-slate-600">No slots available.</p>
+                <p className="text-xs sm:text-sm text-slate-600">
+                  No slots available.
+                </p>
               )}
             </div>
           </motion.div>
@@ -170,25 +186,33 @@ export default function ExitSubmission() {
                 <input
                   placeholder="Last Name"
                   className="w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base"
-                  onChange={(e) => setForm({ ...form, last_name: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, last_name: e.target.value })
+                  }
                 />
                 <input
                   placeholder="Middle Name"
                   className="w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base"
-                  onChange={(e) => setForm({ ...form, middle_name: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, middle_name: e.target.value })
+                  }
                 />
                 <input
                   placeholder="First Name"
                   required
                   className="w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base"
-                  onChange={(e) => setForm({ ...form, first_name: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, first_name: e.target.value })
+                  }
                 />
 
                 <div className="flex items-center gap-3">
                   <FaUniversity className="text-green-700 text-base sm:text-lg" />
                   <select
                     className="w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base"
-                    onChange={(e) => setForm({ ...form, department: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, department: e.target.value })
+                    }
                   >
                     <option>Select Department</option>
                     <option>CCS</option>
@@ -213,12 +237,21 @@ export default function ExitSubmission() {
                     }
                   />
                 </div>
-
-                <input
-                  placeholder="Or paste resume link"
-                  className="w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base"
-                  onChange={(e) => setForm({ ...form, resume_link: e.target.value })}
-                />
+                <div className="flex flex-col gap-1">
+                  <input
+                    placeholder="Or paste resume link"
+                    className="w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base"
+                    disabled={!!form.resume_file} // disable kapag may PDF
+                    onChange={(e) =>
+                      setForm({ ...form, resume_link: e.target.value })
+                    }
+                  />
+                  {form.resume_file && (
+                    <p className="text-xs text-green-700">
+                      Resume link not required when PDF is uploaded.
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 

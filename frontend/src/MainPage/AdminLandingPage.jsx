@@ -20,6 +20,8 @@ import AdminPersonnel from "../DashboardContent/AdminPersonnel";
 import AdminAnnouncement from "../DashboardContent/AdminAnnouncement";
 import EventPosting from "../DashboardContent/EventPosting";   // 🔹 Added EventPosting
 import AdminSchedule from "../DashboardContent/AdminSchedule";
+import AdminExitSchedule from "../DashboardContent/AdminExitSchedule";
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -68,6 +70,8 @@ export default function AdminDashboard() {
     { icon: <Clipboard size={18} />, label: "Admission Schedule", panel: "schedule" },
     { icon: <Users size={18} />, label: "List of Personnel", panel: "personnel" },
     { icon: <User size={18} />, label: "Staffs Account", panel: "staffs" },
+    { icon: <User size={18} />, label: "Exit Interview", panel: "exit" },
+
   ];
 
   // ✅ Sidebar Component (desktop + mobile)
@@ -269,7 +273,9 @@ export default function AdminDashboard() {
         {activePanel === "schedule" && <AdminSchedule />}
         {activePanel === "personnel" && <AdminPersonnel />}
         {activePanel === "announcement" && <AdminAnnouncement />}
-        {activePanel === "events" && <EventPosting />} {/* ✅ Using EventPosting */}
+        {activePanel === "events" && <EventPosting />} 
+        {activePanel === "exit" && <AdminExitSchedule />} 
+
       </main>
 
       {/* 🔹 Popup After Login */}

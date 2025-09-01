@@ -9,6 +9,7 @@ import ResetPassword from './MainPage/ResetPassword';
 import Personnel from './MainPage/Personnel';
 import Announcement from './MainPage/AnnouncementView';
 import Admission from './MainPage/Admission';
+import ExitSubmission from './MainPage/ExitSubmission';
 import AdmissionForm from "./components/AdmissionForm";
 import ViewForm from "./DashboardContent/ViewForm";
 
@@ -91,6 +92,8 @@ function App() {
           <Route path="/admissions" element={<Admission />} />
           <Route path="/admission-form" element={<AdmissionForm />} />
           <Route path="/admin/view-form/:id" element={<ViewForm />} />
+          <Route path="/Exit" element={<ExitSubmission />} />
+
         </Routes>
       </div>
 

@@ -13,6 +13,16 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ApplicationController;
+// routes/api.php
+use App\Http\Controllers\ExitInterviewSlotController;
+use App\Http\Controllers\ExitBookingController;
+
+Route::get('/slots', [ExitInterviewSlotController::class, 'index']);
+Route::post('/slots', [ExitInterviewSlotController::class, 'store']);
+Route::delete('/slots/{id}', [ExitInterviewSlotController::class, 'destroy']);
+
+Route::post('/bookings', [ExitBookingController::class, 'store']);
+Route::patch('/bookings/{id}/status', [ExitBookingController::class, 'updateStatus']);
 
 
 // -------------------- Schedules --------------------

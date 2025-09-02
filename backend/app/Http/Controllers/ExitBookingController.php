@@ -14,8 +14,9 @@ public function store(Request $request) {
         'middle_name' => 'nullable|string',
         'first_name' => 'required|string',
         'department' => 'required|string',
-        'resume_file' => 'nullable|file|mimes:pdf',
         'resume_link' => 'nullable|url|required_without:resume_file',
+        'resume_file' => 'nullable|file|mimes:pdf',
+
     ]);
 
     $slot = ExitInterviewSlot::find($validated['slot_id']);

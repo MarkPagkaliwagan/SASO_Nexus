@@ -14,7 +14,8 @@ class ExitInterviewSlotController extends Controller
         $validated = $request->validate([
             'date' => 'required|date',
             'time' => 'required',
-            'limit' => 'required|integer|min:1'
+            'limit' => 'required|integer|min:1',
+            'department' => 'required|string|in:College,SHS,JHS,GS'
         ]);
         return ExitInterviewSlot::create($validated);
     }

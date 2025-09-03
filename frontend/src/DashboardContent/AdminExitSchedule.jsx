@@ -5,7 +5,7 @@ import { FiPlus, FiTrash2, FiUsers, FiCalendar } from "react-icons/fi";
 
 export default function AdminExitSchedule() {
   const [slots, setSlots] = useState([]);
-  const [form, setForm] = useState({ date: "", time: "", limit: 1 });
+  const [form, setForm] = useState({ date: "", time: "", limit: 1, department: "" });
 
   useEffect(() => {
     fetchSlots();
@@ -17,12 +17,12 @@ export default function AdminExitSchedule() {
   };
 
   const addSlot = async () => {
-    if (!form.date || !form.time || !form.limit) {
+    if (!form.date || !form.time || !form.limit || !form.department) {
       alert("Fill in all fields");
       return;
     }
     await axios.post("/api/slots", form);
-    setForm({ date: "", time: "", limit: 1 });
+    setForm({ date: "", time: "", limit: 1, department: "" });
     fetchSlots();
   };
 
@@ -62,6 +62,18 @@ export default function AdminExitSchedule() {
 
         {/* Add Slot Form */}
         <div className="flex flex-wrap gap-3 mb-6">
+          <select
+            className="flex-1 min-w-[120px] border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-500 bg-white/80"
+            value={form.department}
+            onChange={(e) => setForm({ ...form, department: e.target.value })}
+          >
+            <option value="">Select Department</option>
+            <option value="College">College</option>
+            <option value="SHS">SHS</option>
+            <option value="JHS">JHS</option>
+            <option value="GS">GS</option>
+          </select>
+
           <input
             type="date"
             className="flex-1 min-w-[120px] border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-green-500 bg-white/80"
@@ -94,6 +106,7 @@ export default function AdminExitSchedule() {
           <table className="w-full text-sm border border-gray-300 rounded-lg">
             <thead className="bg-green-100">
               <tr>
+                <th className="p-3 border">Department</th>
                 <th className="p-3 border">Date</th>
                 <th className="p-3 border">Time</th>
                 <th className="p-3 border">Limit</th>
@@ -112,6 +125,7 @@ export default function AdminExitSchedule() {
                     key={slot.id}
                     className="hover:bg-green-50 transition text-center"
                   >
+                    <td className="p-3 border">{slot.department}</td>
                     <td className="p-3 border">{slot.date}</td>
                     <td className="p-3 border">{slot.time}</td>
                     <td className="p-3 border">{slot.limit}</td>
@@ -146,7 +160,7 @@ export default function AdminExitSchedule() {
               >
                 <h3 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2 text-green-700">
                   <FiUsers className="text-yellow-500" />
-                  Bookings for {slot.date} – {slot.time} (
+                  Bookings for {slot.department} – {slot.date} – {slot.time} (
                   {slot.bookings.length})
                 </h3>
 

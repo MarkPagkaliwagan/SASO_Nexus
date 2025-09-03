@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ExitBooking extends Model {
     protected $fillable = [
-        'slot_id','last_name','middle_name','first_name',
+        'slot_id','course','last_name','middle_name','first_name',
         'department','resume_link','resume_file','status'
     ];
 

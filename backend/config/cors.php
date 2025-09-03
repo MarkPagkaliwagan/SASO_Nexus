@@ -38,5 +38,5 @@ return [
 
     // set to true only if you actually need to send cookies / credentials cross-origin.
     // If you set this to true, make sure the frontend uses credentials and the origin is explicit.
-    'supports_credentials' => false,
+    'supports_credentials' => true,
 ];

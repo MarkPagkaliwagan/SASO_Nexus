@@ -9,8 +9,13 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 
-// NOTE: Replaced react-calendar with a custom, student-friendly calendar UI
-// to match your request. Everything else remains intact.
+// NOTE: This is the updated ExitSubmission component.
+// Changes made:
+// - Calendar now shows soft-deleted (archived) slots (muted) while the booking <select>
+//   only lists active slots. Two grouped maps: slotsByDateAll and slotsByDateActive.
+// - Day badges can show: Available / Full / Archived / No slot.
+// - Select options for archived slots are disabled and labeled "— Archived".
+// - Defensive fallbacks used for bookings_count and deleted_at.
 
 const INITIAL_FORM = {
   last_name: "",
@@ -60,7 +65,13 @@ export default function ExitSubmission() {
   const fetchSlots = async () => {
     try {
       const res = await axios.get("/api/slots");
-      setSlots(res.data);
+      // Expect backend to return withTrashed() and withCount('bookings')
+      // Defensive: ensure bookings_count exists
+      const normalized = (res.data || []).map((s) => ({
+        ...s,
+        bookings_count: s.bookings_count || (s.bookings ? s.bookings.length : 0),
+      }));
+      setSlots(normalized);
     } catch (err) {
       console.error("Error fetching slots", err);
     }
@@ -162,14 +173,26 @@ export default function ExitSubmission() {
     }
   };
 
-  const slotsByDate = slots.reduce((acc, slot) => {
+  // ---------------- GROUPED SLOT MAPS ----------------
+  // group all slots by date (including archived/soft-deleted)
+  const slotsByDateAll = slots.reduce((acc, slot) => {
     const d = new Date(slot.date).toDateString();
     if (!acc[d]) acc[d] = [];
     acc[d].push(slot);
     return acc;
   }, {});
 
-  const filteredSlots = (slotsByDate[date.toDateString()] || []).filter(
+  // group only active (non-deleted) slots by date — used for booking dropdown
+  const slotsByDateActive = slots.reduce((acc, slot) => {
+    if (slot.deleted_at) return acc; // skip archived
+    const d = new Date(slot.date).toDateString();
+    if (!acc[d]) acc[d] = [];
+    acc[d].push(slot);
+    return acc;
+  }, {});
+
+  // filteredSlots used by the <select> (only active slots)
+  const filteredSlots = (slotsByDateActive[date.toDateString()] || []).filter(
     (slot) => !form.department || slot.department === form.department
   );
 
@@ -231,21 +254,24 @@ export default function ExitSubmission() {
       }
 
       const cellKey = cell.date.toDateString();
-      const slotsForDay = slotsByDate[cellKey] || [];
+      const slotsForDayAll = slotsByDateAll[cellKey] || [];
 
-      // Respect department filter when deciding availability for the day
-      const departmentFilteredSlots = slotsForDay.filter(
+      // Respect department filter when deciding which slots to list in the cell
+      const departmentFilteredSlots = slotsForDayAll.filter(
         (s) => !form.department || s.department === form.department
       );
 
-      const hasSlots = departmentFilteredSlots.length > 0;
-      const hasAvailable = departmentFilteredSlots.some(
-        (s) => s.limit - s.bookings_count > 0
+      // availability logic:
+      const anyActive = departmentFilteredSlots.some((s) => !s.deleted_at);
+      const anyActiveAvailable = departmentFilteredSlots.some(
+        (s) => !s.deleted_at && (s.limit - (s.bookings_count || 0) > 0)
       );
+      const anyArchived = departmentFilteredSlots.some((s) => !!s.deleted_at);
 
       let dayBadge = "";
-      if (hasAvailable) dayBadge = "Available";
-      else if (hasSlots) dayBadge = "Full";
+      if (anyActiveAvailable) dayBadge = "Available";
+      else if (anyActive) dayBadge = "Full";
+      else if (anyArchived) dayBadge = "Archived";
       else dayBadge = "No slot";
 
       const badgeClass =
@@ -253,6 +279,8 @@ export default function ExitSubmission() {
           ? "text-[10px] px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-800"
           : dayBadge === "Full"
           ? "text-[10px] px-2 py-0.5 rounded-full bg-rose-200 text-rose-800"
+          : dayBadge === "Archived"
+          ? "text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700"
           : "text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700";
 
       return (
@@ -275,16 +303,15 @@ export default function ExitSubmission() {
             ).toDateString()
               ? "ring-2 ring-yellow-400 bg-yellow-50"
               : "hover:bg-slate-50"
-          } ${hasAvailable ? "" : "opacity-70"} flex flex-col justify-between`}
+          } ${anyActiveAvailable ? "" : "opacity-80"} flex flex-col justify-between`}
           title={
             departmentFilteredSlots.length
               ? departmentFilteredSlots
-                  .map(
-                    (s) =>
-                      `${departmentLabels[s.department] || s.department} ${s.time} (${
-                        s.limit - s.bookings_count
-                      } avail)`
-                  )
+                  .map((s) => {
+                    const available = s.limit - (s.bookings_count || 0);
+                    const arch = s.deleted_at ? " (Archived)" : "";
+                    return `${departmentLabels[s.department] || s.department} ${s.time} (${available} avail)${arch}`;
+                  })
                   .join("\n")
               : "No slot"
           }
@@ -296,12 +323,23 @@ export default function ExitSubmission() {
 
           <div className="flex flex-wrap gap-1">
             {departmentFilteredSlots.slice(0, 3).map((slot) => {
-              const available = slot.limit - slot.bookings_count;
+              const available = slot.limit - (slot.bookings_count || 0);
               const colorClass =
                 departmentColors[slot.department] || "bg-gray-300 text-black";
-              // Show only if no department selected OR matches selected department
-              if (form.department && slot.department !== form.department)
-                return null;
+
+              // If archived, show muted pill
+              if (slot.deleted_at) {
+                return (
+                  <span
+                    key={slot.id}
+                    className={`text-[10px] px-1 rounded-md font-semibold bg-slate-100 text-slate-600 opacity-70 border border-slate-200`}
+                    style={{ lineHeight: 1 }}
+                  >
+                    {slot.department[0]} Arch
+                  </span>
+                );
+              }
+
               return (
                 <span
                   key={slot.id}
@@ -607,15 +645,17 @@ export default function ExitSubmission() {
                 >
                   <option value="">Select a slot</option>
                   {filteredSlots.map((slot) => {
-                    const booked = slot.bookings_count;
+                    const booked = slot.bookings_count || 0;
                     const available = slot.limit - booked;
+                    const isArchived = !!slot.deleted_at;
                     return (
                       <option
                         key={slot.id}
                         value={slot.id}
-                        disabled={available <= 0}
+                        disabled={available <= 0 || isArchived}
                       >
-                        {slot.time} ({booked}/{slot.limit} booked) - {available > 0 ? `Available (${available})` : `Full`}
+                        {slot.time} ({booked}/{slot.limit} booked)
+                        {isArchived ? " — Archived" : available > 0 ? ` - Available (${available})` : ` - Full`}
                       </option>
                     );
                   })}

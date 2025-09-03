@@ -6,9 +6,14 @@ use Illuminate\Http\Request;
 
 class ExitInterviewSlotController extends Controller
 {
-    public function index() {
-        return ExitInterviewSlot::with(['bookings'])->withCount('bookings')->get();
-    }
+public function index(Request $request) {
+    // include trashed so bookings remain visible even if slot soft-deleted
+    return ExitInterviewSlot::with(['bookings'])
+                ->withCount('bookings')
+                ->withTrashed()
+                ->get();
+}
+
 
     public function store(Request $request) {
         $validated = $request->validate([

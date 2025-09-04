@@ -132,7 +132,7 @@ const AdminDepartment = () => {
   };
 
 return (
-  <div className="max-w-7xl mx-auto mt-12 p-10 bg-white rounded-3xl shadow-xl border border-gray-300">
+  <div className="max-w-full mx-auto mt-12 p-10 bg-white rounded-3xl shadow-xl border border-gray-300">
     <h2 className="text-4xl font-extrabold mb-12 text-gray-800 text-center flex items-center justify-center gap-3">
       <FaBullhorn /> Create & Preview Announcement
     </h2>
@@ -243,7 +243,7 @@ return (
         {announcements.map((a) => (
           <div
             key={a.id}
-            className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden max-w-xl mx-auto"
+            className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden max-w-3xl mx-auto"
           >
             {/* Media */}
             {a.image && (

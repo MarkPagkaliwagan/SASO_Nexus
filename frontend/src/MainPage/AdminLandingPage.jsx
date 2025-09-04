@@ -6,11 +6,13 @@ import {
   Home,
   Activity,
   Clipboard,
-  User,
+  UserCheck,
   Menu,
   X,
   ChevronDown,
   ChevronUp,
+  LogOut,Volume2, Calendar
+  
 } from "react-feather";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -69,8 +71,8 @@ export default function AdminDashboard() {
     { icon: <Home size={18} />, label: "Dashboard",  },
     { icon: <Clipboard size={18} />, label: "Admission Schedule", panel: "schedule" },
     { icon: <Users size={18} />, label: "List of Personnel", panel: "personnel" },
-    { icon: <User size={18} />, label: "Staffs Account", panel: "staffs" },
-    { icon: <User size={18} />, label: "Exit Interview", panel: "exit" },
+    { icon: <UserCheck  size={18} />, label: "Staffs Account", panel: "staffs" },
+    { icon: <LogOut size={18} />, label: "Exit Interview", panel: "exit" },
 
   ];
 
@@ -167,28 +169,32 @@ export default function AdminDashboard() {
               </button>
 
               {/* Dropdown Items */}
-              <AnimatePresence>
-                {openDropdown && (isExpanded || isMobile) && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="ml-10 mt-1 flex flex-col space-y-1"
-                  >
-                    <button
-                      onClick={() => { setActivePanel("announcement"); setIsMobileMenuOpen(false); }}
-                      className={`${dropdownItemBase}${dropdownItemHover}`}
-                    >
-                      Announcement
-                    </button>
-                    <button
-                      onClick={() => { setActivePanel("events"); setIsMobileMenuOpen(false); }}
-                      className={`${dropdownItemBase}${dropdownItemHover}`}
-                    >
-                      Events
-                    </button>
-                  </motion.div>
-                )}
+
+{/* Dropdown Items */}
+<AnimatePresence>
+  {openDropdown && (isExpanded || isMobile) && (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: "auto", opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      className="ml-10 mt-1 flex flex-col space-y-1"
+    >
+      <button
+        onClick={() => { setActivePanel("announcement"); setIsMobileMenuOpen(false); }}
+        className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+      >
+        <Volume2 size={16} />
+        Announcement
+      </button>
+      <button
+        onClick={() => { setActivePanel("events"); setIsMobileMenuOpen(false); }}
+        className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+      >
+        <Calendar size={16} />
+        Events
+      </button>
+    </motion.div>
+  )}
               </AnimatePresence>
             </div>
           </nav>

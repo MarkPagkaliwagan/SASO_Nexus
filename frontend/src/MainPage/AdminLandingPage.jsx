@@ -23,6 +23,8 @@ import AdminAnnouncement from "../DashboardContent/AdminAnnouncement";
 import EventPosting from "../DashboardContent/EventPosting";   // 🔹 Added EventPosting
 import AdminSchedule from "../DashboardContent/AdminSchedule";
 import AdminExitSchedule from "../DashboardContent/AdminExitSchedule";
+import ExamCreate from "../DashboardContent/ExamCreate";
+
 
 
 export default function AdminDashboard() {
@@ -73,6 +75,7 @@ export default function AdminDashboard() {
     { icon: <Users size={18} />, label: "List of Personnel", panel: "personnel" },
     { icon: <UserCheck  size={18} />, label: "Staffs Account", panel: "staffs" },
     { icon: <LogOut size={18} />, label: "Exit Interview", panel: "exit" },
+    { icon: <UserCheck  size={18} />, label: "Create Examination", panel: "ExamCreate" },
 
   ];
 
@@ -281,6 +284,8 @@ export default function AdminDashboard() {
         {activePanel === "announcement" && <AdminAnnouncement />}
         {activePanel === "events" && <EventPosting />} 
         {activePanel === "exit" && <AdminExitSchedule />} 
+        {activePanel === "ExamCreate" && <ExamCreate />} 
+
 
       </main>
 

@@ -12,6 +12,7 @@ import Admission from './MainPage/Admission';
 import ExitSubmission from './MainPage/ExitSubmission';
 import AdmissionForm from "./components/AdmissionForm";
 import ViewForm from "./DashboardContent/ViewForm";
+import ExamTake from "./components/ExamTake";
 
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -93,6 +94,8 @@ function App() {
           <Route path="/admission-form" element={<AdmissionForm />} />
           <Route path="/admin/view-form/:id" element={<ViewForm />} />
           <Route path="/Exit" element={<ExitSubmission />} />
+          <Route path="/exam/:id" element={<ExamTake />} />
+
 
         </Routes>
       </div>

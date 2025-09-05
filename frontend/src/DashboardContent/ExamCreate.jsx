@@ -1,13 +1,6 @@
-import React, { useState } from "react";
-import { FiPlus, FiTrash2, FiFileText, FiDownload, FiChevronUp, FiChevronDown, FiEye, FiEdit3 } from "react-icons/fi";
-
-// ExamCreate.modified.jsx
-// Modernized UI: white / gold / green theme. Single main card container (no individual card backgrounds for every question).
-// - Gold accent header bar
-// - Primary actions green, highlights gold
-// - Questions are list items with subtle dividers instead of full white cards
-// - Sidebar kept compact and readable
-// - Uses Tailwind CSS utility classes
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { FiPlus, FiTrash2, FiChevronUp, FiChevronDown } from "react-icons/fi";
 
 export default function ExamCreate() {
   const [title, setTitle] = useState("");
@@ -15,7 +8,7 @@ export default function ExamCreate() {
   const [questions, setQuestions] = useState([]);
   const [sectionsEnabled, setSectionsEnabled] = useState(false);
   const [sections, setSections] = useState([]);
-  const [previewMode, setPreviewMode] = useState(false);
+  const [exams, setExams] = useState([]);
 
   function uid(prefix = "id") {
     return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
@@ -27,7 +20,9 @@ export default function ExamCreate() {
     content: "",
     contentPreview: null,
     points: 1,
-    answers: [{ id: uid("a"), type: "text", content: "", contentPreview: null, isCorrect: false }],
+    answers: [
+      { id: uid("a"), type: "text", content: "", contentPreview: null, isCorrect: false },
+    ],
   });
 
   const addQuestion = (sectionId = null, presetType = "text") => {
@@ -41,10 +36,7 @@ export default function ExamCreate() {
 
   const updateQuestion = (qid, patch, sectionId = null) => {
     if (sectionsEnabled) {
-      setSections((s) => s.map((sec) => ({
-        ...sec,
-        questions: sec.questions.map((q) => (q.id === qid ? { ...q, ...patch } : q)),
-      })));
+      setSections((s) => s.map((sec) => ({ ...sec, questions: sec.questions.map((q) => (q.id === qid ? { ...q, ...patch } : q)) })));
     } else {
       setQuestions((s) => s.map((q) => (q.id === qid ? { ...q, ...patch } : q)));
     }
@@ -61,10 +53,7 @@ export default function ExamCreate() {
   const addAnswer = (qid, sectionId = null) => {
     const ans = { id: uid("a"), type: "text", content: "", contentPreview: null, isCorrect: false };
     if (sectionsEnabled) {
-      setSections((s) => s.map((sec) => ({
-        ...sec,
-        questions: sec.questions.map((q) => (q.id === qid ? { ...q, answers: [...q.answers, ans] } : q)),
-      })));
+      setSections((s) => s.map((sec) => ({ ...sec, questions: sec.questions.map((q) => (q.id === qid ? { ...q, answers: [...q.answers, ans] } : q)) })));
     } else {
       setQuestions((s) => s.map((q) => (q.id === qid ? { ...q, answers: [...q.answers, ans] } : q)));
     }
@@ -72,10 +61,7 @@ export default function ExamCreate() {
 
   const updateAnswer = (qid, aid, patch, sectionId = null) => {
     if (sectionsEnabled) {
-      setSections((s) => s.map((sec) => ({
-        ...sec,
-        questions: sec.questions.map((q) => (q.id === qid ? { ...q, answers: q.answers.map((a) => (a.id === aid ? { ...a, ...patch } : a)) } : q)),
-      })));
+      setSections((s) => s.map((sec) => ({ ...sec, questions: sec.questions.map((q) => (q.id === qid ? { ...q, answers: q.answers.map((a) => (a.id === aid ? { ...a, ...patch } : a)) } : q)) })));
     } else {
       setQuestions((s) => s.map((q) => (q.id === qid ? { ...q, answers: q.answers.map((a) => (a.id === aid ? { ...a, ...patch } : a)) } : q)));
     }
@@ -83,20 +69,10 @@ export default function ExamCreate() {
 
   const removeAnswer = (qid, aid, sectionId = null) => {
     if (sectionsEnabled) {
-      setSections((s) => s.map((sec) => ({
-        ...sec,
-        questions: sec.questions.map((q) => (q.id === qid ? { ...q, answers: q.answers.filter((a) => a.id !== aid) } : q)),
-      })));
+      setSections((s) => s.map((sec) => ({ ...sec, questions: sec.questions.map((q) => (q.id === qid ? { ...q, answers: q.answers.filter((a) => a.id !== aid) } : q)) })));
     } else {
       setQuestions((s) => s.map((q) => (q.id === qid ? { ...q, answers: q.answers.filter((a) => a.id !== aid) } : q)));
     }
-  };
-
-  const handleFileInput = (file, cb) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => cb(e.target.result);
-    reader.readAsDataURL(file);
   };
 
   const addSection = (title = "New Section") => {
@@ -157,23 +133,126 @@ export default function ExamCreate() {
     });
   };
 
-  const exportJSON = () => {
-    const payload = {
-      title,
-      description,
-      sectionsEnabled,
-      createdAt: new Date().toISOString(),
-      questions: sectionsEnabled ? sections : questions,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = (title || "exam").split(" ").filter(Boolean).join("_") + ".json";
-    a.click();
-    URL.revokeObjectURL(url);
+  const fetchExams = async () => {
+    try {
+      const res = await fetch("/api/exams");
+      const data = await res.json();
+      setExams(data);
+    } catch (err) {
+      console.error("Failed to fetch exams:", err);
+    }
   };
 
+  useEffect(() => {
+    fetchExams();
+  }, []);
+
+const saveExam = async () => {
+  let allQuestions = [];
+
+  if (sectionsEnabled) {
+    sections.forEach((sec, secIndex) => {
+      sec.questions.forEach((q, qIndex) => {
+        allQuestions.push({
+          type: q.type,
+          content: q.type === "text" ? (q.content || "") : (q.content || null),
+          content_preview: q.type === "figure" ? (q.contentPreview || null) : null,
+          points: q.points || 1,
+          order: qIndex,
+          section_id: sec.id,
+          answers: q.answers.map((a) => ({
+            type: a.type,
+            content: a.type === "text" ? (a.content || "") : (a.content || null),
+            content_preview: a.type === "figure" ? (a.contentPreview || null) : null,
+            is_correct: a.isCorrect || false,
+          })),
+        });
+      });
+    });
+  } else {
+    questions.forEach((q, qIndex) => {
+      allQuestions.push({
+        type: q.type,
+        content: q.type === "text" ? (q.content || "") : (q.content || null),
+        content_preview: q.type === "figure" ? (q.contentPreview || null) : null,
+        points: q.points || 1,
+        order: qIndex,
+        section_id: null,
+        answers: q.answers.map((a) => ({
+          type: a.type,
+          content: a.type === "text" ? (a.content || "") : (a.content || null),
+          content_preview: a.type === "figure" ? (a.contentPreview || null) : null,
+          is_correct: a.isCorrect || false,
+        })),
+      });
+    });
+  }
+
+  const payload = {
+    title,
+    description,
+    sectionsEnabled,
+    sections,
+    questions: allQuestions,
+  };
+
+  try {
+    await axios.post("/api/exams", payload, {
+      headers: { "Content-Type": "application/json" },
+    });
+    alert("Exam saved to backend!");
+    fetchExams();
+  } catch (error) {
+    console.error("Save failed:", error);
+    alert("Failed to save exam. Check console for details.");
+  }
+};
+
+
+// Upload helper
+const uploadFile = async (file) => {
+  if (!file) return null;
+
+  const fd = new FormData();
+  fd.append("file", file);
+
+  try {
+    const res = await fetch("/api/upload", { method: "POST", body: fd });
+
+    // If response is not OK, read text (could be HTML error page)
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Upload failed: ${text}`);
+    }
+
+    const data = await res.json();
+    return data.url; // returns the uploaded file URL
+  } catch (err) {
+    console.error("Upload error", err);
+    alert("Image upload failed. Check console for details.");
+    return null;
+  }
+};
+
+
+// Handle file selection for questions
+const handleFileSelectForQuestion = async (file, qid, sectionId = null) => {
+  const url = await uploadFile(file);
+  if (!url) return;
+
+  updateQuestion(qid, { content: url, contentPreview: url }, sectionId);
+};
+
+// Handle file selection for answers
+const handleFileSelectForAnswer = async (file, qid, aid, sectionId = null) => {
+  const url = await uploadFile(file);
+  if (!url) return;
+
+  updateAnswer(qid, aid, { content: url, contentPreview: url }, sectionId);
+};
+
+
+  // toggle sections on/off
   const toggleSections = (enable) => {
     if (enable) {
       const sec = { id: uid("s"), title: "Section 1", questions: [...questions] };
@@ -188,49 +267,52 @@ export default function ExamCreate() {
     }
   };
 
-  // new visual helpers
-  const gold = "#D4AF37"; // accent
-  const green = "#16A34A";
+  const toggleStatus = async (id) => {
+    try {
+      await fetch(`/api/exams/${id}/toggle-status`, { method: "PATCH" });
+      fetchExams();
+    } catch (err) {
+      console.error("Toggle failed:", err);
+    }
+  };
+
+  const deleteExam = async (id) => {
+    if (!window.confirm("Delete this exam?")) return;
+    try {
+      await fetch(`/api/exams/${id}`, { method: "DELETE" });
+      fetchExams();
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
+  };
+
+  const totalQuestionsCount = sectionsEnabled ? sections.reduce((acc, s) => acc + (s.questions?.length || 0), 0) : questions.length;
+  const totalPoints = sectionsEnabled ? sections.reduce((acc, s) => acc + s.questions.reduce((ps, q) => ps + Number(q.points || 0), 0), 0) : questions.reduce((ps, q) => ps + Number(q.points || 0), 0);
 
   return (
     <div className="min-h-screen p-6 text-slate-900">
       <div className="mx-auto w-full max-w-7xl">
-        {/* MAIN WHITE CARD */}
         <div className="rounded-2xl bg-white shadow-md overflow-hidden">
-          {/* gold accent bar */}
           <div style={{ background: `linear-gradient(90deg, rgba(212,175,55,0.12), rgba(212,175,55,0.04))` }} className="border-b border-gray-100 p-4">
             <div className="flex items-center justify-between gap-5">
               <div>
                 <input placeholder="Exam Title" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full rounded-md border border-gray-200 bg-white p-3 text-xl font-semibold placeholder-slate-400 focus:ring-2 focus:ring-[#FCEFC7]" />
                 <input placeholder="Short description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} className="mt-2 w-full rounded-md border border-gray-100 bg-white p-2 text-sm placeholder-slate-400" />
               </div>
-
               <div className="flex items-center gap-2">
                 <button onClick={() => addQuestion(null, "text")} className="inline-flex items-center gap-2 rounded-lg bg-[#16A34A] px-4 py-2 text-sm font-medium text-white hover:bg-green-600 shadow" title="Add question">
                   <FiPlus /> Add
-                </button>
-
-                <button onClick={() => setPreviewMode((p) => !p)} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:shadow" title="Toggle preview">
-                  {previewMode ? <FiEdit3 /> : <FiEye />} {previewMode ? "Edit" : "Preview"}
-                </button>
-
-                <button onClick={exportJSON} className="inline-flex items-center gap-2 rounded-lg border border-[#D4AF37] bg-white px-3 py-2 text-sm font-medium text-[#D4AF37] hover:bg-[#fffaf0]" title="Export exam as JSON">
-                  <FiDownload /> Export
                 </button>
               </div>
             </div>
           </div>
 
-          {/* body: 2 columns */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 p-6">
-            {/* main column (questions) */}
             <div className="col-span-2">
-              {/* if empty */}
               {!sectionsEnabled && questions.length === 0 && (
                 <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-slate-500">No questions yet — click <strong className="text-slate-700">Add</strong> or enable sections.</div>
               )}
 
-              {/* questions list inside main card (no separate heavy bg per question) */}
               {!sectionsEnabled && questions.length > 0 && (
                 <ul className="divide-y">
                   {questions.map((q, qi) => (
@@ -264,7 +346,11 @@ export default function ExamCreate() {
                               <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                                 <div className="col-span-3">
                                   <label className="block text-sm text-slate-700">Upload image for question</label>
-                                  <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; handleFileInput(file, (dataUrl) => updateQuestion(q.id, { contentPreview: dataUrl })); }} className="mt-1 text-sm" />
+                                  <input type="file" accept="image/*" onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    await handleFileSelectForQuestion(file, q.id);
+                                  }} className="mt-1 text-sm" />
                                 </div>
                                 <div className="flex items-center justify-center">
                                   {q.contentPreview ? (
@@ -300,8 +386,14 @@ export default function ExamCreate() {
                                         <input value={a.content} placeholder="Answer text" onChange={(e) => updateAnswer(q.id, a.id, { content: e.target.value })} className="w-full rounded-md border p-2 text-sm" />
                                       ) : (
                                         <div className="flex items-center gap-3">
-                                          <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; handleFileInput(file, (dataUrl) => updateAnswer(q.id, a.id, { contentPreview: dataUrl })); }} className="text-sm" />
-                                          <div className="h-16 w-24 overflow-hidden rounded-md border bg-gray-50 p-1">{a.contentPreview ? <img src={a.contentPreview} alt={`Answer ${ai + 1}`} className="h-full w-auto object-contain" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>}</div>
+                                          <input type="file" accept="image/*" onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            await handleFileSelectForAnswer(file, q.id, a.id);
+                                          }} className="text-sm" />
+                                          <div className="h-16 w-24 overflow-hidden rounded-md border bg-gray-50 p-1">
+                                            {a.contentPreview ? <img src={a.contentPreview} alt={`Answer ${ai + 1}`} className="h-full w-auto object-contain" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>}
+                                          </div>
                                         </div>
                                       )}
                                     </div>
@@ -321,7 +413,6 @@ export default function ExamCreate() {
                 </ul>
               )}
 
-              {/* Sections UI (kept similar but visually lighter) */}
               {sectionsEnabled && (
                 <div className="space-y-4">
                   {sections.map((sec, si) => (
@@ -369,17 +460,59 @@ export default function ExamCreate() {
                                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                                       <div className="col-span-3">
                                         <label className="block text-sm text-slate-700">Upload image for question</label>
-                                        <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; handleFileInput(file, (dataUrl) => updateQuestion(q.id, { contentPreview: dataUrl }, sec.id)); }} className="mt-1 text-sm" />
+                                        <input type="file" accept="image/*" onChange={async (e) => {
+                                          const file = e.target.files?.[0];
+                                          if (!file) return;
+                                          await handleFileSelectForQuestion(file, q.id, sec.id);
+                                        }} className="mt-1 text-sm" />
                                       </div>
-                                      <div className="flex items-center justify-center">{q.contentPreview ? <img src={q.contentPreview} alt={`Question ${qi + 1}`} className="h-28 w-auto rounded-md border" /> : <div className="h-28 w-full rounded-md border bg-gray-50 p-2 text-xs text-slate-400 flex items-center justify-center">No image</div>}</div>
+                                      <div className="flex items-center justify-center">
+                                        {q.contentPreview ? <img src={q.contentPreview} alt={`Question ${qi + 1}`} className="h-28 w-auto rounded-md border" /> : <div className="h-28 w-full rounded-md border bg-gray-50 p-2 text-xs text-slate-400 flex items-center justify-center">No image</div>}
+                                      </div>
                                     </div>
                                   )}
                                 </div>
 
                                 <div className="mt-3 space-y-2">
-                                  <div className="flex items-center justify-between"><div className="text-sm font-medium text-slate-700">Answers</div><div className="flex items-center gap-2"><button onClick={() => addAnswer(q.id, sec.id)} className="inline-flex items-center gap-2 rounded-md bg-[#ECFDF5] px-2 py-1 text-sm text-[#16A34A] hover:bg-[#DFF6E8]"><FiPlus /> Add</button></div></div>
+                                  <div className="flex items-center justify-between">
+                                    <div className="text-sm font-medium text-slate-700">Answers</div>
+                                    <div className="flex items-center gap-2">
+                                      <button onClick={() => addAnswer(q.id, sec.id)} className="inline-flex items-center gap-2 rounded-md bg-[#ECFDF5] px-2 py-1 text-sm text-[#16A34A] hover:bg-[#DFF6E8]"><FiPlus /> Add</button>
+                                    </div>
+                                  </div>
 
-                                  <div className="space-y-2">{q.answers.map((a, ai) => (<div key={a.id} className="flex items-center gap-3"><input type="checkbox" checked={a.isCorrect} onChange={(e) => updateAnswer(q.id, a.id, { isCorrect: e.target.checked }, sec.id)} className="h-4 w-4" aria-label={`Mark answer ${ai + 1} correct`} /><div className="flex-1"><div className="flex items-center gap-2"><select value={a.type} onChange={(e) => updateAnswer(q.id, a.id, { type: e.target.value, content: "", contentPreview: null }, sec.id)} className="rounded-md border p-1 text-sm"><option value="text">Text</option><option value="figure">Figure</option></select>{a.type === "text" ? (<input value={a.content} placeholder="Answer text" onChange={(e) => updateAnswer(q.id, a.id, { content: e.target.value }, sec.id)} className="w-full rounded-md border p-2 text-sm" />) : (<div className="flex items-center gap-3"><input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; handleFileInput(file, (dataUrl) => updateAnswer(q.id, a.id, { contentPreview: dataUrl }, sec.id)); }} className="text-sm" /><div className="h-16 w-24 overflow-hidden rounded-md border bg-gray-50 p-1">{a.contentPreview ? <img src={a.contentPreview} alt={`Answer ${ai + 1}`} className="h-full w-auto object-contain" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>}</div></div>)}</div></div><div className="flex items-center gap-2"><button onClick={() => removeAnswer(q.id, a.id, sec.id)} className="rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50" title="Remove answer"><FiTrash2 /></button></div></div>))}</div>
+                                  <div className="space-y-2">
+                                    {q.answers.map((a, ai) => (
+                                      <div key={a.id} className="flex items-center gap-3">
+                                        <input type="checkbox" checked={a.isCorrect} onChange={(e) => updateAnswer(q.id, a.id, { isCorrect: e.target.checked }, sec.id)} className="h-4 w-4" aria-label={`Mark answer ${ai + 1} correct`} />
+                                        <div className="flex-1">
+                                          <div className="flex items-center gap-2">
+                                            <select value={a.type} onChange={(e) => updateAnswer(q.id, a.id, { type: e.target.value, content: "", contentPreview: null }, sec.id)} className="rounded-md border p-1 text-sm">
+                                              <option value="text">Text</option>
+                                              <option value="figure">Figure</option>
+                                            </select>
+                                            {a.type === "text" ? (
+                                              <input value={a.content} placeholder="Answer text" onChange={(e) => updateAnswer(q.id, a.id, { content: e.target.value }, sec.id)} className="w-full rounded-md border p-2 text-sm" />
+                                            ) : (
+                                              <div className="flex items-center gap-3">
+                                                <input type="file" accept="image/*" onChange={async (e) => {
+                                                  const file = e.target.files?.[0];
+                                                  if (!file) return;
+                                                  await handleFileSelectForAnswer(file, q.id, a.id, sec.id);
+                                                }} className="text-sm" />
+                                                <div className="h-16 w-24 overflow-hidden rounded-md border bg-gray-50 p-1">
+                                                  {a.contentPreview ? <img src={a.contentPreview} alt={`Answer ${ai + 1}`} className="h-full w-auto object-contain" /> : <div className="flex h-full items-center justify-center text-xs text-slate-400">No image</div>}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <button onClick={() => removeAnswer(q.id, a.id, sec.id)} className="rounded-md px-2 py-1 text-sm text-red-600 hover:bg-red-50" title="Remove answer"><FiTrash2 /></button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -400,7 +533,6 @@ export default function ExamCreate() {
               )}
             </div>
 
-            {/* sidebar */}
             <aside className="space-y-4">
               <div className="rounded-xl border border-gray-100 p-4 shadow-sm">
                 <div className="flex items-center justify-between">
@@ -411,82 +543,67 @@ export default function ExamCreate() {
                 </div>
 
                 <div className="mt-3 space-y-3 text-sm text-slate-600">
-                  <div className="flex items-center justify-between"><div>Use sections</div><div><input type="checkbox" checked={sectionsEnabled} onChange={(e) => toggleSections(e.target.checked)} /></div></div>
+                  <div className="flex items-center justify-between">
+                    <div>Use sections</div>
+                    <div>
+                      <input type="checkbox" checked={sectionsEnabled} onChange={(e) => toggleSections(e.target.checked)} />
+                    </div>
+                  </div>
 
-                  <div>Total questions: <strong className="text-slate-900">{sectionsEnabled ? sections.reduce((acc, s) => acc + s.questions.length, 0) : questions.length}</strong></div>
-                  <div>Total points: <strong className="text-slate-900">{(sectionsEnabled ? sections.reduce((acc, s) => acc + s.questions.reduce((ps, q) => ps + Number(q.points || 0), 0), 0) : questions.reduce((ps, q) => ps + Number(q.points || 0), 0))}</strong></div>
+                  <div>Total questions: <strong className="text-slate-900">{totalQuestionsCount}</strong></div>
+                  <div>Total points: <strong className="text-slate-900">{totalPoints}</strong></div>
 
                   <div className="pt-2">
-                    <button onClick={() => { const invalid = (sectionsEnabled ? sections.some((sec) => sec.questions.some((q) => q.answers.every((a) => !a.isCorrect))) : questions.some((q) => q.answers.every((a) => !a.isCorrect))); if (invalid) { alert("Validation: every question must have at least one correct answer."); return; } alert("Validation passed — exam ready to export."); }} className="w-full rounded-md bg-[#16A34A] px-3 py-2 text-sm font-medium text-white hover:bg-green-600">Validate</button>
+                    <button onClick={() => {
+                      const invalid = sectionsEnabled ? sections.some((sec) => sec.questions.some((q) => q.answers.every((a) => !a.isCorrect))) : questions.some((q) => q.answers.every((a) => !a.isCorrect));
+                      if (invalid) { alert("Validation: every question must have at least one correct answer."); return; }
+                      alert("Validation passed — exam ready to export.");
+                    }} className="w-full rounded-md bg-[#16A34A] px-3 py-2 text-sm font-medium text-white hover:bg-green-600">Validate</button>
                   </div>
                 </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-100 p-4 shadow-sm">
-                <div className="text-sm font-semibold text-slate-800">Tips</div>
-                <ul className="mt-2 list-inside list-disc text-sm text-slate-600">
-                  <li>Enable sections to group questions (e.g., Test 1, Test 2).</li>
-                  <li>When you disable sections, all questions are flattened into a single list.</li>
-                  <li>Use preview mode to check final layout.</li>
-                </ul>
               </div>
             </aside>
           </div>
 
-          {/* preview modal */}
-          {previewMode && (
-            <div className="fixed inset-0 z-50 flex items-start justify-center overflow-auto bg-black/40 p-6">
-              <div className="mx-auto w-full max-w-4xl rounded-2xl bg-white p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold">Preview — {title || "Untitled Exam"}</h2>
-                    <p className="text-sm text-slate-600">{description}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => setPreviewMode(false)} className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm">Close</button>
-                  </div>
-                </div>
+          <div className="border-t border-gray-100 p-4 flex justify-end">
+            <button onClick={saveExam} className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-10 py-2 text-sm font-medium text-white hover:bg-green-700 shadow">Save</button>
+          </div>
+        </div>
 
-                <div className="mt-4 space-y-4">
-                  {!sectionsEnabled && questions.map((q, i) => (
-                    <div key={q.id} className="rounded-lg border p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 flex-shrink-0 text-sm font-semibold text-[#16A34A]">{i + 1}.</div>
-                        <div className="flex-1">
-                          <div className="text-sm text-slate-800">{q.type === "text" ? q.content : <img src={q.contentPreview} alt={`Q${i + 1}`} className="max-h-48 w-auto" />}</div>
-
-                          <div className="mt-3 space-y-2">{q.answers.map((a, ai) => (<div key={a.id} className="flex items-center gap-3"><input type="checkbox" disabled className="h-4 w-4" /><div className="text-sm text-slate-700">{a.type === "text" ? a.content : <img src={a.contentPreview} alt={`A${ai + 1}`} className="h-16 w-auto" />}</div></div>))}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-
-                  {sectionsEnabled && sections.map((sec, si) => (
-                    <div key={sec.id} className="space-y-3">
-                      <div className="text-md font-semibold">{sec.title}</div>
-                      {sec.questions.map((q, i) => (
-                        <div key={q.id} className="rounded-lg border p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 flex-shrink-0 text-sm font-semibold text-[#16A34A]">{si + 1}.{i + 1}</div>
-                            <div className="flex-1">
-                              <div className="text-sm text-slate-800">{q.type === "text" ? q.content : <img src={q.contentPreview} alt={`Q${i + 1}`} className="max-h-48 w-auto" />}</div>
-
-                              <div className="mt-3 space-y-2">{q.answers.map((a, ai) => (<div key={a.id} className="flex items-center gap-3"><input type="checkbox" disabled className="h-4 w-4" /><div className="text-sm text-slate-700">{a.type === "text" ? a.content : <img src={a.contentPreview} alt={`A${ai + 1}`} className="h-16 w-auto" />}</div></div>))}</div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 flex items-center justify-end gap-2">
-                  <button onClick={() => setPreviewMode(false)} className="rounded-md border border-gray-200 bg-white px-3 py-2 text-sm">Back to edit</button>
-                  <button onClick={exportJSON} className="rounded-md bg-[#16A34A] px-4 py-2 text-sm font-medium text-white">Export JSON</button>
-                </div>
-              </div>
-            </div>
-          )}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">All Exams</h2>
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="px-4 py-2 text-left">Title</th>
+                  <th className="px-4 py-2 text-left">Description</th>
+                  <th className="px-4 py-2 text-left">Created</th>
+                  <th className="px-4 py-2 text-left">Link</th>
+                  <th className="px-4 py-2 text-left">Status</th>
+                  <th className="px-4 py-2 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {exams.map((exam) => (
+                  <tr key={exam.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-2 font-medium">{exam.title}</td>
+                    <td className="px-4 py-2">{exam.description || "—"}</td>
+                    <td className="px-4 py-2">{new Date(exam.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-2"><a href={`/exam/${exam.id}`} className="text-blue-600 hover:underline">View</a></td>
+                    <td className="px-4 py-2"><span className={`px-2 py-1 text-xs rounded-full ${exam.status === "open" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>{exam.status}</span></td>
+                    <td className="px-4 py-2 flex gap-2">
+                      <button onClick={() => toggleStatus(exam.id)} className="px-3 py-1 text-xs rounded bg-yellow-500 text-white hover:bg-yellow-600">Toggle</button>
+                      <button onClick={() => deleteExam(exam.id)} className="px-3 py-1 text-xs rounded bg-red-500 text-white hover:bg-red-600">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+                {exams.length === 0 && (
+                  <tr><td colSpan="6" className="px-4 py-4 text-center text-gray-500">No exams found.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

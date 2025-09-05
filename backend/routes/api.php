@@ -16,6 +16,18 @@ use App\Http\Controllers\ApplicationController;
 // routes/api.php
 use App\Http\Controllers\ExitInterviewSlotController;
 use App\Http\Controllers\ExitBookingController;
+use App\Http\Controllers\ExamController;
+use App\Http\Controllers\UploadController;
+
+Route::get('/exams', [ExamController::class, 'index']);
+Route::post('/exams', [ExamController::class, 'store']);
+Route::get('/exams/{id}', [ExamController::class, 'show']);
+Route::patch('/exams/{id}/toggle-status', [ExamController::class, 'toggleStatus']);
+Route::delete('/exams/{id}', [ExamController::class, 'destroy']);
+Route::patch('/exams/{id}', [ExamController::class, 'update']);
+Route::post('/exams/{id}/submit', [ExamController::class, 'submit']);
+
+Route::post('/upload', [UploadController::class, 'store']);
 
 Route::get('/slots', [ExitInterviewSlotController::class, 'index']);
 Route::post('/slots', [ExitInterviewSlotController::class, 'store']);

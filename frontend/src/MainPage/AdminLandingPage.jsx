@@ -76,7 +76,7 @@ export default function AdminDashboard() {
     { icon: <UserCheck  size={18} />, label: "Staffs Account", panel: "staffs" },
     { icon: <LogOut size={18} />, label: "Exit Interview", panel: "exit" },
     { icon: <UserCheck  size={18} />, label: "Create Examination", panel: "ExamCreate" },
-    { icon: <UserCheck  size={18} />, label: "Examination List", panel: "ExamList" },
+    { icon: <Clipboard  size={18} />, label: "Examination List", panel: "ExamList" },
 
   ];
 

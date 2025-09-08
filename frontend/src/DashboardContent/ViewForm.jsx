@@ -16,7 +16,10 @@ import {
   FiPhone,
   FiCalendar,
   FiPrinter,
+  FiClipboard,
+  FiAward
 } from "react-icons/fi";
+
 import SPCLogo from "../images/SPC.png";
 
 export default function ViewForm() {
@@ -218,7 +221,7 @@ export default function ViewForm() {
         initial={{ opacity: 0, scale: 0.997 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.22 }}
-        className={`max-w-6xl mx-auto bg-gray-50 rounded-2xl shadow-md text-black mt-[64px] print-container ${printMode ? "printing" : ""}`}
+        className={`w-full mx-auto bg-gray-50 rounded-2xl shadow-md text-black mt-[64px] print-container ${printMode ? "printing" : ""}`}
       >
         <div className="p-6 md:p-8">
           {/* Header */}
@@ -336,15 +339,15 @@ export default function ViewForm() {
               {/* Photo */}
               <div className="col-span-1">
                 <div className="w-44 h-56 border rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center border-teal-100 photo-box">
-{photoUrl(applicant.photo_path) ? (
-  // crossOrigin allows html2canvas to use the image if backend provides CORS header
-  <img
-    src={photoUrl(applicant.photo_path)}
-    alt="Applicant"
-    className="object-cover w-full h-full"
-    crossOrigin="anonymous"
-  />
-) : (
+                  {photoUrl(applicant.photo_path) ? (
+                    // crossOrigin allows html2canvas to use the image if backend provides CORS header
+                    <img
+                      src={photoUrl(applicant.photo_path)}
+                      alt="Applicant"
+                      className="object-cover w-full h-full"
+                      crossOrigin="anonymous"
+                    />
+                  ) : (
                     <div className="text-slate-400 text-sm flex flex-col items-center gap-2">
                       <FiCamera size={20} />
                       <span>No Photo</span>
@@ -501,11 +504,119 @@ export default function ViewForm() {
             </div>
           </motion.section>
 
-          {/* Footer */}
-          <div className="flex justify-between items-center mt-4">
-            <div className="text-sm text-slate-500">SASO NEXUS</div>
-            <div />
-          </div>
+
+          {/* 📊 EXAMINATION RESULTS */}
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={sectionVariants}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            whileHover={{ scale: 1.01 }}
+            className="mb-6 rounded-2xl border border-green-200 bg-white p-6 shadow-md"
+          >
+            <h2 className="text-lg font-bold text-green-700 text-center mb-2">
+              APPLICATION STATUS (DO NOT FILL THIS AREA)
+            </h2>
+
+            <div className="overflow-x-auto mt-4">
+              <table className="w-full border border-green-300 text-sm text-gray-700">
+                <thead className="bg-green-50 text-green-800 text-center">
+                  <tr>
+                    <th colSpan="4" className="border border-green-300 px-3 py-2 font-semibold">MAT</th>
+                    <th colSpan="9" className="border border-green-300 px-3 py-2 font-semibold">APT</th>
+                    <th colSpan="2" className="border border-green-300 px-3 py-2 font-semibold">GWA</th>
+                    <th rowSpan="2" className="border border-green-300 px-3 py-2 font-semibold">REMARKS</th>
+                  </tr>
+                  <tr>
+                    {/* MAT */}
+                    <th className="border border-green-300 px-3 py-2">RS</th>
+                    <th className="border border-green-300 px-3 py-2">IQ</th>
+                    <th className="border border-green-300 px-3 py-2">%ile</th>
+                    <th className="border border-green-300 px-3 py-2">Classification</th>
+
+                    {/* APT Verbal */}
+                    <th colSpan="3" className="border border-green-300 px-3 py-2 font-semibold">Verbal</th>
+                    {/* APT Numerical */}
+                    <th colSpan="3" className="border border-green-300 px-3 py-2 font-semibold">Numerical</th>
+                    {/* APT Total */}
+                    <th colSpan="3" className="border border-green-300 px-3 py-2 font-semibold">Total</th>
+
+                    {/* GWA */}
+                    <th className="border border-green-300 px-3 py-2">%ile</th>
+                    <th className="border border-green-300 px-3 py-2">Classification</th>
+                  </tr>
+                  <tr>
+                    {/* empty cols for MAT headers */}
+                    <th colSpan="2"></th><th></th><th></th>
+                    {/* Verbal */}
+                    <th className="border border-green-300 px-3 py-2">RS</th>
+                    <th className="border border-green-300 px-3 py-2">%ile</th>
+                    <th className="border border-green-300 px-3 py-2">Classification</th>
+                    {/* Numerical */}
+                    <th className="border border-green-300 px-3 py-2">RS</th>
+                    <th className="border border-green-300 px-3 py-2">%ile</th>
+                    <th className="border border-green-300 px-3 py-2">Classification</th>
+                    {/* Total */}
+                    <th className="border border-green-300 px-3 py-2">RS</th>
+                    <th className="border border-green-300 px-3 py-2">%ile</th>
+                    <th className="border border-green-300 px-3 py-2">Classification</th>
+                    {/* gwa + remarks */}
+                    <th colSpan="2"></th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="hover:bg-green-50 transition text-center">
+                    {/* MAT */}
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+
+                    {/* APT Verbal */}
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+
+                    {/* APT Numerical */}
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+
+                    {/* APT Total */}
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+
+                    {/* GWA */}
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+                    <td className="border border-green-200 px-2 py-1"><input className="w-full p-2 border border-green-300 rounded-md focus:ring-2 focus:ring-yellow-400" /></td>
+
+                    {/* Remarks (dropdown) */}
+                    <td className="border border-green-200 px-2 py-1">
+                      <select className="w-full p-2 border border-green-300 rounded-md bg-white focus:ring-2 focus:ring-yellow-400">
+                        <option value="">Select</option>
+                        <option value="Waitlisted">Waitlisted</option>
+                        <option value="Passed">Passed</option>
+                      </select>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+<div className="mt-6 flex items-center justify-between">
+  {/* Text */}
+  <div className="text-sm text-slate-500">SASO NEXUS</div>
+
+  {/* Submit Button */}
+  <button
+    type="submit"
+    className="px-6 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition"
+  >
+    Submit
+  </button>
+</div>
+
+          </motion.section>
         </div>
       </motion.div>
     </div>
@@ -531,9 +642,8 @@ function SectionHeader({ icon, title, subtitle, accent = "indigo-700" }) {
 function Badge({ present, textPresent = "Yes", textAbsent = "No" }) {
   return (
     <div
-      className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full gap-2 ${
-        present ? "bg-teal-50 text-teal-700" : "bg-gray-100 text-slate-600"
-      }`}
+      className={`inline-flex items-center text-sm font-medium px-3 py-1 rounded-full gap-2 ${present ? "bg-teal-50 text-teal-700" : "bg-gray-100 text-slate-600"
+        }`}
     >
       {present ? <FiCheckCircle /> : <FiXCircle />}
       <span className="text-xs">{present ? textPresent : textAbsent}</span>

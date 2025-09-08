@@ -21,6 +21,7 @@ use App\Http\Controllers\UploadController;
 use App\Http\Controllers\SubmissionController;
 
 Route::get('/submissions', [SubmissionController::class, 'index']);
+Route::delete('/submissions/{id}', [SubmissionController::class, 'destroy']);
 
 
 Route::get('/exams', [ExamController::class, 'index']);

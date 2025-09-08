@@ -18,6 +18,10 @@ use App\Http\Controllers\ExitInterviewSlotController;
 use App\Http\Controllers\ExitBookingController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\UploadController;
+use App\Http\Controllers\SubmissionController;
+
+Route::get('/submissions', [SubmissionController::class, 'index']);
+
 
 Route::get('/exams', [ExamController::class, 'index']);
 Route::post('/exams', [ExamController::class, 'store']);

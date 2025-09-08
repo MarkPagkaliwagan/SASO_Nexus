@@ -24,7 +24,7 @@ import EventPosting from "../DashboardContent/EventPosting";   // 🔹 Added Eve
 import AdminSchedule from "../DashboardContent/AdminSchedule";
 import AdminExitSchedule from "../DashboardContent/AdminExitSchedule";
 import ExamCreate from "../DashboardContent/ExamCreate";
-
+import ExamList from "../DashboardContent/ExamList";
 
 
 export default function AdminDashboard() {
@@ -76,6 +76,7 @@ export default function AdminDashboard() {
     { icon: <UserCheck  size={18} />, label: "Staffs Account", panel: "staffs" },
     { icon: <LogOut size={18} />, label: "Exit Interview", panel: "exit" },
     { icon: <UserCheck  size={18} />, label: "Create Examination", panel: "ExamCreate" },
+    { icon: <UserCheck  size={18} />, label: "Examination List", panel: "ExamList" },
 
   ];
 
@@ -285,6 +286,7 @@ export default function AdminDashboard() {
         {activePanel === "events" && <EventPosting />} 
         {activePanel === "exit" && <AdminExitSchedule />} 
         {activePanel === "ExamCreate" && <ExamCreate />} 
+        {activePanel === "ExamList" && <ExamList />} 
 
 
       </main>

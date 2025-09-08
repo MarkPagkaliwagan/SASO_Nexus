@@ -265,7 +265,7 @@ export default function AdminSchedule() {
   }
 
   return (
-    <div className="p-4 max-w-7xl mx-auto text-black">
+    <div className="p-4 w-full mx-auto text-black">
       {/* SCHEDULE CARD */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-transparent">
         {/* Header */}

@@ -165,7 +165,7 @@ export default function AdminExitSchedule() {
   };
 
   return (
-    <div className="relative p-4 sm:p-8 min-h-screen text-gray-800 bg-transparent">
+    <div className="relative p-4 sm:p-8 min-h-screen w-full text-gray-800 bg-transparent">
       <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white -z-10" />
 
       <div className="text-center mb-6">

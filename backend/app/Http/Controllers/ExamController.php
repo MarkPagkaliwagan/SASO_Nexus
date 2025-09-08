@@ -119,6 +119,11 @@ $exams = Exam::with([
         'questions.answers' => fn($q) => $q->orderBy('id'),
     ])->findOrFail($id);
 
+        // 🔒 Block access kung closed
+    if ($exam->status === 'close') {
+        return response()->json(['message' => 'This exam is closed.'], 403);
+    }
+
         $processQuestion = function ($q) {
             // choose preview first, then content
             $raw = $q->content_preview ?: $q->content;

@@ -10,6 +10,40 @@ use Illuminate\Support\Facades\Mail;
 
 class ApplicationController extends Controller
 {
+
+    public function updateResults(Request $request, $id)
+    {
+        $application = Application::findOrFail($id);
+
+$application->update($request->only([
+    // College
+    'mat_rs','mat_iq','mat_percentile','mat_classification',
+    'apt_verbal_rs','apt_verbal_percentile','apt_verbal_classification',
+    'apt_num_rs','apt_num_percentile','apt_num_classification',
+    'apt_total_rs','apt_total_percentile','apt_total_classification',
+    'gwa_percentile','gwa_classification',
+
+    // SHS
+    'cfit_rs','cfit_iq','cfit_pc','cfit_classification',
+    'olsat_verbal_rs','olsat_verbal_ss','olsat_verbal_percentile','olsat_verbal_stanine','olsat_verbal_classification',
+    'olsat_nonverbal_rs','olsat_nonverbal_ss','olsat_nonverbal_pc','olsat_nonverbal_stanine','olsat_nonverbal_classification',
+    'olsat_total_rs','olsat_total_ss','olsat_total_pc','olsat_total_stanine','olsat_total_classification',
+
+    // JHS
+    'vc_rs','vc_pc','vr_rs','vr_pc','fr_rs','fr_pc','qr_rs','qr_pc',
+    'verbal_rs','verbal_pc','nonverbal_rs','nonverbal_pc','overall_rs','overall_pc',
+
+    // Common
+    'remarks'
+]));
+
+
+        return response()->json([
+            'message' => 'Exam results updated successfully.',
+            'application' => $application
+        ], 200);
+    }
+
     /**
      * Store new application
      */

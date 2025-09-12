@@ -20,6 +20,7 @@ use App\Http\Controllers\ExamController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\SubmissionController;
 
+Route::get('/applications/{id}/results', [ApplicationController::class, 'showResults']);
 Route::put('/applications/{id}/results', [ApplicationController::class, 'updateResults']);
 
 Route::get('/submissions', [SubmissionController::class, 'index']);

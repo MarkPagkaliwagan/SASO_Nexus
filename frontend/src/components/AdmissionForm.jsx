@@ -727,7 +727,6 @@ export default function AdmissionForm() {
                     }`}
                   >
                     <option value="">Select Grade</option>
-                    <option>Grade 6</option>
                     <option>Grade 7</option>
                     <option>Grade 8</option>
                     <option>Grade 9</option>

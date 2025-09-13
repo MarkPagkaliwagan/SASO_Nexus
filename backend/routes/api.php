@@ -19,6 +19,12 @@ use App\Http\Controllers\ExitBookingController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\AnalyticsController;
+
+Route::get('/analytics/applications', [AnalyticsController::class, 'applications']);
+Route::get('/analytics/payments', [AnalyticsController::class, 'payments']);
+Route::get('/analytics/exit-bookings', [AnalyticsController::class, 'exitBookings']);
+Route::get('/analytics/academic-years', [AnalyticsController::class, 'academicYears']);
 
 Route::get('/applications/{id}/results', [ApplicationController::class, 'showResults']);
 Route::put('/applications/{id}/results', [ApplicationController::class, 'updateResults']);

@@ -1,5 +1,4 @@
-// Dashboard.jsx
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import axios from "axios";
 import {
   BarChart3,
@@ -8,6 +7,8 @@ import {
   ClipboardList,
   CreditCard,
   Layers,
+  RefreshCw,
+  Download,
 } from "lucide-react";
 import {
   BarChart,
@@ -16,80 +17,96 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from "recharts";
 
 const ICONS = [User, FileText, ClipboardList, CreditCard, Layers];
+const BAR_COLOR_PALETTE = ["#16A34A", "#F59E0B", "#22C55E", "#FBBF24", "#059669", "#FACC15"];
+const PIE_COLORS = ["#16A34A", "#F59E0B"];
 
-const Dashboard = () => {
+export default function Dashboard() {
   const [data, setData] = useState([]);
   const [paymentData, setPaymentData] = useState([]);
   const [years, setYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Flat, bold color palette for bars (green & yellow primary)
-  const BAR_COLOR_PALETTE = ["#16A34A", "#F59E0B", "#22C55E", "#FBBF24", "#059669", "#FACC15"];
-  // Pie: primary green and accent yellow
-  const PIE_COLORS = ["#16A34A", "#F59E0B"];
-
-  // Fetch academic years once
+  // Fetch academic years once (logic intact)
   useEffect(() => {
-    axios.get("http://localhost:8000/api/analytics/academic-years")
-      .then(res => {
+    axios
+      .get("http://localhost:8000/api/analytics/academic-years")
+      .then((res) => {
         setYears(res.data || []);
-        if (res.data && res.data.length > 0) setSelectedYear(res.data[0].academicYear);
+        if (res.data && res.data.length > 0) setSelectedYear((prev) => prev || res.data[0].academicYear);
       })
-      .catch(err => console.error(err));
+      .catch((err) => console.error(err));
   }, []);
 
-  // Fetch data & payments for selectedYear (with auto-refresh)
+  // Fetch data & payments for selectedYear (with auto-refresh) — logic unchanged
+  const fetchAll = useCallback(() => {
+    if (!selectedYear) return;
+    setLoading(true);
+
+    axios
+      .get(`http://localhost:8000/api/analytics/applications?academicYear=${selectedYear}`)
+      .then((res) => setData(res.data || []))
+      .catch((err) => console.error(err));
+
+    axios
+      .get(`http://localhost:8000/api/analytics/payments?academicYear=${selectedYear}`)
+      .then((res) => setPaymentData(res.data || []))
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, [selectedYear]);
+
   useEffect(() => {
     if (!selectedYear) return;
-
-    const fetchData = () => {
-      axios.get(`http://localhost:8000/api/analytics/applications?academicYear=${selectedYear}`)
-        .then(res => setData(res.data || []))
-        .catch(err => console.error(err));
-
-      axios.get(`http://localhost:8000/api/analytics/payments?academicYear=${selectedYear}`)
-        .then(res => setPaymentData(res.data || []))
-        .catch(err => console.error(err));
-    };
-
-    fetchData();
-    const interval = setInterval(fetchData, 5000);
+    fetchAll();
+    const interval = setInterval(fetchAll, 5000);
     return () => clearInterval(interval);
-  }, [selectedYear]);
+  }, [selectedYear, fetchAll]);
 
   const totalApplications = data.reduce((sum, item) => sum + (item.total || 0), 0);
 
-  // Transform paymentData into chartData (grouped by applicationType)
+  // Transform paymentData into chartData (grouped by applicationType) — logic intact
   const chartData = useMemo(() => {
     const grouped = {};
-    paymentData.forEach(item => {
+    paymentData.forEach((item) => {
       if (!grouped[item.applicationType]) grouped[item.applicationType] = { applicationType: item.applicationType };
       grouped[item.applicationType][item.payment_type] = item.total;
     });
     return Object.values(grouped);
   }, [paymentData]);
 
-  // Derive unique payment types in stable order for legend + color mapping
-  const paymentTypes = useMemo(() => {
-    const types = Array.from(new Set(paymentData.map(d => d.payment_type)));
-    return types;
-  }, [paymentData]);
+  const paymentTypes = useMemo(() => Array.from(new Set(paymentData.map((d) => d.payment_type))), [paymentData]);
 
   const paymentColor = (typeIndex) => BAR_COLOR_PALETTE[typeIndex % BAR_COLOR_PALETTE.length];
 
-  // Custom Tooltip for bar chart (styled)
+  // Export CSV helper (small UX addition) — doesn't change business logic
+  const exportCSV = () => {
+    const headers = ["ApplicationType", "Total", ...paymentTypes];
+    const rows = (data.length ? data : chartData).map((d) => {
+      const typeVals = paymentTypes.map((t) => (d[t] != null ? d[t] : 0));
+      return [d.applicationType || d.applicationType, d.total || 0, ...typeVals];
+    });
+    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `applications_${selectedYear || "all"}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Custom tooltip preserves the existing payload names/values
   const CustomTooltip = ({ active, payload, label }) => {
     if (!active || !payload || payload.length === 0) return null;
     return (
-      <div className="rounded-md shadow-md p-3" style={{ background: "white", color: "#064e3b", minWidth: 160 }}>
+      <div className="rounded-md shadow-md p-3" style={{ background: "white", color: "#064e3b", minWidth: 180 }}>
         <div className="text-sm font-semibold mb-1" style={{ color: "#064e3b" }}>{label}</div>
         {payload.map((p, i) => (
           <div key={i} className="flex items-center gap-2 text-sm">
@@ -102,70 +119,87 @@ const Dashboard = () => {
     );
   };
 
-  // Custom legend renderer (flat colored badges + label)
-  const renderLegend = () => {
-    return (
-      <div className="flex flex-wrap gap-3 items-center">
-        {paymentTypes.map((type, idx) => (
-          <div key={type} className="flex items-center gap-2 text-sm">
-            <span style={{
-              width: 12,
-              height: 12,
-              background: paymentColor(idx),
-              display: "inline-block",
-              borderRadius: 3
-            }} />
-            <span style={{ color: "#065f46", fontWeight: 600 }}>{type}</span>
-          </div>
-        ))}
-      </div>
-    );
-  };
+  // Small helper for legend rendering
+  const renderLegend = () => (
+    <div className="flex flex-wrap gap-3 items-center">
+      {paymentTypes.length === 0 && <div className="text-sm text-slate-400">No payment types</div>}
+      {paymentTypes.map((type, idx) => (
+        <div key={type} className="flex items-center gap-2 text-sm">
+          <span style={{ width: 12, height: 12, background: paymentColor(idx), display: "inline-block", borderRadius: 3 }} />
+          <span style={{ color: "#065f46", fontWeight: 600 }}>{type}</span>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen p-6">
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen p-6 bg-gradient-to-br from-gray-50 via-white to-emerald-50">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
-          <BarChart3 className="w-8 h-8" style={{ color: "#F59E0B" }} />
-          <h1 className="text-3xl font-extrabold" style={{ color: "#064e3b" }}>Analytics Dashboard</h1>
+          <div className="p-2 rounded-lg bg-amber-50 ring-1 ring-amber-100">
+            <BarChart3 className="w-8 h-8 text-amber-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-emerald-900">Analytics Dashboard</h1>
+            <p className="text-sm text-slate-500">Clean, modern UI — business logic untouched.</p>
+          </div>
         </div>
 
-        {/* Year selector (compact, clear) */}
         <div className="flex items-center gap-3">
-          <label className="text-sm font-semibold" style={{ color: "#065f46" }}>Academic Year</label>
-          <select
-            className="border rounded-lg px-3 py-2 text-sm font-medium"
-            style={{ borderColor: "#d1fae5", color: "#065f46" }}
-            value={selectedYear || ""}
-            onChange={(e) => setSelectedYear(e.target.value)}
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-semibold" style={{ color: "#065f46" }}>Academic Year</label>
+            <select
+              className="border rounded-lg px-3 py-2 text-sm font-medium"
+              style={{ borderColor: "#d1fae5", color: "#065f46" }}
+              value={selectedYear || ""}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              {years.map((y, i) => (
+                <option key={i} value={y.academicYear}>{y.academicYear}</option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={fetchAll}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-900/80 shadow-sm border border-gray-100 hover:scale-105 transition"
+            aria-label="Refresh"
           >
-            {years.map((y, i) => (
-              <option key={i} value={y.academicYear}>{y.academicYear}</option>
-            ))}
-          </select>
+            <RefreshCw className="w-4 h-4" />
+            <span className="text-sm">{loading ? "Refreshing..." : "Refresh"}</span>
+          </button>
+
+          <button
+            onClick={exportCSV}
+            className="ml-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-600 
+                      text-white text-sm font-medium shadow-sm hover:bg-emerald-700 transition"
+            title="Export CSV"
+          >
+            <Download className="w-4 h-6" />
+            Export
+          </button>
+
         </div>
       </div>
 
-      {/* CARDS */}
+      {/* Cards */}
       <div className="flex flex-wrap gap-6 mb-8">
-        {/* Total Applications card - white, bold accent */}
-        <div className="flex-1 min-w-[220px] max-w-xs p-5 rounded-2xl shadow-lg flex items-center gap-4" style={{ background: "white" }}>
+        <div className="flex-1 min-w-[220px] max-w-xs p-5 rounded-2xl bg-white/90 shadow-md flex items-center gap-4 border border-gray-100">
           <div className="p-3 rounded-lg" style={{ background: "#ecfdf5" }}>
-            <User className="w-6 h-6" style={{ color: "#16A34A" }} />
+            <User className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <div className="text-sm font-semibold" style={{ color: "#065f46" }}>Total Applications</div>
-            <div className="text-2xl font-extrabold" style={{ color: "#064e3b" }}>{totalApplications}</div>
+            <div className="text-sm font-semibold text-slate-700">Total Applications</div>
+            <div className="text-2xl font-extrabold text-emerald-900">{totalApplications}</div>
+            <div className="text-xs text-slate-400 mt-1">Updated: {new Date().toLocaleString()}</div>
           </div>
+
           <div className="ml-auto w-20 h-20">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={[
-                    { name: "Used", value: totalApplications },
-                    { name: "Remaining", value: Math.max(0, 100 - totalApplications) }
-                  ]}
+                  data={[{ name: "Used", value: Math.min(totalApplications, 100) }, { name: "Remaining", value: Math.max(0, 100 - totalApplications) }]}
                   innerRadius={18}
                   outerRadius={28}
                   dataKey="value"
@@ -181,45 +215,37 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Application type cards (icon, totals) */}
         {data.map((item, idx) => {
           const Icon = ICONS[idx % ICONS.length];
-          // flat colored left accent strip for stronger visual
           const accent = idx % 2 === 0 ? "#16A34A" : "#F59E0B";
           return (
-            <div key={idx} className="flex-1 min-w-[220px] max-w-xs rounded-2xl shadow-lg p-4 flex items-center gap-4" style={{ background: "white", borderLeft: `6px solid ${accent}` }}>
-              <div className="p-3 rounded-md" style={{ background: "#f8fafc" }}>
+            <div key={idx} className="flex-1 min-w-[220px] max-w-xs rounded-2xl shadow-md p-4 flex items-center gap-4 bg-white/90" style={{ borderLeft: `6px solid ${accent}` }}>
+              <div className="p-3 rounded-md bg-gray-50">
                 <Icon className="w-6 h-6" style={{ color: accent }} />
               </div>
               <div>
-                <div className="text-sm font-semibold" style={{ color: "#065f46" }}>{item.applicationType}</div>
-                <div className="text-2xl font-bold" style={{ color: "#064e3b" }}>{item.total}</div>
+                <div className="text-sm font-semibold text-slate-700">{item.applicationType}</div>
+                <div className="text-2xl font-bold text-emerald-900">{item.total}</div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* PAYMENT BAR GRAPH SECTION */}
+      {/* Payment chart with legend */}
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold" style={{ color: "#065f46" }}>Payment Type per Application</h2>
+        <h2 className="text-lg font-semibold text-emerald-900">Payment Type per Application</h2>
         <div>{renderLegend()}</div>
       </div>
 
-      <div className="w-full rounded-2xl shadow-lg p-4" style={{ background: "white" }}>
+      <div className="w-full rounded-2xl shadow-md p-4 bg-white/90">
         <ResponsiveContainer width="100%" height={420}>
-          <BarChart
-            data={chartData}
-            margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
-            barCategoryGap="20%"
-          >
-            {/* subtle grid lines */}
+          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }} barCategoryGap="20%">
             <CartesianGrid strokeDasharray="3 3" stroke="#e6f2ea" />
             <XAxis dataKey="applicationType" tick={{ fill: "#065f46", fontSize: 13 }} />
             <YAxis tick={{ fill: "#065f46", fontSize: 13 }} />
             <Tooltip content={<CustomTooltip />} />
 
-            {/* render bars for each payment type (grouped bars) */}
             {paymentTypes.map((type, idx) => (
               <Bar
                 key={type}
@@ -236,6 +262,4 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

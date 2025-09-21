@@ -29,6 +29,7 @@ import ExamCreate from "../DashboardContent/ExamCreate";
 import ExamList from "../DashboardContent/ExamList";
 import ExamScheduleAnalytics from "../DashboardContent/ExamScheduleAnalytics";
 import ExitAnalytics from "../DashboardContent/ExitAnalytics";
+import ExamsAnalytics from "../DashboardContent/ExamsAnalytics";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -165,7 +166,7 @@ export default function AdminDashboard() {
                     </button>
 
                     <button
-                      onClick={() => { setActivePanel("examAnalytics"); setIsMobileMenuOpen(false); }}
+                      onClick={() => { setActivePanel("ExamsAnalytics"); setIsMobileMenuOpen(false); }}
                       className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
                     >
                       <Clipboard size={16} />
@@ -317,43 +318,41 @@ export default function AdminDashboard() {
 
       {/* 🔹 Main Content */}
       <main className="flex-1 p-4 md:p-8 md:ml-20 overflow-auto w-full max-w-full mt-16 md:mt-0 transition">
-{activePanel === "Dashboard" && (
-  <div className="relative w-full min-h-screen flex flex-col items-center justify-start text-center overflow-hidden pt-32 md:pt-40">
-    {/* Hover overlay effect */}
-    <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all duration-300 pointer-events-none z-0" />
+        {activePanel === "Dashboard" && (
+          <div className="relative w-full min-h-screen flex flex-col items-center justify-start text-center overflow-hidden pt-32 md:pt-40">
+            {/* Hover overlay effect */}
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all duration-300 pointer-events-none z-0" />
 
-    {/* Logo and Titles */}
-    <div className="relative z-10 flex flex-col items-center justify-center gap-8">
-      <div className="flex items-center justify-center gap-12">
-        <img
-          src={spcLogo}
-          alt="SPC Logo"
-          className="w-36 md:w-48 object-contain"
-        />
-        <img
-          src={sasoLogo}
-          alt="SASO Logo"
-          className="w-32 md:w-44 object-contain"
-        />
-      </div>
+            {/* Logo and Titles */}
+            <div className="relative z-10 flex flex-col items-center justify-center gap-8">
+              <div className="flex items-center justify-center gap-12">
+                <img
+                  src={spcLogo}
+                  alt="SPC Logo"
+                  className="w-36 md:w-48 object-contain"
+                />
+                <img
+                  src={sasoLogo}
+                  alt="SASO Logo"
+                  className="w-32 md:w-44 object-contain"
+                />
+              </div>
 
-      <h1 className="text-6xl md:text-8xl font-extrabold text-[rgb(6,73,26)] tracking-tight hover:text-yellow-500 transition-colors duration-300">
-        SAN PABLO COLLEGES
-      </h1>
+              <h1 className="text-6xl md:text-8xl font-extrabold text-[rgb(6,73,26)] tracking-tight hover:text-yellow-500 transition-colors duration-300">
+                SAN PABLO COLLEGES
+              </h1>
 
-      <h2 className="text-3xl md:text-5xl font-semibold text-gray-700 hover:text-yellow-500 transition-colors duration-300">
-        Student Affairs & Services Office
-      </h2>
+              <h2 className="text-3xl md:text-5xl font-semibold text-gray-700 hover:text-yellow-500 transition-colors duration-300">
+                Student Affairs & Services Office
+              </h2>
 
-      <span className="mt-4 text-2xl md:text-3xl font-medium text-emerald-800 hover:text-yellow-500 transition-colors duration-300">
-        Admin Dashboard
-      </span>
-    </div>
-  </div>
-)}
+              <span className="mt-4 text-2xl md:text-3xl font-medium text-emerald-800 hover:text-yellow-500 transition-colors duration-300">
+                Admin Dashboard
+              </span>
+            </div>
+          </div>
+        )}
 
-
-        
         {activePanel === "staffs" && <StaffPanel />}
         {activePanel === "schedule" && <AdminSchedule />}
         {activePanel === "personnel" && <AdminPersonnel />}
@@ -364,6 +363,7 @@ export default function AdminDashboard() {
         {activePanel === "ExamList" && <ExamList />}
         {activePanel === "ExamScheduleAnalytics" && <ExamScheduleAnalytics />}
         {activePanel === "ExitAnalytics" && <ExitAnalytics />}
+        {activePanel === "ExamsAnalytics" && <ExamsAnalytics />}
 
       </main>
 

@@ -15,7 +15,7 @@ export default function Home() {
       ></div>
 
       {/* Dark overlay for readability */}
-      <div className="absolute inset-0 bg-black bg-opacity-60 z-0"></div>
+      <div className="absolute inset-0 bg-emerald-9 bg-opacity-60 z-0"></div>
 
       {/* Page content */}
       <div className="relative z-10 flex flex-col w-full ">

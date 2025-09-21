@@ -15,7 +15,7 @@ class StaffController extends Controller
                 'id' => $staff->id,
                 'name' => $staff->name,
                 'email' => $staff->email,
-                'position' => $staff->position,
+                'department' => $staff->department,
                 'password' => $staff->password,
                 'remember_token' => $staff->remember_token,
                 'created_at' => $staff->created_at,
@@ -43,7 +43,7 @@ class StaffController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|unique:staffs,email',
             'password' => 'required|string|min:6',
-            'position' => 'nullable|string',
+            'department' => 'nullable|string',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -61,7 +61,7 @@ class StaffController extends Controller
             return response()->json(['message' => 'Staff not found'], 404);
         }
 
-        $staff->update($request->only(['name', 'email', 'position']));
+        $staff->update($request->only(['name', 'email', 'department']));
 
         if ($request->filled('password')) {
             $staff->password = Hash::make($request->password);

@@ -65,20 +65,20 @@ export default function MainPanelEdge({ backgroundUrl = "/images/campus-bg.jpg",
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-<motion.a
-  href="#history"
-  onClick={(e) => {
-    e.preventDefault();
-    setShowHistory((prev) => !prev); // toggle
-    const el = document.getElementById("history");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }}
-  className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm sm:text-base md:text-lg font-semibold bg-emerald-500/95 text-white shadow-lg hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-400/30"
-  whileHover={{ scale: 1.03 }}
-  whileTap={{ scale: 0.98 }}
->
-  {showHistory ? "Hide History" : "Read History"}
-</motion.a>
+              <motion.a
+                href="#history"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowHistory((prev) => !prev); // toggle
+                  const el = document.getElementById("history");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm sm:text-base md:text-lg font-semibold bg-emerald-500/95 text-white shadow-lg hover:scale-105 focus:outline-none focus:ring-4 focus:ring-emerald-400/30"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {showHistory ? "Hide History" : "Read History"}
+              </motion.a>
 
 
             </div>
@@ -101,8 +101,8 @@ export default function MainPanelEdge({ backgroundUrl = "/images/campus-bg.jpg",
             transition={{ duration: 0.45, ease: "easeOut" }}
             className="overflow-hidden"
           >
-            <article className="bg-white/5 backdrop-blur-sm rounded-xl p-6 sm:p-8 md:p-10 lg:p-12 text-white/95">
-              <h3 className="font-[Merriweather] text-2xl sm:text-3xl md:text-4xl font-bold mb-4">
+            <article className="bg-black/30 backdrop-blur-sm rounded-xl p-6 sm:p-8 md:p-10 lg:p-12 text-white/95">
+              <h3 className="font-[Merriweather] text-2xl sm:text-3xl md:text-4xl font-bold mb-6 text-center">
                 Brief History of the San Pablo Colleges
               </h3>
 
@@ -121,9 +121,9 @@ export default function MainPanelEdge({ backgroundUrl = "/images/campus-bg.jpg",
               </div>
             </article>
           </motion.div>
- {/* Arrow to expand */}
+          {/* Arrow to expand */}
           {!showHistory && (
-            <div className="mt-6 flex items-center justify-center">
+            <div className=" flex items-center justify-center">
               <motion.div
                 className="cursor-pointer text-white/80"
                 animate={{ y: [0, 6, 0] }}

@@ -18,7 +18,7 @@ export default function StaffPanel() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    position: "",
+    department: "",
     password: "",
   });
 
@@ -43,7 +43,7 @@ export default function StaffPanel() {
     id: true,
     name: true,
     email: true,
-    position: true,
+    department: true,
     created_at: true,
     updated_at: true,
   });
@@ -86,7 +86,7 @@ export default function StaffPanel() {
 
   const resetForm = () => {
     setEditingStaff(null);
-    setForm({ name: "", email: "", position: "", password: "" });
+    setForm({ name: "", email: "", department: "", password: "" });
     setErrors({});
     setShowPassword(false);
   };
@@ -174,7 +174,7 @@ export default function StaffPanel() {
     setForm({
       name: s.name || "",
       email: s.email || "",
-      position: s.position || "",
+      department: s.department || "",
       password: "",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -212,7 +212,7 @@ export default function StaffPanel() {
     let list = staffs.slice();
     if (q)
       list = list.filter((s) =>
-        [String(s.id), s.name, s.email, s.position]
+        [String(s.id), s.name, s.email, s.department]
           .join(" ")
           .toLowerCase()
           .includes(q)
@@ -253,7 +253,7 @@ export default function StaffPanel() {
         "id",
         "name",
         "email",
-        "position",
+        "department",
         "created_at",
         "updated_at",
       ].filter((c) => visibleCols[c]);
@@ -261,7 +261,7 @@ export default function StaffPanel() {
         id: "ID",
         name: "Name",
         email: "Email",
-        position: "Position",
+        department: "department",
         created_at: "Created",
         updated_at: "Updated",
       };
@@ -287,7 +287,7 @@ export default function StaffPanel() {
         if (k === "id") return { wpx: 50 };
         if (k === "name") return { wpx: 200 };
         if (k === "email") return { wpx: 220 };
-        if (k === "position") return { wpx: 140 };
+        if (k === "department") return { wpx: 140 };
         return { wpx: 140 };
       });
       ws["!cols"] = cols;
@@ -380,12 +380,12 @@ export default function StaffPanel() {
 
           <div>
             <label className="text-xs font-medium text-gray-600">
-              Position
+              Department
             </label>
             <input
-              value={form.position}
+              value={form.department}
               onChange={(e) =>
-                setForm({ ...form, position: e.target.value })
+                setForm({ ...form, department: e.target.value })
               }
               className="mt-1 w-full border rounded px-3 py-2"
               placeholder="e.g. Librarian"
@@ -444,7 +444,7 @@ export default function StaffPanel() {
               <button
                 type="button"
                 onClick={() =>
-                  setForm({ name: "", email: "", position: "", password: "" })
+                  setForm({ name: "", email: "", department: "", password: "" })
                 }
                 className="px-3 py-2 rounded-lg border flex items-center gap-2"
                 title="Clear fields"
@@ -469,7 +469,7 @@ export default function StaffPanel() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, email, position or id"
+            placeholder="Search name, email, department or id"
             className="w-full border rounded px-3 py-2"
           />
         </div>
@@ -547,10 +547,10 @@ export default function StaffPanel() {
                 </div>
 
                 <div className="mt-3 grid grid-cols-1 gap-2 text-sm text-gray-700">
-                  {visibleCols.position && (
+                  {visibleCols.department && (
                     <div>
-                      <div className="text-xs text-gray-500">Position</div>
-                      <div>{s.position || "—"}</div>
+                      <div className="text-xs text-gray-500">department</div>
+                      <div>{s.department || "—"}</div>
                     </div>
                   )}
                   {visibleCols.created_at && (
@@ -627,12 +627,12 @@ export default function StaffPanel() {
                     Email
                   </th>
                 )}
-                {visibleCols.position && (
+                {visibleCols.department && (
                   <th
                     className="text-left p-3 border-b cursor-pointer"
-                    onClick={() => toggleSort("position")}
+                    onClick={() => toggleSort("department")}
                   >
-                    Position
+                    Department
                   </th>
                 )}
                 {visibleCols.created_at && (
@@ -674,7 +674,7 @@ export default function StaffPanel() {
                         <div className="h-4 w-48 bg-gray-200 rounded" />
                       </td>
                     )}
-                    {visibleCols.position && (
+                    {visibleCols.department && (
                       <td className="p-3 border-t">
                         <div className="h-4 w-32 bg-gray-200 rounded" />
                       </td>
@@ -721,8 +721,8 @@ export default function StaffPanel() {
                     )}
 
                     {visibleCols.email && <td className="p-3 border-t">{s.email}</td>}
-                    {visibleCols.position && (
-                      <td className="p-3 border-t">{s.position || "—"}</td>
+                    {visibleCols.department && (
+                      <td className="p-3 border-t">{s.department || "—"}</td>
                     )}
                     {visibleCols.created_at && (
                       <td className="p-3 border-t">{formatDate(s.created_at)}</td>

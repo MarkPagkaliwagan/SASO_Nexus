@@ -1,126 +1,435 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  CheckCircle, BarChart2, Users, FileText, Home, Activity, Clipboard
-} from 'react-feather';
-import { motion } from 'framer-motion';
-import api from '../services/api'; // ✅ Ensure this exists
+  CheckCircle,
+  Users,
+  Home,
+  Activity,
+  Clipboard,
+  UserCheck,
+  Menu,
+  X,
+  ChevronDown,
+  ChevronUp,
+  LogOut,
+  Volume2,
+  Calendar,
+} from "react-feather";
+import { motion, AnimatePresence } from "framer-motion";
+import spcLogo from "../images/SPC.png";
+import sasoLogo from "../images/SASO.png";
+
+// ✅ Still using Admin* components
+import AdminPersonnel from "../DashboardContent/AdminPersonnel";
+import AdminAnnouncement from "../DashboardContent/AdminAnnouncement";
+import EventPosting from "../DashboardContent/EventPosting";
+import AdminSchedule from "../DashboardContent/AdminSchedule";
+import AdminExitSchedule from "../DashboardContent/AdminExitSchedule";
+import ExamCreate from "../DashboardContent/ExamCreate";
+import ExamList from "../DashboardContent/ExamList";
+import ExamScheduleAnalytics from "../DashboardContent/ExamScheduleAnalytics";
+import ExitAnalytics from "../DashboardContent/ExitAnalytics";
 
 export default function StaffDashboard() {
   const navigate = useNavigate();
+
+  // ✅ States
   const [showPopup, setShowPopup] = useState(false);
-  const [staffData, setStaffData] = useState(null);
+  const [activePanel, setActivePanel] = useState(() => {
+    return localStorage.getItem("staffActivePanel") || "Dashboard";
+  });
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const [openDashboard, setOpenDashboard] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
 
-  const token = localStorage.getItem('staffToken');
-  const role = localStorage.getItem('role');
-  const staffId = localStorage.getItem('staffId');
-
-  const fetchStaffData = async () => {
-    try {
-      const response = await api.get(`/staff/${staffId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setStaffData(response.data);
-    } catch (err) {
-      console.error('Error fetching staff data:', err);
-    }
-  };
-
+  // ✅ Detect touch devices
   useEffect(() => {
-    if (!token || role !== 'staff') {
-      navigate('/staff-login', { replace: true });
-      return;
-    }
+    const touch =
+      "ontouchstart" in window ||
+      (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+    setIsTouch(Boolean(touch));
+  }, []);
 
-    if (localStorage.getItem('showPopup') === 'true') {
-      fetchStaffData().then(() => {
-        setShowPopup(true);
-        localStorage.removeItem('showPopup');
-      });
-    } else {
-      fetchStaffData();
+  // ✅ Check login token
+  useEffect(() => {
+    const token = localStorage.getItem("staffToken");
+    const role = localStorage.getItem("role");
+    if (!token || role !== "staff") {
+      navigate("/staff-login", { replace: true });
+    }
+    if (localStorage.getItem("showPopup") === "true") {
+      setShowPopup(true);
+      localStorage.removeItem("showPopup");
+      setActivePanel("Dashboard");
+      localStorage.setItem("staffActivePanel", "Dashboard");
     }
   }, [navigate]);
 
+  // ✅ Save active panel
+  useEffect(() => {
+    localStorage.setItem("staffActivePanel", activePanel);
+  }, [activePanel]);
+
   const handleClosePopup = () => setShowPopup(false);
 
-  // ✅ Logout function
-  const handleLogout = () => {
-    localStorage.removeItem('staffToken');
-    localStorage.removeItem('role');
-    localStorage.removeItem('staffId');
-    navigate('/staff-login', { replace: true });
-  };
+  const menuItems = [
+    { icon: <Clipboard size={18} />, label: "Admission Schedule", panel: "schedule" },
+    { icon: <Users size={18} />, label: "List of Personnel", panel: "personnel" },
+    { icon: <UserCheck size={18} />, label: "Staffs Account", panel: "staffs" },
+    { icon: <LogOut size={18} />, label: "Exit Interview", panel: "exit" },
+    { icon: <UserCheck size={18} />, label: "Create Examination", panel: "ExamCreate" },
+    { icon: <Clipboard size={18} />, label: "Examination List", panel: "ExamList" },
+  ];
 
-  return (
-    <div className="min-h-screen flex">
-      {/* Sidebar */}
-      <aside className="w-64 h-full bg-green-600 text-white p-6 flex flex-col justify-between">
-        <div>
-          <div className="text-2xl font-bold mb-6">SASO Staff</div>
-          <nav className="flex flex-col space-y-4">
-            <a href="#" className="flex items-center gap-3 hover:text-green-200"><Home size={18} /> Dashboard</a>
-            <a href="#" className="flex items-center gap-3 hover:text-green-200"><FileText size={18} /> Tasks</a>
-            <a href="#" className="flex items-center gap-3 hover:text-green-200"><BarChart2 size={18} /> Reports</a>
-            <a href="#" className="flex items-center gap-3 hover:text-green-200"><Clipboard size={18} /> Schedule</a>
-            <a href="#" className="flex items-center gap-3 hover:text-green-200"><Users size={18} /> Team</a>
-            <a href="#" className="flex items-center gap-3 hover:text-green-200"><Activity size={18} /> Activity</a>
+  // ✅ Sidebar component
+  const SidebarContent = ({ isMobile }) => {
+    const itemBase =
+      "flex items-center gap-3 text-left px-3 py-2 rounded-lg w-full truncate transition-all";
+    const itemHover = !isTouch ? " hover:text-black hover:bg-yellow-500" : "";
+    const dropdownItemBase =
+      "text-sm text-left px-2 py-1 rounded w-full text-left";
+    const dropdownItemHover = !isTouch ? " hover:bg-yellow-500/60" : "";
+    const logoutHover = !isTouch ? " hover:bg-yellow-500" : "";
+
+    return (
+      <div className="flex flex-col h-full w-full">
+        {/* 🔹 Logo Section */}
+        <div className="p-4 border-b border-yellow-400/10 flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-base font-bold shadow-md">
+            ST
+          </div>
+          <AnimatePresence>
+            {(isExpanded || isMobile) && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="overflow-hidden"
+              >
+                <div className="text-lg font-semibold truncate">
+                  San Pablo Colleges
+                </div>
+                <div className="text-xs text-green-200 truncate">
+                  SASO Staff Dashboard
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 🔹 Menu Section */}
+        <div className="flex-1 p-3 mt-3 overflow-y-auto">
+          <nav className="flex flex-col space-y-2">
+            {/* 🔹 Dashboard Dropdown */}
+            <div>
+              <button
+                onClick={() => setOpenDashboard(!openDashboard)}
+                className={`flex items-center gap-3 justify-between text-left px-3 py-2 rounded-lg w-full truncate transition-all${itemHover}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Home size={18} />
+                  <AnimatePresence>
+                    {(isExpanded || isMobile) && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="truncate"
+                      >
+                        Dashboard
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {(isExpanded || isMobile) &&
+                  (openDashboard ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  ))}
+              </button>
+
+              <AnimatePresence>
+                {openDashboard && (isExpanded || isMobile) && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="ml-10 mt-1 flex flex-col space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        setActivePanel("ExamScheduleAnalytics");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+                    >
+                      <Clipboard size={16} />
+                      Exam Schedule Analytics
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setActivePanel("ExitAnalytics");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+                    >
+                      <LogOut size={16} />
+                      Exit Schedule Analytics
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setActivePanel("examAnalytics");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+                    >
+                      <Clipboard size={16} />
+                      Examination Analytics
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* 🔹 Other menu items */}
+            {menuItems.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  if (item.panel) setActivePanel(item.panel);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`${itemBase}${itemHover}`}
+              >
+                {item.icon}
+                <AnimatePresence>
+                  {(isExpanded || isMobile) && (
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="truncate"
+                    >
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            ))}
+
+            {/* 🔹 Posting Dropdown */}
+            <div>
+              <button
+                onClick={() => setOpenDropdown(!openDropdown)}
+                className={`flex items-center gap-3 justify-between text-left px-3 py-2 rounded-lg w-full truncate transition-all${itemHover}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Activity size={18} />
+                  <AnimatePresence>
+                    {(isExpanded || isMobile) && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="truncate"
+                      >
+                        Posting
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {(isExpanded || isMobile) &&
+                  (openDropdown ? (
+                    <ChevronUp size={16} />
+                  ) : (
+                    <ChevronDown size={16} />
+                  ))}
+              </button>
+
+              <AnimatePresence>
+                {openDropdown && (isExpanded || isMobile) && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="ml-10 mt-1 flex flex-col space-y-1"
+                  >
+                    <button
+                      onClick={() => {
+                        setActivePanel("announcement");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+                    >
+                      <Volume2 size={16} />
+                      Announcement
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActivePanel("events");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+                    >
+                      <Calendar size={16} />
+                      Events
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </nav>
         </div>
 
-        {/* ✅ Logout button */}
-        <div>
+        {/* 🔹 Logout */}
+        <div className="p-4 border-t border-yellow-400/10">
           <button
-            onClick={handleLogout}
-            className="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded flex items-center justify-center gap-2"
+            onClick={() => {
+              localStorage.removeItem("staffToken");
+              localStorage.removeItem("role");
+              navigate("/staff/login", { replace: true });
+            }}
+            className={`w-full bg-emerald-900 px-4 py-2 rounded-lg text-white flex items-center gap-3 justify-center transition${logoutHover}`}
           >
-            <CheckCircle size={18} /> Logout
+            <CheckCircle size={18} />
+            <AnimatePresence>
+              {(isExpanded || isMobile) && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="truncate"
+                >
+                  Logout
+                </motion.span>
+              )}
+            </AnimatePresence>
           </button>
         </div>
-      </aside>
+      </div>
+    );
+  };
 
-      {/* Main Content */}
-      <main className="ml-64 flex-1 flex items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white shadow-lg rounded-xl p-10 w-full max-w-2xl text-center"
-        >
-          <h1 className="text-3xl font-bold text-green-700">
-            Welcome, {staffData ? staffData.name : 'Staff'}!
-          </h1>
-          <p className="mt-4 text-gray-700">
-            You are now inside the SASO Staff Dashboard.
-          </p>
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row overflow-hidden bg-gradient-to-r from-slate-100 via-neutral-50 to-slate-200">
+      {/* 🔹 Topbar (Mobile Only) */}
+      <div className="md:hidden fixed top-0 left-0 w-full flex justify-between items-center bg-[rgb(6,73,26)] text-white z-50 h-14 px-4 shadow-md">
+        <div className="flex items-center gap-3 truncate">
+          <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold shadow-sm">
+            ST
+          </div>
+          <div className="text-lg font-semibold truncate">SASO Staff</div>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
 
-          {staffData && (
-            <div className="mt-6 text-left text-gray-600">
-              <p><strong>Email:</strong> {staffData.email}</p>
-              <p><strong>Position:</strong> {staffData.position || 'Not set'}</p>
+      {/* 🔹 Sidebar (Desktop) */}
+      <motion.aside
+        initial={{ width: 72 }}
+        animate={{ width: isExpanded ? 280 : 72 }}
+        transition={{ duration: 0.25 }}
+        onMouseEnter={() => {
+          if (!isTouch) setIsExpanded(true);
+        }}
+        onMouseLeave={() => {
+          if (!isTouch) setIsExpanded(false);
+        }}
+        className="hidden md:flex bg-emerald-900/90 text-white flex-col h-screen fixed top-0 left-0 z-40 shadow-xl overflow-hidden"
+      >
+        <SidebarContent isMobile={false} />
+      </motion.aside>
+
+      {/* 🔹 Sidebar (Mobile) */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.aside
+            initial={{ x: "-100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "-100%" }}
+            transition={{ duration: 0.25 }}
+            className="fixed top-0 left-0 w-72 h-full bg-[rgb(6,73,26)] text-white z-50 shadow-xl"
+          >
+            <SidebarContent isMobile={true} />
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* 🔹 Main Content */}
+      <main className="flex-1 p-4 md:p-8 md:ml-20 overflow-auto w-full max-w-full mt-16 md:mt-0 transition">
+        {activePanel === "Dashboard" && (
+          <div className="relative w-full min-h-screen flex flex-col items-center justify-start text-center overflow-hidden pt-32 md:pt-40">
+            <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition-all duration-300 pointer-events-none z-0" />
+
+            <div className="relative z-10 flex flex-col items-center justify-center gap-8">
+              <div className="flex items-center justify-center gap-12">
+                <img
+                  src={spcLogo}
+                  alt="SPC Logo"
+                  className="w-36 md:w-48 object-contain"
+                />
+                <img
+                  src={sasoLogo}
+                  alt="SASO Logo"
+                  className="w-32 md:w-44 object-contain"
+                />
+              </div>
+
+              <h1 className="text-6xl md:text-8xl font-extrabold text-[rgb(6,73,26)] tracking-tight hover:text-yellow-500 transition-colors duration-300">
+                SAN PABLO COLLEGES
+              </h1>
+
+              <h2 className="text-3xl md:text-5xl font-semibold text-gray-700 hover:text-yellow-500 transition-colors duration-300">
+                Student Affairs & Services Office
+              </h2>
+
+              <span className="mt-4 text-2xl md:text-3xl font-medium text-emerald-800 hover:text-yellow-500 transition-colors duration-300">
+                Staff Dashboard
+              </span>
             </div>
-          )}
-        </motion.div>
+          </div>
+        )}
+
+        {activePanel === "staffs" && <AdminPersonnel />}
+        {activePanel === "schedule" && <AdminSchedule />}
+        {activePanel === "personnel" && <AdminPersonnel />}
+        {activePanel === "announcement" && <AdminAnnouncement />}
+        {activePanel === "events" && <EventPosting />}
+        {activePanel === "exit" && <AdminExitSchedule />}
+        {activePanel === "ExamCreate" && <ExamCreate />}
+        {activePanel === "ExamList" && <ExamList />}
+        {activePanel === "ExamScheduleAnalytics" && <ExamScheduleAnalytics />}
+        {activePanel === "ExitAnalytics" && <ExitAnalytics />}
       </main>
 
-      {/* Popup */}
-      {showPopup && staffData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      {/* 🔹 Popup After Login */}
+      {showPopup && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full text-center"
+            className="rounded-xl shadow-lg p-6 md:p-8 max-w-md w-full text-center bg-white"
           >
-            <CheckCircle size={48} className="text-green-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-green-700">Login Verified</h2>
-            <p className="text-gray-600 mt-2">You are now logged in as SASO staff.</p>
-            <p className="text-gray-700 mt-2">
-              <strong>Staff ID:</strong> {staffData.id}
+            <CheckCircle
+              size={48}
+              className="text-green-600 mx-auto mb-4"
+            />
+            <h2 className="text-xl font-bold truncate text-[rgb(6,73,26)]">
+              Login Verified
+            </h2>
+            <p className="text-gray-600 mt-2">
+              You are now logged in as authorized SASO Staff.
             </p>
             <button
               onClick={handleClosePopup}
-              className="mt-6 bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition"
+              className="mt-6 bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition"
             >
               OK
             </button>

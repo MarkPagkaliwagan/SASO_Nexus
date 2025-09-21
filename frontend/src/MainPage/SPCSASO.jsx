@@ -23,7 +23,7 @@ export default function SPCSASO({ backgroundUrl = "/images/campus-bg.jpg" }) {
       style={{ backgroundImage: `url(${backgroundUrl})` }}
     >
       {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-black/30 pointer-events-none"></div>
+      <div className="absolute inset-0 bg-black/70 pointer-events-none"></div>
 
       <div className="relative max-w-7xl mx-auto py-16 px-6 sm:px-8 lg:px-0">
         <div className="grid md:grid-cols-2 gap-12">

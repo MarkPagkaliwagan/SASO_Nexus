@@ -34,7 +34,7 @@ class StaffAuthController extends Controller
                 'id' => $staff->id,
                 'name' => $staff->name,
                 'email' => $staff->email,
-                'position' => $staff->position ?? null,
+                'department' => $staff->department ?? null,
             ],
             'token' => $token
         ]);

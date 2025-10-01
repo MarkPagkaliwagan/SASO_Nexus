@@ -99,11 +99,18 @@ export default function StaffPanel() {
 
   const validateForm = () => {
     const e = {};
-    if (!form.name.trim()) e.name = "Name is required";
-    if (!form.email.trim()) e.email = "Email is required";
+    if (!form.name || !form.name.trim()) e.name = "Name is required";
+    if (!form.email || !form.email.trim()) e.email = "Email is required";
     else if (!(form.email.includes("@") && form.email.includes(".")))
       e.email = "Invalid email";
+
+    // Password is required only on create (not when editing)
     if (!editingStaff && !form.password) e.password = "Password is required";
+
+    // Department: required on create (save) but optional on update
+    if (!editingStaff && (!form.department || !String(form.department).trim()))
+      e.department = "Department is required";
+
     return e;
   };
 
@@ -205,6 +212,16 @@ export default function StaffPanel() {
       .join("")
       .toUpperCase();
   };
+
+  // derive department options from existing staffs + some defaults
+  const departmentOptions = useMemo(() => {
+    const fromStaff = Array.from(
+      new Set(staffs.map((s) => s.department).filter(Boolean))
+    );
+    const defaults = ["Guidance Office", "Student Formation and Development Unit SFDU", "School Clinic", "Campus Ministry", "Sports Development Unit"];
+    // merge while preserving order and uniqueness
+    return Array.from(new Set([...fromStaff, ...defaults]));
+  }, [staffs]);
 
   // filtering/sorting
   const filtered = useMemo(() => {
@@ -382,14 +399,21 @@ export default function StaffPanel() {
             <label className="text-xs font-medium text-gray-600">
               Department
             </label>
-            <input
+            <select
               value={form.department}
-              onChange={(e) =>
-                setForm({ ...form, department: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
               className="mt-1 w-full border rounded px-3 py-2"
-              placeholder="e.g. Librarian"
-            />
+            >
+              <option value="">-- Select department --</option>
+              {departmentOptions.map((d) => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </select>
+            {errors.department && (
+              <div className="text-rose-600 text-xs mt-1">{errors.department}</div>
+            )}
           </div>
 
           <div className="relative">
@@ -405,9 +429,7 @@ export default function StaffPanel() {
             />
 
             {errors.password && (
-              <div className="text-rose-600 text-xs mt-1">
-                {errors.password}
-              </div>
+              <div className="text-rose-600 text-xs mt-1">{errors.password}</div>
             )}
           </div>
 

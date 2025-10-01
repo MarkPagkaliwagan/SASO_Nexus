@@ -21,6 +21,9 @@ use App\Http\Controllers\UploadController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\AnalyticsController;
 
+Route::get('/departments', [StaffAuthController::class, 'departments']);
+
+
 Route::get('/analytics/exit-bookings', [AnalyticsController::class, 'exitBookings']);
 
 Route::get('/analytics/applications', [AnalyticsController::class, 'applications']);

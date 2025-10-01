@@ -10,49 +10,49 @@ return new class extends Migration
     {
         Schema::table('applications', function (Blueprint $table) {
             // 🟩 COLLEGE (MAT, APT, GWA)
-            $table->string('mat_rs', 20)->nullable();
-            $table->string('mat_iq', 20)->nullable();
-            $table->string('mat_percentile', 20)->nullable();
-            $table->string('mat_classification', 50)->nullable();
+            $table->Text('mat_rs')->nullable();
+            $table->Text('mat_iq')->nullable();
+            $table->Text('mat_percentile')->nullable();
+            $table->Text('mat_classification')->nullable();
 
-            $table->string('apt_verbal_rs', 20)->nullable();
-            $table->string('apt_verbal_percentile', 20)->nullable();
-            $table->string('apt_verbal_classification', 50)->nullable();
+            $table->Text('apt_verbal_rs')->nullable();
+            $table->Text('apt_verbal_percentile')->nullable();
+            $table->Text('apt_verbal_classification')->nullable();
 
-            $table->string('apt_num_rs', 20)->nullable();
-            $table->string('apt_num_percentile', 20)->nullable();
-            $table->string('apt_num_classification', 50)->nullable();
+            $table->Text('apt_num_rs')->nullable();
+            $table->Text('apt_num_percentile')->nullable();
+            $table->Text('apt_num_classification')->nullable();
 
-            $table->string('apt_total_rs', 20)->nullable();
-            $table->string('apt_total_percentile', 20)->nullable();
-            $table->string('apt_total_classification', 50)->nullable();
+            $table->Text('apt_total_rs')->nullable();
+            $table->Text('apt_total_percentile')->nullable();
+            $table->Text('apt_total_classification')->nullable();
 
-            $table->string('gwa_percentile', 20)->nullable();
-            $table->string('gwa_classification', 50)->nullable();
+            $table->Text('gwa_percentile')->nullable();
+            $table->Text('gwa_classification')->nullable();
 
             // 🟦 SHS (CFIT & OLSAT)
             $table->string('cfit_rs', 20)->nullable();
             $table->string('cfit_iq', 20)->nullable();
             $table->string('cfit_pc', 20)->nullable();
-            $table->string('cfit_classification', 50)->nullable();
+            $table->Text('cfit_classification')->nullable();
 
             $table->string('olsat_verbal_rs', 20)->nullable();
             $table->string('olsat_verbal_ss', 20)->nullable();
             $table->string('olsat_verbal_percentile', 20)->nullable();
             $table->string('olsat_verbal_stanine', 20)->nullable();
-            $table->string('olsat_verbal_classification', 50)->nullable();
+            $table->Text('olsat_verbal_classification')->nullable();
 
             $table->string('olsat_nonverbal_rs', 20)->nullable();
             $table->string('olsat_nonverbal_ss', 20)->nullable();
             $table->string('olsat_nonverbal_pc', 20)->nullable();
             $table->string('olsat_nonverbal_stanine', 20)->nullable();
-            $table->string('olsat_nonverbal_classification', 50)->nullable();
+            $table->Text('olsat_nonverbal_classification')->nullable();
 
             $table->string('olsat_total_rs', 20)->nullable();
             $table->string('olsat_total_ss', 20)->nullable();
             $table->string('olsat_total_pc', 20)->nullable();
             $table->string('olsat_total_stanine', 20)->nullable();
-            $table->string('olsat_total_classification', 50)->nullable();
+            $table->Text('olsat_total_classification')->nullable();
 
             // 🟨 JHS (VCAT subtests)
             $table->string('vc_rs', 20)->nullable();
@@ -72,7 +72,7 @@ return new class extends Migration
             $table->string('overall_pc', 20)->nullable();
 
             // 🔖 Common
-            $table->string('remarks', 255)->nullable();
+            $table->Text('remarks')->nullable();
         });
     }
 

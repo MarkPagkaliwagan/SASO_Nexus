@@ -20,6 +20,13 @@ use App\Http\Controllers\ExamController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\ReportController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/reports', [ReportController::class, 'store']);
+    Route::get('/reports', [ReportController::class, 'index']);
+    
+});
 
 Route::get('/departments', [StaffAuthController::class, 'departments']);
 

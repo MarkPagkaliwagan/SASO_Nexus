@@ -13,6 +13,7 @@ import {
   ChevronUp,
   LogOut,
   Volume2,
+  FileText ,
   Calendar
 } from "react-feather";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +31,8 @@ import ExamList from "../DashboardContent/ExamList";
 import ExamScheduleAnalytics from "../DashboardContent/ExamScheduleAnalytics";
 import ExitAnalytics from "../DashboardContent/ExitAnalytics";
 import ExamsAnalytics from "../DashboardContent/ExamsAnalytics";
+import AdminReport from "../components/AdminReport";
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -79,6 +82,9 @@ export default function AdminDashboard() {
     { icon: <LogOut size={18} />, label: "Exit Interview", panel: "exit" },
     { icon: <UserCheck size={18} />, label: "Create Examination", panel: "ExamCreate" },
     { icon: <Clipboard size={18} />, label: "Examination List", panel: "ExamList" },
+    { icon: <FileText size={18} />, label: "Report", panel: "AdminReport" },
+
+    
   ];
 
   // ✅ Sidebar component
@@ -364,6 +370,9 @@ export default function AdminDashboard() {
         {activePanel === "ExamScheduleAnalytics" && <ExamScheduleAnalytics />}
         {activePanel === "ExitAnalytics" && <ExitAnalytics />}
         {activePanel === "ExamsAnalytics" && <ExamsAnalytics />}
+        {activePanel === "AdminReport" && <AdminReport />}
+
+        
 
       </main>
 

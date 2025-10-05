@@ -9,7 +9,7 @@ const cardHover = {
 
 export default function SanPabloCollegesDarkInlineLabel() {
   return (
-    <div className="relative font-sans bg-gray-900 text-white">
+    <div className="relative font-sans bg-emerald-900 text-white">
       <div className="max-w-5xl mx-auto py-12 px-4 sm:px-6 lg:px-0 space-y-12">
 
         {/* San Pablo Colleges Section */}

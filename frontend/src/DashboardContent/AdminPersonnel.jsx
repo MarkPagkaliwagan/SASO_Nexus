@@ -27,6 +27,7 @@ export default function AdminPersonnel() {
 
   const positions = ['Head', 'Staff', 'Student Assistant'];
   const units = [
+    'Student Affairs and Services Office (Head Only)',
     'Guidance Office',
     'Student Formation and Development Unit (SFDU)',
     'School Clinic',

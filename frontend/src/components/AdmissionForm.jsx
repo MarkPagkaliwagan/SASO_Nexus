@@ -850,6 +850,7 @@ export default function AdmissionForm() {
                       name="nameFamily"
                       value={formData.nameFamily}
                       onChange={handleChange}
+                      placeholder="Ex. Pagkaliwagan"
                       className={`mt-1 w-full border rounded p-2 ${
                         errors.includes("nameFamily")
                           ? "border-red-500"
@@ -863,6 +864,7 @@ export default function AdmissionForm() {
                       name="nameGiven"
                       value={formData.nameGiven}
                       onChange={handleChange}
+                      placeholder="Ex. Mark Jeus"
                       className={`mt-1 w-full border rounded p-2 ${
                         errors.includes("nameGiven")
                           ? "border-red-500"
@@ -876,6 +878,7 @@ export default function AdmissionForm() {
                       name="nameMiddle"
                       value={formData.nameMiddle}
                       onChange={handleChange}
+                      placeholder="Ex. Marco"
                       className={`mt-1 w-full border rounded p-2 ${
                         errors.includes("nameMiddle")
                           ? "border-red-500"

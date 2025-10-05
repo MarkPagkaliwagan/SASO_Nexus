@@ -9,6 +9,7 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  File,
   LogOut,
   Volume2,
   Calendar,
@@ -21,6 +22,7 @@ import sasoLogo from "../images/SASO.png";
 import AdminPersonnel from "../DashboardContent/AdminPersonnel";
 import AdminAnnouncement from "../DashboardContent/AdminAnnouncement";
 import EventPosting from "../DashboardContent/EventPosting";
+import ReportForm from "../components/ReportForm";
 
 export default function StaffDashboard() {
   const navigate = useNavigate();
@@ -140,6 +142,29 @@ export default function StaffDashboard() {
                     className="truncate"
                   >
                     Staff
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </button>
+
+            {/* 🔹 Reports */}
+            <button
+              onClick={() => {
+                setActivePanel("reports");
+                setIsMobileMenuOpen(false);
+              }}
+              className={`${itemBase}${itemHover}`}
+            >
+              <File size={18} />
+              <AnimatePresence>
+                {(isExpanded || isMobile) && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="truncate"
+                  >
+                    Reports
                   </motion.span>
                 )}
               </AnimatePresence>
@@ -322,6 +347,7 @@ export default function StaffDashboard() {
         {activePanel === "staffs" && <AdminPersonnel />}
         {activePanel === "announcement" && <AdminAnnouncement />}
         {activePanel === "events" && <EventPosting />}
+        {activePanel === "reports" && <ReportForm />}
       </main>
 
       {/* 🔹 Popup After Login */}
@@ -333,10 +359,7 @@ export default function StaffDashboard() {
             transition={{ duration: 0.3 }}
             className="rounded-xl shadow-lg p-6 md:p-8 max-w-md w-full text-center bg-white"
           >
-            <CheckCircle
-              size={48}
-              className="text-yellow-600 mx-auto mb-4"
-            />
+            <CheckCircle size={48} className="text-yellow-600 mx-auto mb-4" />
             <h2 className="text-xl font-bold truncate text-yellow-700">
               Login Verified
             </h2>

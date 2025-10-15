@@ -25,9 +25,9 @@ export default function AdminPersonnel() {
   const [sortByControl, setSortByControl] = useState('fullName');
   const [sortOrderControl, setSortOrderControl] = useState('asc');
 
-  const positions = ['Head', 'Staff', 'Student Assistant'];
+  const positions = ['Office In Charge', 'Staff','Chaplain', 'Student Assistant'];
   const units = [
-    'Student Affairs and Services Office (Head Only)',
+    'OIC, Student Affairs and Services Office',
     'Guidance Office',
     'Student Formation and Development Unit (SFDU)',
     'School Clinic',

@@ -4,6 +4,7 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronDown,
   Shield,
   Users,
   Leaf,
@@ -19,11 +20,13 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [loginDropdownOpen, setLoginDropdownOpen] = useState(false);
+  const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
   const lastScroll = useRef(0);
   const menuRef = useRef(null);
   const loginDropdownRef = useRef(null);
+  const servicesDropdownRef = useRef(null);
 
   const adminToken = localStorage.getItem("token");
   const staffToken = localStorage.getItem("staffToken");
@@ -51,6 +54,12 @@ export default function Navbar() {
         !loginDropdownRef.current.contains(e.target)
       ) {
         setLoginDropdownOpen(false);
+      }
+      if (
+        servicesDropdownRef.current &&
+        !servicesDropdownRef.current.contains(e.target)
+      ) {
+        setServicesDropdownOpen(false);
       }
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false);
@@ -80,6 +89,7 @@ export default function Navbar() {
   useEffect(() => {
     setMenuOpen(false);
     setLoginDropdownOpen(false);
+    setServicesDropdownOpen(false);
   }, [location.pathname]);
 
   const navLinks = [
@@ -88,6 +98,14 @@ export default function Navbar() {
     { name: "Announcement", path: "/announcement" },
     { name: "Exit Schedule", path: "/Exit" },
     { name: "Personnel", path: "/personnel" },
+  ];
+
+  const services = [
+    { name: "Guidance Office", path: "/services/guidance" },
+    { name: "Student Formation and Development Unit (SFDU)", path: "/services/sfdu" },
+    { name: "School Clinic", path: "/services/clinic" },
+    { name: "Campus Ministry", path: "/services/ministry" },
+    { name: "Sports Development Unit", path: "/services/sports" },
   ];
 
   const isActive = (path) => location.pathname === path;
@@ -100,7 +118,6 @@ export default function Navbar() {
         transition={{ type: "spring", stiffness: 140, damping: 22 }}
         className="fixed top-0 left-0 w-full z-50"
       >
-        {/* glass + subtle border — modern 2025 palette */}
         <div className="backdrop-blur-sm bg-white/60 dark:bg-slate-900/50 border-b border-slate-200/30 dark:border-slate-700/40">
           <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3 lg:py-4 flex items-center gap-4 justify-between">
             {/* Logo / Brand */}
@@ -138,7 +155,6 @@ export default function Navbar() {
                     }`}
                   >
                     <span className="relative z-10">{link.name}</span>
-                    {/* animated underline */}
                     <span
                       className={`absolute left-0 -bottom-1 h-0.5 rounded-full bg-amber-400 transition-all duration-250 transform origin-left ${
                         isActive(link.path) ? "w-full" : "w-0 group-hover:w-full"
@@ -146,9 +162,47 @@ export default function Navbar() {
                     />
                   </Link>
                 ))}
+
+                {/* Services Dropdown */}
+                <div className="relative" ref={servicesDropdownRef}>
+                  <button
+                    onClick={() => setServicesDropdownOpen((s) => !s)}
+                    className="group relative px-2 py-1 inline-flex items-center gap-1 text-slate-800 dark:text-slate-100/90 hover:-translate-y-0.5 transition"
+                  >
+                    <span>Services</span>
+                    <ChevronDown size={16} />
+                  </button>
+
+                  <AnimatePresence>
+                    {servicesDropdownOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.18 }}
+                        className="absolute left-0 mt-2 w-72 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200/40 z-30"
+                      >
+                        <ul className="py-2">
+                          {services.map((service) => (
+                            <li key={service.name}>
+                              <Link
+                                to={service.path}
+                                onClick={() => setServicesDropdownOpen(false)}
+                                className="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+                              >
+                                {service.name}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </nav>
             )}
 
+            {/* Right Side */}
             <div className="flex items-center gap-3">
               {/* dark mode */}
               <button
@@ -160,7 +214,7 @@ export default function Navbar() {
                 {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700" />}
               </button>
 
-              {/* Login + dropdown (desktop) */}
+              {/* Login Dropdown */}
               {!isLoggedIn && (
                 <div className="relative" ref={loginDropdownRef}>
                   <button
@@ -227,18 +281,17 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile drawer */}
+        {/* Mobile Drawer */}
         <AnimatePresence>
           {menuOpen && !isLoggedIn && (
             <motion.div
               ref={menuRef}
-              initial={{ x: '100%' }}
+              initial={{ x: "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', stiffness: 220, damping: 28 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 220, damping: 28 }}
               className="fixed inset-0 z-40 pointer-events-auto"
             >
-              {/* backdrop */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 0.45 }}
@@ -278,6 +331,24 @@ export default function Navbar() {
                       </Link>
                     </motion.div>
                   ))}
+
+                  {/* Services section for mobile */}
+                  <div className="mt-4">
+                    <h4 className="text-xl font-semibold mb-2 text-amber-300">Services</h4>
+                    <ul className="flex flex-col gap-2">
+                      {services.map((s) => (
+                        <li key={s.name}>
+                          <Link
+                            to={s.path}
+                            onClick={() => setMenuOpen(false)}
+                            className="block pl-8 text-lg hover:text-amber-400 transition"
+                          >
+                            {s.name}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </motion.nav>
 
                 <div className="px-6 pb-10 flex flex-col gap-3">
@@ -302,7 +373,6 @@ export default function Navbar() {
           )}
         </AnimatePresence>
       </motion.header>
-
     </>
   );
 }

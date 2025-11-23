@@ -24,8 +24,9 @@ export default function AdminPersonnel() {
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [sortByControl, setSortByControl] = useState('fullName');
   const [sortOrderControl, setSortOrderControl] = useState('asc');
+  const [customPosition, setCustomPosition] = useState('');
 
-  const positions = ['Office In Charge', 'Staff','Chaplain', 'Student Assistant'];
+  const positions = ['Office In Charge', 'Staff', 'Chaplain', 'Student Assistant'];
   const units = [
     'OIC, Student Affairs and Services Office',
     'Guidance Office',
@@ -119,8 +120,12 @@ export default function AdminPersonnel() {
     payload.append('fullName', formData.fullName);
     payload.append('email', formData.email);
     payload.append('contact', formData.contact);
-    payload.append('position', formData.position);
     payload.append('unit', formData.unit);
+    if (formData.position === "Others") {
+      payload.append('position', customPosition);
+    } else {
+      payload.append('position', formData.position);
+    }
 
     if (formData.profile) {
       payload.append('profile', formData.profile);
@@ -314,10 +319,16 @@ export default function AdminPersonnel() {
             {/* Position */}
             <div className="flex flex-col">
               <label className="font-semibold text-gray-700 mb-1">Position</label>
+
               <select
                 name="position"
                 value={formData.position}
-                onChange={handleChange}
+                onChange={(e) => {
+                  handleChange(e);
+                  if (e.target.value !== "Others") {
+                    setCustomPosition("");
+                  }
+                }}
                 required
                 className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
               >
@@ -325,8 +336,21 @@ export default function AdminPersonnel() {
                 {positions.map((pos) => (
                   <option key={pos} value={pos}>{pos}</option>
                 ))}
+                <option value="Others">Others</option>
               </select>
+
+              {formData.position === "Others" && (
+                <input
+                  type="text"
+                  placeholder="Enter custom position"
+                  value={customPosition}
+                  onChange={(e) => setCustomPosition(e.target.value)}
+                  className="mt-2 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+                  required
+                />
+              )}
             </div>
+
 
             {/* Unit */}
             <div className="flex flex-col">

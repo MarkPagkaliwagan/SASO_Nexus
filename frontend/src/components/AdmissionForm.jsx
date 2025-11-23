@@ -165,13 +165,45 @@ export default function AdmissionForm() {
     }
   }, [isTransferee]);
 
+  // Function para i-compute ang age base sa birthday
+  const calculateAge = (dob) => {
+    if (!dob) return "";
+    const birthDate = new Date(dob);
+    const today = new Date();
+
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  };
+
+  // Updated handleChange function
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((s) => ({
-      ...s,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+
+    // kapag dob ang binago, auto-compute age
+    if (name === "dob") {
+      const computedAge = calculateAge(value);
+      setFormData((prev) => ({
+        ...prev,
+        dob: value,
+        age: computedAge, // auto update age
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      }));
+    }
   };
+
 
   const handlePhotoChange = (e) => {
     const f = e.target.files[0];
@@ -270,12 +302,12 @@ export default function AdmissionForm() {
     // Transferee conditional
     const transfereeFields = isTransferee
       ? [
-          "transferee_school_name",
-          "transferee_course",
-          "transferee_major",
-          "transferee_school_address",
-          "transferee_school_year_attended",
-        ]
+        "transferee_school_name",
+        "transferee_course",
+        "transferee_major",
+        "transferee_school_address",
+        "transferee_school_year_attended",
+      ]
       : [];
 
     // Schedule & declaration
@@ -482,11 +514,10 @@ export default function AdmissionForm() {
                     setApplicationType(a.key);
                     clearTypeSpecificFields();
                   }}
-                  className={`flex items-center gap-2 p-3 rounded-lg border transition transform hover:-translate-y-1 hover:shadow-md ${
-                    applicationType === a.key
-                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent"
-                      : "bg-white text-slate-700"
-                  }`}
+                  className={`flex items-center gap-2 p-3 rounded-lg border transition transform hover:-translate-y-1 hover:shadow-md ${applicationType === a.key
+                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent"
+                    : "bg-white text-slate-700"
+                    }`}
                 >
                   <FiChevronDown className="w-5 h-5" />
                   <span className="font-medium">{a.label}</span>
@@ -514,11 +545,10 @@ export default function AdmissionForm() {
                     name="academicYear"
                     value={formData.academicYear}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("academicYear")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("academicYear")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Academic Year</option>
                     {Array.from({ length: 5 }).map((_, i) => {
@@ -539,11 +569,10 @@ export default function AdmissionForm() {
                     name="semester"
                     value={formData.semester}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("semester")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("semester")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Semester</option>
                     <option>First Semester</option>
@@ -560,11 +589,10 @@ export default function AdmissionForm() {
                       name="firstChoice"
                       value={formData.firstChoice}
                       onChange={handleChange}
-                      className={`w-1/2 border rounded p-2 ${
-                        errors.includes("firstChoice")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`w-1/2 border rounded p-2 ${errors.includes("firstChoice")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     >
                       <option value="">1st Choice</option>
                       {collegeOptions}
@@ -573,11 +601,10 @@ export default function AdmissionForm() {
                       name="secondChoice"
                       value={formData.secondChoice}
                       onChange={handleChange}
-                      className={`w-1/2 border rounded p-2 ${
-                        errors.includes("secondChoice")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`w-1/2 border rounded p-2 ${errors.includes("secondChoice")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     >
                       <option value="">2nd Choice</option>
                       {collegeOptions}
@@ -605,11 +632,10 @@ export default function AdmissionForm() {
                     name="academicYear"
                     value={formData.academicYear}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("academicYear")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("academicYear")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Academic Year</option>
                     {Array.from({ length: 5 }).map((_, i) => {
@@ -630,11 +656,10 @@ export default function AdmissionForm() {
                     name="shsGradeLevel"
                     value={formData.shsGradeLevel}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("shsGradeLevel")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("shsGradeLevel")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Grade</option>
                     <option>Grade 11</option>
@@ -648,11 +673,10 @@ export default function AdmissionForm() {
                     name="shsStrand"
                     value={formData.shsStrand}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("shsStrand")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("shsStrand")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Strand</option>
                     <optgroup label="GENERAL ACADEMIC TRACK">
@@ -695,11 +719,10 @@ export default function AdmissionForm() {
                     name="academicYear"
                     value={formData.academicYear}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("academicYear")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("academicYear")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Academic Year</option>
                     {Array.from({ length: 5 }).map((_, i) => {
@@ -720,11 +743,10 @@ export default function AdmissionForm() {
                     name="gradeLevel"
                     value={formData.gradeLevel}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("gradeLevel")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("gradeLevel")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Grade</option>
                     <option>Grade 7</option>
@@ -754,11 +776,10 @@ export default function AdmissionForm() {
                     name="academicYear"
                     value={formData.academicYear}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("academicYear")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("academicYear")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Academic Year</option>
                     {Array.from({ length: 5 }).map((_, i) => {
@@ -779,11 +800,10 @@ export default function AdmissionForm() {
                     name="gradeLevel"
                     value={formData.gradeLevel}
                     onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("gradeLevel")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`mt-1 w-full border rounded p-2 ${errors.includes("gradeLevel")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   >
                     <option value="">Select Grade</option>
                     <option>Nursery</option>
@@ -831,11 +851,10 @@ export default function AdmissionForm() {
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoChange}
-                    className={`hidden ${
-                      errors.includes("declaration")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`hidden ${errors.includes("declaration")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   Upload 2x2
                 </label>
@@ -851,11 +870,10 @@ export default function AdmissionForm() {
                       value={formData.nameFamily}
                       onChange={handleChange}
                       placeholder="Ex. Pagkaliwagan"
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("nameFamily")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("nameFamily")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
                   <div>
@@ -865,11 +883,10 @@ export default function AdmissionForm() {
                       value={formData.nameGiven}
                       onChange={handleChange}
                       placeholder="Ex. Mark Jeus"
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("nameGiven")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("nameGiven")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
                   <div>
@@ -879,11 +896,10 @@ export default function AdmissionForm() {
                       value={formData.nameMiddle}
                       onChange={handleChange}
                       placeholder="Ex. Marco"
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("nameMiddle")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("nameMiddle")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
 
@@ -893,11 +909,10 @@ export default function AdmissionForm() {
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("gender")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("gender")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     >
                       <option value="">Select</option>
                       <option>Male</option>
@@ -912,11 +927,10 @@ export default function AdmissionForm() {
                       name="address"
                       value={formData.address}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("address")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("address")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                       placeholder="House no., Street"
                     />
                   </div>
@@ -927,11 +941,10 @@ export default function AdmissionForm() {
                       name="barangay"
                       value={formData.barangay}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("barangay")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("barangay")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
 
@@ -943,11 +956,10 @@ export default function AdmissionForm() {
                       name="city"
                       value={formData.city}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("city")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("city")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
 
@@ -957,11 +969,10 @@ export default function AdmissionForm() {
                       name="zip"
                       value={formData.zip}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("zip")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("zip")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
 
@@ -971,11 +982,10 @@ export default function AdmissionForm() {
                       name="tel"
                       value={formData.tel}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("tel")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("tel")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
 
@@ -983,29 +993,77 @@ export default function AdmissionForm() {
                     <label className="block text-sm">Mobile No.</label>
                     <input
                       name="mobile"
+                      type="tel"
                       value={formData.mobile}
-                      onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("mobile")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      onChange={(e) => {
+                        const { value } = e.target;
+
+                        // Allow only numbers
+                        const numericValue = value.replace(/\D/g, "");
+
+                        setFormData((prev) => ({ ...prev, mobile: numericValue }));
+
+                        // 🔹 Philippine format (11 digits, starts with 09)
+                        const mobilePattern = /^09\d{9}$/;
+
+                        if (!mobilePattern.test(numericValue) && numericValue !== "") {
+                          if (!errors.includes("mobile")) {
+                            setErrors((prev) => [...prev, "mobile"]);
+                          }
+                        } else {
+                          setErrors((prev) => prev.filter((err) => err !== "mobile"));
+                        }
+                      }}
+                      maxLength={11} // optional: limit to 11 digits
+                      placeholder="09XXXXXXXXX"
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("mobile") ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
+
+                    {/* 🔹 Show error message while typing */}
+                    {errors.includes("mobile") && formData.mobile !== "" && (
+                      <p className="text-red-500 text-sm mt-1">
+                        ⚠️ Please enter a valid 11-digit mobile number (e.g. 09123456789)
+                      </p>
+                    )}
                   </div>
+
 
                   <div>
                     <label className="block text-sm">E-mail Address</label>
                     <input
                       name="email"
+                      type="email"
                       value={formData.email}
-                      onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("email")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      onChange={(e) => {
+                        const { value } = e.target;
+                        setFormData((prev) => ({ ...prev, email: value }));
+
+                        // 🔹 Regex for strict email format checking
+                        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+                        // Kung invalid format habang nagta-type
+                        if (!emailPattern.test(value) && value !== "") {
+                          if (!errors.includes("email")) {
+                            setErrors((prev) => [...prev, "email"]);
+                          }
+                        } else {
+                          // Kung valid na, tanggalin sa error list
+                          setErrors((prev) => prev.filter((err) => err !== "email"));
+                        }
+                      }}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("email") ? "border-red-500" : "border-gray-300"
+                        }`}
                     />
+
+                    {/* 🔹 Show live error message */}
+                    {errors.includes("email") && formData.email !== "" && (
+                      <p className="text-red-500 text-sm mt-1">
+                        ⚠️ Please enter a valid email address (e.g. user@example.com)
+                      </p>
+                    )}
                   </div>
+
 
                   <div>
                     <label className="block text-sm">Date of Birth</label>
@@ -1014,11 +1072,10 @@ export default function AdmissionForm() {
                       value={formData.dob}
                       onChange={handleChange}
                       type="date"
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("dob")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("dob")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
 
@@ -1028,11 +1085,10 @@ export default function AdmissionForm() {
                       name="placeOfBirth"
                       value={formData.placeOfBirth}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("placeOfBirth")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("placeOfBirth")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
 
@@ -1041,14 +1097,14 @@ export default function AdmissionForm() {
                     <input
                       name="age"
                       value={formData.age}
-                      onChange={handleChange}
+                      readOnly // ✅ para auto-fill lang
                       type="number"
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("age")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 bg-gray-100 ${errors.includes("age")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
+
                   </div>
 
                   <div>
@@ -1057,9 +1113,8 @@ export default function AdmissionForm() {
                       name="religion"
                       value={formData.religion}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("religion") ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("religion") ? "border-red-500" : "border-gray-300"
+                        }`}
                     >
                       <option value="">Select Religion</option>
                       <option value="Roman Catholic">Roman Catholic</option>
@@ -1077,9 +1132,8 @@ export default function AdmissionForm() {
                       name="civilStatus"
                       value={formData.civilStatus}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("civilStatus") ? "border-red-500" : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("civilStatus") ? "border-red-500" : "border-gray-300"
+                        }`}
                     >
                       <option value="">Select Civil Status</option>
                       <option value="Single">Single</option>
@@ -1093,21 +1147,20 @@ export default function AdmissionForm() {
 
 
                   <div>
-                  <label className="block text-sm">Citizenship</label>
-                  <select
-                    name="citizenship"
-                    value={formData.citizenship}
-                    onChange={handleChange}
-                    className={`mt-1 w-full border rounded p-2 ${
-                      errors.includes("citizenship") ? "border-red-500" : "border-gray-300"
-                    }`}
-                  >
-                    <option value="">Select Citizenship</option>
-                    <option value="Filipino">Filipino</option>
-                    <option value="Foreign">Foreign</option>
-                    {/* Pwede kang magdagdag pa ng iba pang options dito */}
-                  </select>
-                </div>
+                    <label className="block text-sm">Citizenship</label>
+                    <select
+                      name="citizenship"
+                      value={formData.citizenship}
+                      onChange={handleChange}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("citizenship") ? "border-red-500" : "border-gray-300"
+                        }`}
+                    >
+                      <option value="">Select Citizenship</option>
+                      <option value="Filipino">Filipino</option>
+                      <option value="Foreign">Foreign</option>
+                      {/* Pwede kang magdagdag pa ng iba pang options dito */}
+                    </select>
+                  </div>
 
 
                   <div>
@@ -1116,11 +1169,10 @@ export default function AdmissionForm() {
                       name="residence"
                       value={formData.residence}
                       onChange={handleChange}
-                      className={`mt-1 w-full border rounded p-2 ${
-                        errors.includes("residence")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`mt-1 w-full border rounded p-2 ${errors.includes("residence")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     >
                       <option value="">Select</option>
                       <option>With Parents</option>
@@ -1146,99 +1198,90 @@ export default function AdmissionForm() {
                     value={formData.father_name}
                     onChange={handleChange}
                     placeholder="Name"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_name")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_name")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_address"
                     value={formData.father_address}
                     onChange={handleChange}
                     placeholder="Home Address"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_address")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_address")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_tel"
                     value={formData.father_tel}
                     onChange={handleChange}
                     placeholder="Tel/Mobile"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_tel")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_tel")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_citizenship"
                     value={formData.father_citizenship}
                     onChange={handleChange}
                     placeholder="Citizenship"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_citizenship")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_citizenship")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_occupation"
                     value={formData.father_occupation}
                     onChange={handleChange}
                     placeholder="Occupation"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_occupation")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_occupation")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_office_address"
                     value={formData.father_office_address}
                     onChange={handleChange}
                     placeholder="Office Address"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_office_address")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_office_address")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_office_tel"
                     value={formData.father_office_tel}
                     onChange={handleChange}
                     placeholder="Office Tel"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_office_tel")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_office_tel")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_education"
                     value={formData.father_education}
                     onChange={handleChange}
                     placeholder="Educational Attainment"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_education")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_education")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="father_last_school"
                     value={formData.father_last_school}
                     onChange={handleChange}
                     placeholder="Last School Attended"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("father_last_school")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("father_last_school")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                 </div>
 
@@ -1281,99 +1324,90 @@ export default function AdmissionForm() {
                     value={formData.mother_name}
                     onChange={handleChange}
                     placeholder="Name"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_name")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_name")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_address"
                     value={formData.mother_address}
                     onChange={handleChange}
                     placeholder="Home Address"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_address")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_address")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_tel"
                     value={formData.mother_tel}
                     onChange={handleChange}
                     placeholder="Tel/Mobile"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_tel")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_tel")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_citizenship"
                     value={formData.mother_citizenship}
                     onChange={handleChange}
                     placeholder="Citizenship"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_citizenship")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_citizenship")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_occupation"
                     value={formData.mother_occupation}
                     onChange={handleChange}
                     placeholder="Occupation"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_occupation")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_occupation")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_office_address"
                     value={formData.mother_office_address}
                     onChange={handleChange}
                     placeholder="Office Address"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_office_address")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_office_address")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_office_tel"
                     value={formData.mother_office_tel}
                     onChange={handleChange}
                     placeholder="Office Tel"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_office_tel")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_office_tel")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_education"
                     value={formData.mother_education}
                     onChange={handleChange}
                     placeholder="Educational Attainment"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_education")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_education")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="mother_last_school"
                     value={formData.mother_last_school}
                     onChange={handleChange}
                     placeholder="Last School Attended"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("mother_last_school")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("mother_last_school")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                 </div>
 
@@ -1385,22 +1419,20 @@ export default function AdmissionForm() {
                       value={formData.parent_alumni_year}
                       onChange={handleChange}
                       placeholder="School year graduated"
-                      className={`w-full border rounded p-2 ${
-                        errors.includes("parent_alumni_year")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`w-full border rounded p-2 ${errors.includes("parent_alumni_year")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                     <input
                       name="parent_alumni_level_course"
                       value={formData.parent_alumni_level_course}
                       onChange={handleChange}
                       placeholder="Level/Course"
-                      className={`w-full border rounded p-2 ${
-                        errors.includes("parent_alumni_level_course")
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
+                      className={`w-full border rounded p-2 ${errors.includes("parent_alumni_level_course")
+                        ? "border-red-500"
+                        : "border-gray-300"
+                        }`}
                     />
                   </div>
                 )}
@@ -1435,55 +1467,50 @@ export default function AdmissionForm() {
                     value={formData.transferee_school_name}
                     onChange={handleChange}
                     placeholder="Name of School Last Attended"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("transferee_school_name")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("transferee_school_name")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="transferee_course"
                     value={formData.transferee_course}
                     onChange={handleChange}
                     placeholder="Course/Degree"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("transferee_course")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("transferee_course")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="transferee_major"
                     value={formData.transferee_major}
                     onChange={handleChange}
                     placeholder="Major"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("transferee_major")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("transferee_major")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="transferee_school_address"
                     value={formData.transferee_school_address}
                     onChange={handleChange}
                     placeholder="School Address"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("transferee_school_address")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("transferee_school_address")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                   <input
                     name="transferee_school_year_attended"
                     value={formData.transferee_school_year_attended}
                     onChange={handleChange}
                     placeholder="School Year Attended"
-                    className={`w-full border rounded p-2 ${
-                      errors.includes("transferee_school_year_attended")
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    }`}
+                    className={`w-full border rounded p-2 ${errors.includes("transferee_school_year_attended")
+                      ? "border-red-500"
+                      : "border-gray-300"
+                      }`}
                   />
                 </div>
               </div>
@@ -1499,33 +1526,30 @@ export default function AdmissionForm() {
                 value={formData.lrn}
                 onChange={handleChange}
                 placeholder="LRN No."
-                className={`w-full border rounded p-2 ${
-                  errors.includes("last_school_name")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("last_school_name")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
               <input
                 name="last_school_name"
                 value={formData.last_school_name}
                 onChange={handleChange}
                 placeholder="Name of School Last Attended"
-                className={`w-full border rounded p-2 ${
-                  errors.includes("last_school_name")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("last_school_name")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
               <input
                 name="last_school_address"
                 value={formData.last_school_address}
                 onChange={handleChange}
                 placeholder="School Address"
-                className={`w-full border rounded p-2 ${
-                  errors.includes("last_school_address")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("last_school_address")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
             </div>
 
@@ -1535,33 +1559,30 @@ export default function AdmissionForm() {
                 value={formData.track}
                 onChange={handleChange}
                 placeholder="Track"
-                className={`w-full border rounded p-2 ${
-                  errors.includes("track")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("track")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
               <input
                 name="strand"
                 value={formData.strand}
                 onChange={handleChange}
                 placeholder="Strand"
-                className={`w-full border rounded p-2 ${
-                  errors.includes("strand")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("strand")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
               <input
                 name="school_year_attended"
                 value={formData.school_year_attended}
                 onChange={handleChange}
                 placeholder="School Year Attended"
-                className={`w-full border rounded p-2 ${
-                  errors.includes("school_year_attended")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("school_year_attended")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
             </div>
 
@@ -1571,22 +1592,20 @@ export default function AdmissionForm() {
                 value={formData.date_of_graduation}
                 onChange={handleChange}
                 placeholder="Date of Graduation"
-                className={`w-full border rounded p-2 ${
-                  errors.includes("date_of_graduation")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("date_of_graduation")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
               <input
                 name="honors"
                 value={formData.honors}
                 onChange={handleChange}
                 placeholder="List of Honors/Awards"
-                className={`w-full border rounded p-2 ${
-                  errors.includes("honors")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("honors")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
             </div>
           </motion.section>
@@ -1599,11 +1618,10 @@ export default function AdmissionForm() {
                 name="schedule_id"
                 value={formData.schedule_id}
                 onChange={handleChange}
-                className={`w-full border rounded p-2 ${
-                  errors.includes("schedule_id")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-full border rounded p-2 ${errors.includes("schedule_id")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               >
                 <option value="">Select date & time</option>
                 {schedules.map((s) => (
@@ -1649,11 +1667,10 @@ export default function AdmissionForm() {
                 type="checkbox"
                 checked={formData.declaration}
                 onChange={handleChange}
-                className={`w-4 h-4 ${
-                  errors.includes("declaration")
-                    ? "border-red-500"
-                    : "border-gray-300"
-                }`}
+                className={`w-4 h-4 ${errors.includes("declaration")
+                  ? "border-red-500"
+                  : "border-gray-300"
+                  }`}
               />
               <span>
                 I have read and fully understood the above declaration and give

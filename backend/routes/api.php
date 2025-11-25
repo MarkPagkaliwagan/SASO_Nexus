@@ -21,6 +21,10 @@ use App\Http\Controllers\UploadController;
 use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\CollegeAnalyticsController;
+
+Route::get('/college-analytics', [CollegeAnalyticsController::class, 'index']);
+Route::get('/analytics/course/{course}', [CollegeAnalyticsController::class, 'courseDetail']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/reports', [ReportController::class, 'store']);

@@ -32,6 +32,7 @@ import ExamScheduleAnalytics from "../DashboardContent/ExamScheduleAnalytics";
 import ExitAnalytics from "../DashboardContent/ExitAnalytics";
 import ExamsAnalytics from "../DashboardContent/ExamsAnalytics";
 import AdminReport from "../components/AdminReport";
+import CollegeAnalytics from "../DashboardContent/CollegeAnalytics";
 
 
 export default function AdminDashboard() {
@@ -179,6 +180,13 @@ export default function AdminDashboard() {
                       Examination Analytics
                     </button>
 
+                    <button
+                      onClick={() => { setActivePanel("CollegeAnalytics"); setIsMobileMenuOpen(false); }}
+                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
+                    >
+                      <Clipboard size={16} />
+                      College Analytics
+                    </button>
                     
 
                     {/* 🔹 Note: Add more Dashboard dropdown items below as needed */}
@@ -373,6 +381,7 @@ export default function AdminDashboard() {
         {activePanel === "ExitAnalytics" && <ExitAnalytics />}
         {activePanel === "ExamsAnalytics" && <ExamsAnalytics />}
         {activePanel === "AdminReport" && <AdminReport />}
+        {activePanel === "CollegeAnalytics" && <CollegeAnalytics />}
 
         
 

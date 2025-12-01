@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
-import { FiSearch, FiDownload, FiTrash2 } from "react-icons/fi";
+import {
+  FiSearch,
+  FiDownload,
+  FiTrash2,
+  FiSend,
+  FiUser,
+  FiMail,
+  FiClock,
+  FiStar,
+  FiChevronUp,
+} from "react-icons/fi";
 
 const LEVELS = ["college", "shs", "jhs", "gs"];
 const LEVEL_LABELS = {
@@ -10,13 +20,30 @@ const LEVEL_LABELS = {
   gs: "Grade School",
 };
 
+// Normalizes many possible ways the level might be stored in the data
+const normalizeLevel = (raw) => {
+  if (!raw && raw !== 0) return null;
+  const r = String(raw).toLowerCase().trim();
+  const collegeKeys = ["college", "col", "tertiary", "undergraduate", "higher"];
+  const shsKeys = ["shs", "senior high", "senior high school", "grade 11", "grade 12", "senior"];
+  const jhsKeys = ["jhs", "junior high", "junior high school", "grade 7", "grade 8", "grade 9", "grade 10"];
+  const gsKeys = ["gs", "grade school", "elementary", "elementary school", "grade 1", "grade 6"];
+
+  if (collegeKeys.some((k) => r.includes(k))) return "college";
+  if (shsKeys.some((k) => r.includes(k))) return "shs";
+  if (jhsKeys.some((k) => r.includes(k))) return "jhs";
+  if (gsKeys.some((k) => r.includes(k))) return "gs";
+  return null;
+};
+
 export default function ExamList() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchPerLevel, setSearchPerLevel] = useState({});
   const [exporting, setExporting] = useState(false);
-  const [deletingIds, setDeletingIds] = useState([]); // track deletions
+  const [deletingIds, setDeletingIds] = useState([]);
+  const [selectedScoreField, setSelectedScoreField] = useState({});
 
   useEffect(() => {
     let mounted = true;
@@ -42,6 +69,31 @@ export default function ExamList() {
     };
   }, []);
 
+  const SCORE_OPTIONS_BY_LEVEL = {
+    college: [
+      { label: "CFIT RS", value: "mat_rs" },
+      { label: "CQT RS VERBAL", value: "apt_verbal_rs" },
+      { label: "CQT NUMERICAL", value: "apt_num_rs" },
+    ],
+    shs: [
+      { label: "CFIT RS", value: "cfit_rs" },
+      { label: "OLSAT Verbal RS", value: "olsat_verbal_rs" },
+      { label: "OLSAT Non-Verbal RS", value: "olsat_nonverbal_rs" },
+    ],
+    jhs: [
+      { label: "Verbal VC RS", value: "vc_rs" },
+      { label: "Verbal VR RS", value: "vr_rs" },
+      { label: "Non-Verbal FR RS", value: "fr_rs" },
+      { label: "Non-Verbal QR RS", value: "qr_rs" },
+    ],
+    gs: [
+      { label: "Verbal VC RS", value: "vc_rs" },
+      { label: "Verbal VR RS", value: "vr_rs" },
+      { label: "Non-Verbal FR RS", value: "fr_rs" },
+      { label: "Non-Verbal QR RS", value: "qr_rs" },
+    ],
+  };
+
   const safeDetails = (raw) => {
     if (!raw) return {};
     if (typeof raw === "object") return raw;
@@ -57,10 +109,21 @@ export default function ExamList() {
     submissions.forEach((raw) => {
       const s = { ...raw };
       s.details = safeDetails(s.details);
-      const lvlRaw = (s.details?.application_level || "").toString().trim().toLowerCase();
-      const lvl = LEVELS.includes(lvlRaw) ? lvlRaw : null;
-      if (lvl) g[lvl].push(s);
+      const d = s.details || {};
+
+      let lvl = normalizeLevel(d.application_level || d.level || d.applicationLevel || "");
+      if (!lvl) {
+        if (d.college_choice_1 || d.college_academic_year || d.college_choice_2 || d.college_semester) lvl = "college";
+        else if (d.shs_strand || d.shs_grade_level) lvl = "shs";
+        else if (d.jhs_grade_level) lvl = "jhs";
+        else if (d.gs_grade_level || d.grade_level || d.elementary_grade) lvl = "gs";
+      }
+      if (!lvl && s.exam && s.exam.level) lvl = normalizeLevel(s.exam.level);
+
+      if (lvl && LEVELS.includes(lvl)) g[lvl].push(s);
+      else g.college.push(s);
     });
+
     Object.keys(g).forEach((k) =>
       g[k].sort((a, b) => {
         const na = `${a.details?.last_name || ""} ${a.details?.first_name || ""}`.toLowerCase();
@@ -73,6 +136,7 @@ export default function ExamList() {
 
   const commonHeaders = [
     "ID",
+    "Application ID",
     "Exam",
     "First Name",
     "Last Name",
@@ -96,13 +160,14 @@ export default function ExamList() {
       const d = s.details || {};
       const base = {
         ID: s.id,
+        "Application ID": d.application_id || d.applicationId || "-",
         Exam: s.exam?.title || `Exam #${s.exam_id}`,
         "First Name": d.first_name || "-",
         "Last Name": d.last_name || "-",
         Email: d.email || "-",
         Phone: d.phone || "-",
         Gender: d.gender || "-",
-        "Date of Birth": d.date_of_birth || "-",
+        "Date of Birth": d.date_of_birth || d.dob || "-",
         Address: d.address || "-",
       };
       if (lvl === "college") {
@@ -116,13 +181,30 @@ export default function ExamList() {
       } else if (lvl === "jhs") {
         base["JHS Grade Level"] = d.jhs_grade_level || "-";
       } else if (lvl === "gs") {
-        base["GS Grade Level"] = d.gs_grade_level || "-";
+        base["GS Grade Level"] = d.gs_grade_level || d.grade_level || "-";
       }
       base["Score"] = s.score ?? "-";
       base["Max Score"] = s.max_score ?? "-";
       base["Submitted At"] = s.created_at ? new Date(s.created_at).toLocaleString() : "-";
       return base;
     });
+
+  const sendScore = async (submissionId, applicationId, score) => {
+    const field = selectedScoreField[submissionId];
+    if (!field) return;
+    try {
+      const res = await fetch(`/api/applications/${applicationId}/update-score`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ field, score }),
+      });
+      if (!res.ok) throw new Error("Failed to save score");
+      alert("Score saved successfully!");
+    } catch (err) {
+      console.error(err);
+      alert("Error saving score. Check console.");
+    }
+  };
 
   const exportToExcel = (lvl, items) => {
     if (!items || items.length === 0) {
@@ -193,22 +275,17 @@ export default function ExamList() {
 
   const isDeleting = (id) => deletingIds.includes(id);
 
-  // DELETE action
   const deleteSubmission = async (id) => {
-    // simple confirmation
     const ok = window.confirm("Delete this submission? This action cannot be undone.");
     if (!ok) return;
 
     setDeletingIds((s) => (s.includes(id) ? s : [...s, id]));
     try {
-      // Assumes backend supports DELETE /api/submissions/:id
       const res = await fetch(`/api/submissions/${id}`, { method: "DELETE" });
       if (!res.ok) {
         const text = await res.text().catch(() => null);
-        throw new Error(`Delete failed (${res.status}) ${text || ''}`);
+        throw new Error(`Delete failed (${res.status}) ${text || ""}`);
       }
-
-      // remove from local state
       setSubmissions((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       console.error("Delete failed:", err);
@@ -237,9 +314,14 @@ export default function ExamList() {
     <div className="bg-white border border-amber-50 p-4 rounded shadow-sm text-center text-gray-500">{text}</div>
   );
 
+  /**
+   * NEW: DesktopTable - grid-based rows to avoid horizontal scrolling.
+   * - On lg: grid-cols-3 (Primary / Details / Actions)
+   * - On md: grid-cols-2
+   * - On sm: behaves like mobile (cards)
+   */
   const DesktopTable = ({ lvl }) => {
     const items = filterItems(lvl);
-    const headers = headersFor(lvl);
     const rows = buildRowsFor(items, lvl);
 
     return (
@@ -248,97 +330,187 @@ export default function ExamList() {
           <h3 className="text-lg font-semibold text-emerald-800">
             {LEVEL_LABELS[lvl]} <span className="text-sm text-gray-500">({items.length})</span>
           </h3>
+
           <div className="flex items-center gap-2">
-            <label htmlFor={`search-${lvl}`} className="sr-only">
-              Search {LEVEL_LABELS[lvl]}
-            </label>
             <div className="relative">
               <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500" />
               <input
                 id={`search-${lvl}`}
                 placeholder={`Search ${LEVEL_LABELS[lvl]} by name, email, phone...`}
                 value={searchPerLevel[lvl] || ""}
-                onChange={(e) =>
-                  setSearchPerLevel((s) => ({ ...s, [lvl]: e.target.value }))
-                }
+                onChange={(e) => setSearchPerLevel((s) => ({ ...s, [lvl]: e.target.value }))}
                 className="pl-10 pr-3 py-2 border rounded-lg bg-white text-sm w-44 sm:w-64 md:w-72 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                title={`Search ${LEVEL_LABELS[lvl]} by name, email, phone`}
               />
             </div>
 
             <button
               onClick={() => exportToExcel(lvl, items)}
-              className="px-3 py-2 rounded-lg border bg-amber-500 text-white text-sm shadow-sm hover:shadow-md flex items-center gap-2"
+              className="px-3 py-2 rounded-lg border bg-amber-500 text-white text-sm shadow-sm hover:shadow-md flex items-center gap-2 transition-transform transform hover:-translate-y-0.5"
+              title={`Export ${LEVEL_LABELS[lvl]} submissions`}
             >
-              <FiDownload /> Export
+              <FiDownload /> <span className="hidden sm:inline">Export</span>
             </button>
           </div>
         </div>
 
-        <div className="bg-white border border-amber-50 rounded-2xl shadow-md overflow-hidden">
-          <div className="p-3 overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead className="bg-amber-100">
-                <tr>
-                  {headers.map((h, i) => (
-                    <th
-                      key={h}
-                      className="p-3 text-left text-xs font-medium text-emerald-700 uppercase align-top break-words whitespace-normal"
-                      style={{
-                        verticalAlign: "top",
-                        maxWidth: i < 3 ? 140 : 260,
-                      }}
-                      title={h}
-                    >
-                      {h}
-                    </th>
-                  ))}
+        <div className="bg-white border border-amber-50 rounded-2xl shadow-md overflow-visible">
+          {/* Header row (visual only) */}
+          <div className="hidden lg:grid grid-cols-3 gap-2 p-3 bg-amber-100 rounded-t-2xl">
+            <div className="text-xs font-medium text-emerald-700 uppercase">Applicant</div>
+            <div className="text-xs font-medium text-emerald-700 uppercase">Details</div>
+            <div className="text-xs font-medium text-emerald-700 uppercase">Score / Actions</div>
+          </div>
 
-                  {/* Actions column */}
-                  <th className="p-3 text-left text-xs font-medium text-emerald-700 uppercase align-top">Actions</th>
-                </tr>
-              </thead>
+          {/* Rows as grid/cards */}
+          <div className="p-3 space-y-3">
+            {rows.length === 0 ? (
+              <EmptyCard />
+            ) : (
+              rows.map((r, idx) => {
+                // Access original details quickly
+                const orig = items[idx] || {};
+                const d = orig.details || {};
+                return (
+                  <div
+                    key={`${r.ID}-${idx}`}
+                    className={`group grid gap-3 p-4 rounded-2xl shadow-sm ${
+                      idx % 2 === 0 ? "bg-white" : "bg-emerald-50"
+                    } grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-start hover:shadow-lg hover:-translate-y-1 transform transition-all duration-150`}
+                    title={`${d.first_name || ""} ${d.last_name || ""} — ${r.Exam}`}
+                  >
+                    {/* Column 1: Applicant basic */}
+                    <div className="flex flex-col gap-1">
+                      <div className="text-xs text-amber-600 font-medium">#{r.ID} · {r.Exam}</div>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-900 truncate">
+                        <FiUser className="text-amber-500" />
+                        <span>{r["First Name"]} {r["Last Name"]}</span>
+                      </div>
+                      <div className="text-xs text-emerald-700 truncate flex items-center gap-2">
+                        <FiMail className="text-amber-400" />
+                        <span className="truncate">{r.Email} · {r.Phone}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">{r.Address}</div>
+                    </div>
 
-              <tbody>
-                {rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={headers.length + 1} className="p-6">
-                      <EmptyCard />
-                    </td>
-                  </tr>
-                ) : (
-                  rows.map((r, idx) => (
-                    <tr
-                      key={`${r.ID}-${idx}`}
-                      className={`${idx % 2 === 0 ? "bg-white" : "bg-emerald-50"} hover:bg-emerald-100`}
-                    >
-                      {headers.map((h) => (
-                        <td
-                          key={h}
-                          className="p-3 align-top text-xs text-emerald-800 break-words whitespace-normal"
-                          style={{ maxWidth: 260 }}
-                        >
-                          {String(r[h] ?? "-")}
-                        </td>
-                      ))}
+                    {/* Column 2: Details (wraps fields vertically so no horizontal scroll) */}
+                    <div className="text-xs text-emerald-800 space-y-1">
+                      <div>
+                        <span className="font-medium text-amber-600">Gender:</span> {r.Gender}
+                      </div>
+                      <div>
+                        <span className="font-medium text-amber-600">DOB:</span> {r["Date of Birth"]}
+                      </div>
 
-                      {/* Actions cell */}
-                      <td className="p-3 align-top text-xs text-emerald-800">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => deleteSubmission(r.ID)}
-                            disabled={isDeleting(r.ID)}
-                            className="px-2 py-1 rounded-lg border bg-white text-amber-700 text-xs shadow-sm hover:bg-amber-50 flex items-center gap-2"
-                            aria-label={`Delete submission ${r.ID}`}
+                      {/* level-specific fields compacted */}
+                      {lvl === "college" && (
+                        <>
+                          <div>
+                            <span className="font-medium text-amber-600">College AY:</span> {r["College AY"]}
+                          </div>
+                          <div>
+                            <span className="font-medium text-amber-600">Semester:</span> {r["College Semester"]}
+                          </div>
+                          <div>
+                            <span className="font-medium text-amber-600">Choices:</span> {r["College Choice #1"]} / {r["College Choice #2"]}
+                          </div>
+                        </>
+                      )}
+                      {lvl === "shs" && (
+                        <>
+                          <div>
+                            <span className="font-medium text-amber-600">SHS Grade:</span> {r["SHS Grade Level"]}
+                          </div>
+                          <div>
+                            <span className="font-medium text-amber-600">SHS Strand:</span> {r["SHS Strand"]}
+                          </div>
+                        </>
+                      )}
+                      {lvl === "jhs" && (
+                        <div>
+                          <span className="font-medium text-amber-600">JHS Grade:</span> {r["JHS Grade Level"]}
+                        </div>
+                      )}
+                      {lvl === "gs" && (
+                        <div>
+                          <span className="font-medium text-amber-600">GS Grade:</span> {r["GS Grade Level"]}
+                        </div>
+                      )}
+
+                      <div className="mt-1 text-gray-400 text-xs flex items-center gap-2">
+                        <FiClock className="text-amber-400" /> Submitted: {r["Submitted At"]}
+                      </div>
+                    </div>
+
+                    {/* Column 3: Score + actions */}
+                    <div className="flex flex-col items-start gap-2">
+                      <div className="flex items-baseline gap-2">
+                        <div className="text-2xl font-semibold text-amber-600 flex items-center gap-2">
+                          <FiStar className="text-amber-500" /> <span>{r.Score}</span>
+                        </div>
+                        <div className="text-sm text-emerald-700">/ {r["Max Score"]}</div>
+                      </div>
+
+                      {SCORE_OPTIONS_BY_LEVEL[lvl] && (
+                        <div className="flex items-center gap-2 w-full">
+                          <select
+                            value={selectedScoreField[r.ID] || ""}
+                            onChange={(e) =>
+                              setSelectedScoreField((prev) => ({
+                                ...prev,
+                                [r.ID]: e.target.value,
+                              }))
+                            }
+                            className="px-2 py-1 border rounded flex-1 text-sm"
+                            title="Select which score field to send"
                           >
-                            <FiTrash2 /> {isDeleting(r.ID) ? "Deleting..." : "Delete"}
+                            <option value="">Select Score Type</option>
+                            {SCORE_OPTIONS_BY_LEVEL[lvl].map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+
+                          <button
+                            onClick={() => sendScore(r.ID, r["Application ID"], r.Score)}
+                            disabled={!selectedScoreField[r.ID]}
+                            className="px-3 py-1 rounded-lg border bg-emerald-500 text-white text-xs flex items-center gap-2 shadow-sm hover:scale-105 transition-transform"
+                            title="Send selected score to application"
+                            aria-label={`Send score for ${r.ID}`}
+                          >
+                            <FiSend /> Send
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      )}
+
+                      <div className="flex items-center gap-2 mt-2 w-full">
+                        <button
+                          onClick={() => deleteSubmission(r.ID)}
+                          disabled={isDeleting(r.ID)}
+                          className="px-3 py-1 rounded-lg border bg-white text-amber-700 text-xs shadow-sm hover:bg-amber-50 flex items-center gap-2 transition-colors"
+                          aria-label={`Delete submission ${r.ID}`}
+                          title="Delete submission"
+                        >
+                          <FiTrash2 /> {isDeleting(r.ID) ? "Deleting..." : "Delete"}
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            // small utility to scroll to top or focus — keep this non-intrusive
+                            window.scrollTo({ top: 0, behavior: "smooth" });
+                          }}
+                          className="px-3 py-1 rounded-lg border bg-white text-emerald-700 text-xs shadow-sm hover:bg-emerald-50 flex items-center gap-2"
+                          title="Scroll to top"
+                        >
+                          <FiChevronUp /> Top
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       </section>
@@ -356,7 +528,8 @@ export default function ExamList() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => exportToExcel(lvl, items)}
-              className="px-3 py-2 rounded-lg border bg-amber-500 text-white text-sm shadow-sm hover:shadow-md flex items-center gap-2"
+              className="px-3 py-2 rounded-lg border bg-amber-500 text-white text-sm shadow-sm hover:shadow-md flex items-center gap-2 transition-transform transform hover:-translate-y-0.5"
+              title={`Export ${LEVEL_LABELS[lvl]} submissions`}
             >
               <FiDownload /> Export
             </button>
@@ -370,15 +543,16 @@ export default function ExamList() {
             return (
               <article
                 key={s.id}
-                className="bg-white border border-amber-50 p-4 rounded-2xl shadow-sm"
-              >
+                className="group bg-white border border-amber-50 p-4 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transform transition-all duration-150"
+                title={`${d.first_name || ""} ${d.last_name || ""}`}>
                 <div className="flex items-start justify-between">
                   <div>
                     <div className="text-sm text-emerald-600 mb-1">#{s.id} · {s.exam?.title || `Exam #${s.exam_id}`}</div>
-                    <div className="text-base font-semibold text-emerald-900">
-                      {d.first_name || "-"} {d.last_name || "-"}
+                    <div className="text-base font-semibold text-emerald-900 flex items-center gap-2">
+                      <FiUser className="text-amber-500" />
+                      <span>{d.first_name || "-"} {d.last_name || "-"}</span>
                     </div>
-                    <div className="text-xs text-emerald-700 mt-1">{d.email || "-"} · {d.phone || "-"}</div>
+                    <div className="text-xs text-emerald-700 mt-1 flex items-center gap-2"><FiMail /> {d.email || "-"} · {d.phone || "-"}</div>
                   </div>
 
                   <div className="text-right text-xs text-emerald-600">
@@ -387,18 +561,15 @@ export default function ExamList() {
                     </div>
                     <div className="mt-1 text-gray-400">{s.created_at ? new Date(s.created_at).toLocaleString() : "-"}</div>
 
-                    {/* Mobile delete button */}
                     <div className="mt-2">
                       <button
                         onClick={() => deleteSubmission(s.id)}
                         disabled={isDeleting(s.id)}
                         className="px-2 py-1 rounded-lg border bg-white text-amber-700 text-xs shadow-sm hover:bg-amber-50 flex items-center gap-2"
-                        aria-label={`Delete submission ${s.id}`}
-                      >
+                        aria-label={`Delete submission ${s.id}`} title="Delete submission">
                         <FiTrash2 /> {isDeleting(s.id) ? "Deleting..." : "Delete"}
                       </button>
                     </div>
-
                   </div>
                 </div>
 
@@ -468,7 +639,7 @@ export default function ExamList() {
           <div className="bg-gradient-to-r from-amber-50 via-amber-100 to-emerald-50 shadow-md rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-emerald-900">Exam Submissions</h1>
-              <p className="text-sm text-emerald-700 mt-1">Organized by application level — clean, admin-friendly layout with white / gold / green palette.</p>
+              <p className="text-sm text-emerald-700 mt-1">S_A_S_O</p>
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
@@ -476,9 +647,9 @@ export default function ExamList() {
                 <button
                   key={lvl}
                   onClick={() => setSearchPerLevel((s) => ({ ...s, [lvl]: "" }))}
-                  className="px-3 py-1 rounded-full border border-amber-100 bg-white text-amber-700 shadow-sm text-xs"
-                  aria-label={`Reset ${LEVEL_LABELS[lvl]} search`}
-                >
+                  className="px-3 py-1 rounded-full border border-amber-100 bg-white text-amber-700 shadow-sm text-xs hover:shadow-md hover:bg-amber-50 transition-all flex items-center gap-2"
+                  aria-label={`Reset ${LEVEL_LABELS[lvl]} search`} title={`Reset ${LEVEL_LABELS[lvl]} search`}>
+                  <FiUser className="text-amber-500" />
                   {LEVEL_LABELS[lvl]} <span className="text-xs text-gray-500 ml-1">({(grouped[lvl] || []).length})</span>
                 </button>
               ))}
@@ -486,8 +657,8 @@ export default function ExamList() {
               <button
                 onClick={exportAll}
                 disabled={exporting}
-                className="px-4 py-2 rounded-lg border bg-emerald-600 text-white text-sm shadow-sm hover:shadow-md flex items-center gap-2"
-              >
+                className="px-4 py-2 rounded-lg border bg-emerald-600 text-white text-sm shadow-sm hover:shadow-md flex items-center gap-2 transition-transform transform hover:-translate-y-0.5"
+                title="Export all submissions">
                 <FiDownload /> Export All
               </button>
             </div>

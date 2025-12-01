@@ -22,6 +22,10 @@ use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CollegeAnalyticsController;
+// routes/api.php
+Route::put('/applications/{id}/update-score', [SubmissionController::class, 'updateScore']);
+
+Route::put('/applications/{id}', [ApplicationController::class, 'update']);
 
 Route::get('/college-analytics', [CollegeAnalyticsController::class, 'index']);
 Route::get('/analytics/course/{course}', [CollegeAnalyticsController::class, 'courseDetail']);

@@ -4,22 +4,22 @@ import debounce from "lodash.debounce";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  PieChart, Pie, Cell, ResponsiveContainer, Legend
+  PieChart, Pie, Cell, ResponsiveContainer, Legend,
+  ScatterChart, Scatter, ZAxis
 } from "recharts";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 /**
- * CollegeAnalyticsAdvanced.polished.jsx
- * - Polished, professional UI/UX (Tailwind): smooth hover states, clearer layout,
- *   better controls (column dropdown), responsive tweaks, accessible buttons
- * - Keep your existing API endpoints; component expects the same shape as before
+ * CollegeAnalyticsAdvanced.withRankings.jsx
+ * - Keeps your original component intact but adds:
+ *   • Rankings (Top N students) panel + export
+ *   • Distribution histogram of chosen numeric field (buckets)
+ *   • Scatter plot (MAT IQ vs APT Total %tile)
+ *   • Threshold counter (how many students above X)
+ *   • Small UI controls to pick Top N, threshold, and histogram field
  *
- * Requirements:
- * - TailwindCSS configured
- * - axios, recharts, framer-motion, lodash.debounce, xlsx, file-saver
- *
- * Paste into src/pages and import into your router/layout.
+ * Drop-in replacement for your existing file. Requires same deps as before.
  */
 
 /* ------------------------
@@ -138,6 +138,11 @@ export default function CollegeAnalyticsAdvanced(){
   const [rowDetail, setRowDetail] = useState(null); // modal
   const [compactView, setCompactView] = useState(false);
 
+  // NEW: ranking controls
+  const [topN, setTopN] = useState(10);
+  const [threshold, setThreshold] = useState(75);
+  const [histField, setHistField] = useState("apt_total_percentile");
+
   // load courses summary
   useEffect(()=>{
     setLoadingCourses(true);
@@ -248,6 +253,42 @@ export default function CollegeAnalyticsAdvanced(){
     return Object.keys(m).map((k,i)=>({ name:k, value:m[k], percent: +(((m[k]/(detail.total||1))*100).toFixed(2)), color: COLOR_PALETTE[i%COLOR_PALETTE.length] }));
   },[detail]);
 
+  // NEW: derived ranking & distribution
+  const topStudents = useMemo(()=>{
+    if (!detail || !Array.isArray(detail.rows)) return [];
+    // prefer apt_total_percentile, fall back to apt_total_rs or gwa_percentile
+    const key = detail.rows.some(r=>r.apt_total_percentile!==undefined) ? 'apt_total_percentile' : (detail.rows.some(r=>r.apt_total_rs!==undefined) ? 'apt_total_rs' : 'gwa_percentile');
+    const rows = [...detail.rows].map(r=>({ ...r, __rankKey: safeNumber(r[key]) || 0 })).sort((a,b)=>b.__rankKey - a.__rankKey);
+    return rows.slice(0, topN);
+  },[detail, topN]);
+
+  const histogram = useMemo(()=>{
+    if (!detail || !Array.isArray(detail.rows)) return [];
+    const field = histField;
+    const vals = (detail.rows||[]).map(r=>safeNumber(r[field])).filter(v=>v!==null);
+    if (!vals.length) return [];
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const buckets = 10;
+    const size = (max - min) / buckets || 1;
+    const m = new Array(buckets).fill(0);
+    vals.forEach(v=>{
+      let idx = Math.floor((v - min) / size);
+      if (idx < 0) idx = 0; if (idx >= buckets) idx = buckets-1;
+      m[idx]++;
+    });
+    return m.map((count,i)=>({ bucket: `${Math.round(min + i*size)} - ${Math.round(min + (i+1)*size)}`, count }));
+  },[detail, histField]);
+
+  const countAboveThreshold = useMemo(()=>{
+    if (!detail || !Array.isArray(detail.rows)) return 0;
+    const key = histField; // measure on current chosen field
+    return (detail.rows||[]).reduce((s,r)=>{
+      const v = safeNumber(r[key]);
+      if (v!==null && v >= threshold) return s+1;
+      return s;
+    }, 0);
+  },[detail, threshold, histField]);
+
   // column toggle helpers
   const allCols = Object.keys(LABELS).filter(k=>k!=="name");
   function toggleCol(col){
@@ -293,6 +334,22 @@ export default function CollegeAnalyticsAdvanced(){
     XLSX.utils.book_append_sheet(wb, ws, "rows");
     const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
     saveAs(new Blob([wbout], { type: "application/octet-stream" }), `${(detail.course||selectedCourse||"course").replace(/\s+/g,"_")}_rows_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+
+  // NEW: export Top N to CSV
+  function exportTopNCSV(){
+    if (!detail) return alert("No data.");
+    const rows = topStudents;
+    if (!rows.length) return alert("No rows to export.");
+    const headers = ["Rank","ID","LastName","FirstName","Middle","Score"];
+    const csv = [headers.join(",")];
+    rows.forEach((r,i)=>{
+      const score = r.apt_total_percentile ?? r.apt_total_rs ?? r.gwa_percentile ?? "";
+      const line = [i+1, r.id, r.nameFamily, r.nameGiven, r.nameMiddle, score].map(v=>`"${String(v||"").replace(/,/g,"")}"`).join(",");
+      csv.push(line);
+    });
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    saveAs(blob, `${(detail.course||selectedCourse||"course").replace(/\s+/g,"_")}_top_${topN}_${new Date().toISOString().slice(0,10)}.csv`);
   }
 
   // change sorting
@@ -462,6 +519,100 @@ export default function CollegeAnalyticsAdvanced(){
                 </div>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {/* NEW: Rankings & Distribution section */}
+        {detail && (
+          <motion.div initial={{opacity:0, y:6}} animate={{opacity:1, y:0}} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold">Rankings & Distribution</h3>
+              <div className="text-sm text-gray-500">Top students, histogram, threshold counts</div>
+            </div>
+
+            <div className="flex flex-col md:flex-row gap-4">
+              {/* Controls */}
+              <div className="w-full md:w-64 p-2 border rounded">
+                <div className="mb-2 text-xs text-gray-600">Top N</div>
+                <input type="number" min={1} max={100} value={topN} onChange={(e)=>setTopN(Math.max(1, Number(e.target.value||1)))} className="w-full px-2 py-1 border rounded mb-3" />
+
+                <div className="mb-2 text-xs text-gray-600">Histogram field</div>
+                <select value={histField} onChange={(e)=>setHistField(e.target.value)} className="w-full px-2 py-1 border rounded mb-3">
+                  {NUMERIC_FIELDS.map(f=> <option key={f} value={f}>{LABELS[f] || f}</option>)}
+                </select>
+
+                <div className="mb-2 text-xs text-gray-600">Threshold (for chosen field)</div>
+                <input type="number" value={threshold} onChange={(e)=>setThreshold(Number(e.target.value||0))} className="w-full px-2 py-1 border rounded mb-3" />
+
+                <div className="flex gap-2">
+                  <button onClick={exportTopNCSV} className="px-3 py-1 rounded bg-amber-400 text-black">Export Top</button>
+                  <button onClick={()=>navigator.clipboard.writeText(JSON.stringify(topStudents))} className="px-3 py-1 rounded border">Copy</button>
+                </div>
+
+                <div className="text-xs text-gray-500 mt-3">Count ≥ {threshold}: <strong>{countAboveThreshold}</strong></div>
+              </div>
+
+              {/* Charts: histogram / scatter / top list */}
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-2 border rounded">
+                  <div className="text-sm font-medium mb-2">Histogram — {LABELS[histField]}</div>
+                  {histogram.length===0 ? <div className="text-xs text-gray-500">No data</div> : (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <BarChart data={histogram} margin={{ left: 0, right: 8 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
+                        <YAxis />
+                        <ReTooltip />
+                        <Bar dataKey="count" fill={THEME.green} radius={[6,6,0,0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+
+                <div className="p-2 border rounded">
+                  <div className="text-sm font-medium mb-2">MAT IQ vs APT Total (%tile)</div>
+                  {detail.rows.length===0 ? <div className="text-xs text-gray-500">No data</div> : (
+                    <ResponsiveContainer width="100%" height={180}>
+                      <ScatterChart>
+                        <CartesianGrid />
+                        <XAxis dataKey="mat_iq" name="MAT IQ" />
+                        <YAxis dataKey="apt_total_percentile" name="APT %tile" />
+                        <ReTooltip cursor={{ strokeDasharray: '3 3' }} />
+                        <Scatter data={(detail.rows||[]).map(r=>({ mat_iq: safeNumber(r.mat_iq), apt_total_percentile: safeNumber(r.apt_total_percentile), name: toFullName(r) })).filter(p=>p.mat_iq!==null && p.apt_total_percentile!==null)} fill={COLOR_PALETTE[0]} />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+
+                <div className="md:col-span-2 p-2 border rounded">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-sm font-medium">Top {topN} students</div>
+                    <div className="text-xs text-gray-500">Sorted by APT total %tile (or fallback)</div>
+                  </div>
+                  <div className="max-h-56 overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-gray-600 border-b">
+                          <th className="p-1">#</th>
+                          <th className="p-1">Name</th>
+                          <th className="p-1">Score</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {topStudents.map((r,i)=> (
+                          <tr key={r.id} className="border-b hover:bg-amber-50">
+                            <td className="p-1 text-xs">{i+1}</td>
+                            <td className="p-1 text-xs">{toFullName(r)}</td>
+                            <td className="p-1 text-xs font-medium">{r.apt_total_percentile ?? r.apt_total_rs ?? r.gwa_percentile ?? '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </motion.div>
         )}
 

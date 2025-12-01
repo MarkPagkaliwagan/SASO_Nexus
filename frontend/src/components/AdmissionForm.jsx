@@ -386,61 +386,63 @@ export default function AdmissionForm() {
         <option value="AB English">AB ENGLISH</option>
       </optgroup>
       <optgroup label="College of Education">
-        <option value="BECed">
+        <option value="Bachelor of Early Childhood Education (BECed)">
           Bachelor of Early Childhood Education (BECed)
         </option>
-        <option value="BEED">
+        <option value="Bachelor of Elementary Education (BEED) - Generalist">
           Bachelor of Elementary Education (BEED) - Generalist
         </option>
-        <option value="CTP-MAPEH">
+        <option value="Certificate in Teaching Program - MAPEH">
           Certificate in Teaching Program - MAPEH
         </option>
-        <option value="CTP-PE">Certificate in Teaching Program - PE</option>
-        <option value="BSED-English">BSED - English</option>
-        <option value="BSED-Math">BSED - Mathematics</option>
-        <option value="BSED-Filipino">BSED - Filipino</option>
-        <option value="BSED-SocialStudies">BSED - Social Studies</option>
-        <option value="BSED-Science">BSED - Science</option>
-        <option value="BSED-Values">BSED - Values Education</option>
-        <option value="BTLE-HomeEc">BTLE - Home Economics</option>
-        <option value="BTLE-ICT">BTLE - ICT</option>
-        <option value="BS Mathematics">BS Mathematics</option>
-        <option value="BPED">BPED</option>
-        <option value="BSNED">BSNED</option>
+        <option value="Certificate in Teaching Program - PE">Certificate in Teaching Program - PE</option>
+        <option value="Bachelor of Secondary Education (BSED) - English">BSED - English</option>
+        <option value="Bachelor of Secondary Education (BSED) - Mathematics">BSED - Mathematics</option>
+        <option value="Bachelor of Secondary Education (BSED) - Filipino">BSED - Filipino</option>
+        <option value="Bachelor of Secondary Education (BSED) - Social Studies">BSED - Social Studies</option>
+        <option value="Bachelor of Secondary Education (BSED) - Science">BSED - Science</option>
+        <option value="Bachelor of Secondary Education (BSED) - Values Education">BSED - Values Education</option>
+        <option value="Bachelor of Technology and Livelihood Education (BTLE) - Home Economics">BTLE - Home Economics</option>
+        <option value="Bachelor of Technology and Livelihood Education (BTLE) - ICT">BTLE - ICT</option>
+        <option value="Bachelor of Science in Mathematics (BS Mathematics)">BS Mathematics</option>
+        <option value="Bachelor of Physical Education (BPED)">BPED</option>
+        <option value="Bachelor of Special Needs Education (BSNED)">BSNED</option>
       </optgroup>
       <optgroup label="College of Physical Therapy">
-        <option value="BSPT">
+        <option value="Bachelor of Science in Physical Therapy (BSPT)">
           Bachelor of Science in Physical Therapy (BSPT)
         </option>
       </optgroup>
       <optgroup label="College of Radiologic Technology">
-        <option value="BSRT">
+        <option value="Bachelor of Science in Radiologic Technology (BSRT)">
           Bachelor of Science in Radiologic Technology (BSRT)
         </option>
-        <option value="ARadTech">
+        <option value="Associate in Radiologic Technology (ARadTech - 3 years)">
           Associate in Radiologic Technology (ARadTech)
         </option>
       </optgroup>
       <optgroup label="College of Business and Management">
-        <option value="BSBA-HRM">BSBA - HRM</option>
-        <option value="BSBA-Marketing">BSBA - Marketing</option>
-        <option value="BSBA-FinTech">BSBA - Financial Technology</option>
-        <option value="BS Entrep">BS Entrep</option>
-        <option value="BS in PubAd">BS in Public Administration</option>
-        <option value="BSREM">BSREM</option>
-        <option value="BSHM">BSHM</option>
-        <option value="AHM">AHM</option>
+      <option value="BSBA - Human Resources Management">BSBA - HRM</option>
+      <option value="BSBA - Marketing Management">BSBA - Marketing</option>
+      <option value="BSBA - Financial Technology">BSBA - Financial Technology</option>
+      <option value="Bachelor of Science in Entrepreneurship (BS Entrep)">BS Entrep</option>
+      <option value="Bachelor of Science in Public Administration (BS in PubAd)">BS in Public Administration</option>
+      <option value="Bachelor of Science in Real Estate Management (BSREM)">BSREM</option>
+      <option value="Bachelor of Science in Hospitality Management (BSHM)">BSHM</option>
+      <option value="Associate in Hospitality and Management (AHM - 2 years)">AHM</option>
+
       </optgroup>
       <optgroup label="College of Accountancy">
-        <option value="BSA">BSA</option>
+        <option value="Bachelor of Science in Accountancy (BSA)">BSA</option>
       </optgroup>
       <optgroup label="College of Computer Science">
-        <option value="BSCS">BSCS</option>
-        <option value="BSIT">BSIT</option>
-        <option value="ACT">ACT</option>
+       <option value="Bachelor of Science in Computer Science (BSCS)">BSCS</option>
+        <option value="Bachelor of Science in Information Technology (BSIT)">BSIT</option>
+        <option value="Associate in Computer Technology (ACT - 2 years)">ACT</option>
+
       </optgroup>
       <optgroup label="College of Nursing">
-        <option value="BSN">BSN</option>
+        <option value="Bachelor of Science in Nursing (BSN)">BSN</option>
       </optgroup>
     </>
   );

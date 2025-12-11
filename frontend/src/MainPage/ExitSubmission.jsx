@@ -7,30 +7,39 @@ import {
   FaUser,
   FaUniversity,
   FaSpinner,
+  FaExclamationTriangle,
+  FaClock,
+  FaEdit,
 } from "react-icons/fa";
 
-// NOTE: This is the updated ExitSubmission component.
-// Changes made:
-// - Calendar now shows soft-deleted (archived) slots (muted) while the booking <select>
-//   only lists active slots. Two grouped maps: slotsByDateAll and slotsByDateActive.
-// - Day badges can show: Available / Full / Archived / No slot.
-// - Select options for archived slots are disabled and labeled "— Archived".
-// - Defensive fallbacks used for bookings_count and deleted_at.
+// Enhanced ExitSubmission with: live-search for existing booking by name,
+// "finished" check (shows message), "no_show" flow (auto-fill + reschedule + reason),
+// update existing booking via PUT to /api/bookings/:id, and create via POST /api/bookings.
 
 const INITIAL_FORM = {
   last_name: "",
   middle_name: "",
   first_name: "",
   department: "",
-  course: "", // 🔽 added
+  course: "",
   slot_id: "",
   resume_link: "",
   resume_file: null,
 };
 
+const REASONS = [
+  "Sick / Illness",
+  "Family emergency",
+  "Transport problem",
+  "Exam / Class conflict",
+  "Forgot schedule",
+  "Weather (e.g., typhoon)",
+  "Other",
+];
+
 export default function ExitSubmission() {
   const [confirmation, setConfirmation] = useState(null);
-  const [confirmChecked, setConfirmChecked] = useState(false); // ✅ New state
+  const [confirmChecked, setConfirmChecked] = useState(false);
   const [slots, setSlots] = useState([]);
   const [form, setForm] = useState(INITIAL_FORM);
   const [date, setDate] = useState(new Date());
@@ -42,6 +51,15 @@ export default function ExitSubmission() {
   // validation errors
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
+
+  // --- search / existing booking handling ---
+  const [existingBooking, setExistingBooking] = useState(null);
+  const [searching, setSearching] = useState(false);
+  const searchTimer = useRef(null);
+
+  // no_show specific fields
+  const [reason, setReason] = useState("");
+  const [otherReasonText, setOtherReasonText] = useState("");
 
   // Friendly full-labels for UI
   const departmentLabels = {
@@ -65,8 +83,6 @@ export default function ExitSubmission() {
   const fetchSlots = async () => {
     try {
       const res = await axios.get("/api/slots");
-      // Expect backend to return withTrashed() and withCount('bookings')
-      // Defensive: ensure bookings_count exists
       const normalized = (res.data || []).map((s) => ({
         ...s,
         bookings_count: s.bookings_count || (s.bookings ? s.bookings.length : 0),
@@ -77,20 +93,76 @@ export default function ExitSubmission() {
     }
   };
 
+  // ----------------- live-search ------------------
+  // call search when last/mid/first names are populated (at least last & first)
+  useEffect(() => {
+    // clear previous timer
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+
+    const ln = (form.last_name || "").trim();
+    const mn = (form.middle_name || "").trim();
+    const fn = (form.first_name || "").trim();
+
+    // only search if we have last and first (middle optional)
+    if (!ln || !fn) {
+      setExistingBooking(null);
+      return;
+    }
+
+    setSearching(true);
+    searchTimer.current = setTimeout(() => {
+      performSearch(ln, mn, fn);
+    }, 400); // debounce
+
+    return () => clearTimeout(searchTimer.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.last_name, form.middle_name, form.first_name]);
+
+  const performSearch = async (last_name, middle_name, first_name) => {
+    try {
+      const res = await axios.get("/api/bookings/search", {
+        params: { last_name, middle_name, first_name },
+      });
+
+      if (res.data) {
+        setExistingBooking(res.data);
+        // autofill some fields using existing booking
+        setForm((prev) => ({
+          ...prev,
+          department: res.data.department || prev.department,
+          course: res.data.course || prev.course,
+          resume_link: res.data.resume_link || prev.resume_link,
+          // don't set resume_file (can't populate file inputs) — instead show link
+        }));
+
+        // set resume type for UI convenience
+        if (res.data.resume_file) setResumeType("file-existing");
+        else if (res.data.resume_link) setResumeType("url");
+      } else {
+        setExistingBooking(null);
+      }
+    } catch (err) {
+      if (err.response && err.response.status === 404) setExistingBooking(null);
+      else console.error("Search error", err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const resetForm = () => {
     setForm(INITIAL_FORM);
     setDate(new Date());
     setResumeType("file");
     setErrors({});
     setApiError("");
+    setExistingBooking(null);
+    setReason("");
+    setOtherReasonText("");
     if (fileInputRef.current) fileInputRef.current.value = null;
   };
 
   const submitBooking = async () => {
-    // clear previous api error
     setApiError("");
-
-    // client-side validation (user-friendly inline errors)
     const newErrors = {};
 
     if (!form.first_name || !form.first_name.trim())
@@ -98,46 +170,31 @@ export default function ExitSubmission() {
 
     if (!form.department) newErrors.department = "Please select your department.";
 
-    // course is required only when department is College
     if (form.department === "College" && !form.course)
       newErrors.course = "Please select your course (required for College).";
 
     if (!form.slot_id) newErrors.slot_id = "Please select a slot from the calendar.";
 
-    if (
-      (!form.resume_file || form.resume_file.size === 0) &&
-      !form.resume_link
-    )
+    if ((!form.resume_file || form.resume_file.size === 0) && !form.resume_link)
       newErrors.resume = "Please upload a PDF or provide a resume link.";
 
-    // if there are validation errors, show them inline (no alerts)
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      // gently scroll user to top to show banner (if on small screens)
       try {
         window.scrollTo({ top: 0, behavior: "smooth" });
-      } catch (e) {
-        // ignore in non-browser environments
-      }
+      } catch (e) {}
       return;
     }
 
-    // passed validation — clear errors
     setErrors({});
 
     const data = new FormData();
     for (let key in form) {
       if (key === "resume_file") {
-        if (form.resume_file && form.resume_file.size > 0)
-          data.append(key, form.resume_file);
+        if (form.resume_file && form.resume_file.size > 0) data.append(key, form.resume_file);
         continue;
       }
-      if (
-        key === "resume_link" &&
-        form.resume_file &&
-        form.resume_file.size > 0
-      )
-        continue;
+      if (key === "resume_link" && form.resume_file && form.resume_file.size > 0) continue;
       data.append(key, form[key]);
     }
 
@@ -154,7 +211,7 @@ export default function ExitSubmission() {
         middle_name: form.middle_name,
         first_name: form.first_name,
         department: form.department,
-        course: form.course, // ✅ added para lumabas sa modal
+        course: form.course,
         slotDate: bookedSlot ? new Date(bookedSlot.date).toDateString() : "N/A",
         slotTime: bookedSlot?.time || "N/A",
         venue: "Guidance office, EALA Building, 2nd Floor",
@@ -162,19 +219,95 @@ export default function ExitSubmission() {
 
       await fetchSlots();
       resetForm();
-      setConfirmChecked(false); // reset checkbox for new submission
+      setConfirmChecked(false);
     } catch (err) {
       const message = err.response?.data?.error || "Error submitting booking";
       setApiError(message);
-      // also console.error for debugging
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ---------------- Update existing booking (no_show flow) ----------------
+ const updateExistingBooking = async () => {
+  if (!existingBooking) return;
+
+  const newErrors = {};
+  if (!form.slot_id) newErrors.slot_id = "Please select a new slot for rescheduling.";
+  if (!reason) newErrors.reason = "Please choose a reason for no_show.";
+  if (reason === "Other" && !otherReasonText.trim())
+    newErrors.otherReason = "Please provide other reason text.";
+
+  if (Object.keys(newErrors).length > 0) {
+    setErrors(newErrors);
+    return;
+  }
+
+  const data = new FormData();
+  data.append("_method", "PUT"); // method override inside FormData (reliable for multipart)
+  data.append("slot_id", form.slot_id);
+  data.append("department", form.department || existingBooking.department || "");
+  data.append("course", form.course || existingBooking.course || "");
+  data.append("status", "no_show");
+  data.append("reason", reason === "Other" ? otherReasonText : reason);
+
+  if (form.resume_file && form.resume_file.size > 0) {
+    data.append("resume_file", form.resume_file);
+  } else {
+    // send resume_link if present (or existing)
+    data.append("resume_link", form.resume_link || existingBooking.resume_link || "");
+  }
+
+  try {
+    setIsLoading(true);
+    // Post with multipart/form-data; Laravel will read _method from the body
+    const res = await axios.post(`/api/bookings/${existingBooking.id}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Accept: "application/json",
+      },
+    });
+
+    // success: populate confirmation from response
+    setConfirmation({
+      last_name: res.data.last_name,
+      middle_name: res.data.middle_name,
+      first_name: res.data.first_name,
+      department: res.data.department,
+      course: res.data.course,
+      slotDate: new Date(res.data.slot.date).toDateString(),
+      slotTime: res.data.slot.time,
+      venue: "Guidance office, EALA Building, 2nd Floor",
+    });
+
+    await fetchSlots();
+    resetForm();
+    setExistingBooking(null);
+  } catch (err) {
+    console.error("Update booking error response:", err.response?.data ?? err.message);
+    // If validation error (Laravel returns 422 + { errors: { field: [msg] } })
+    if (err.response?.status === 422) {
+      const resp = err.response.data || {};
+      // map Laravel errors to your errors state (take first message for each field)
+      const mapped = {};
+      if (resp.errors) {
+        Object.entries(resp.errors).forEach(([k, v]) => {
+          mapped[k] = Array.isArray(v) ? v[0] : v;
+        });
+      }
+      setErrors(mapped);
+      setApiError(resp.message || "Validation failed. Please fix the fields.");
+    } else {
+      const message = err.response?.data?.error || err.message || "Error updating booking";
+      setApiError(message);
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
+
   // ---------------- GROUPED SLOT MAPS ----------------
-  // group all slots by date (including archived/soft-deleted)
   const slotsByDateAll = slots.reduce((acc, slot) => {
     const d = new Date(slot.date).toDateString();
     if (!acc[d]) acc[d] = [];
@@ -182,16 +315,14 @@ export default function ExitSubmission() {
     return acc;
   }, {});
 
-  // group only active (non-deleted) slots by date — used for booking dropdown
   const slotsByDateActive = slots.reduce((acc, slot) => {
-    if (slot.deleted_at) return acc; // skip archived
+    if (slot.deleted_at) return acc;
     const d = new Date(slot.date).toDateString();
     if (!acc[d]) acc[d] = [];
     acc[d].push(slot);
     return acc;
   }, {});
 
-  // filteredSlots used by the <select> (only active slots)
   const filteredSlots = (slotsByDateActive[date.toDateString()] || []).filter(
     (slot) => !form.department || slot.department === form.department
   );
@@ -203,7 +334,6 @@ export default function ExitSubmission() {
     );
 
     useEffect(() => {
-      // keep calendar focused on selected date's month
       setCurrentMonth(new Date(selected.getFullYear(), selected.getMonth(), 1));
     }, [selected]);
 
@@ -218,7 +348,6 @@ export default function ExitSubmission() {
       0
     );
 
-    // compute days to display (start from Sunday -> Saturday)
     const startDayIndex = startOfMonth.getDay();
     const totalCells = startDayIndex + endOfMonth.getDate();
     const rows = Math.ceil(totalCells / 7);
@@ -244,6 +373,12 @@ export default function ExitSubmission() {
         new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
       );
 
+    const isPastDate = (d) => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d < today;
+    };
+
     const renderDayCell = (cell) => {
       if (!cell.inMonth) {
         return (
@@ -256,15 +391,13 @@ export default function ExitSubmission() {
       const cellKey = cell.date.toDateString();
       const slotsForDayAll = slotsByDateAll[cellKey] || [];
 
-      // Respect department filter when deciding which slots to list in the cell
       const departmentFilteredSlots = slotsForDayAll.filter(
         (s) => !form.department || s.department === form.department
       );
 
-      // availability logic:
       const anyActive = departmentFilteredSlots.some((s) => !s.deleted_at);
       const anyActiveAvailable = departmentFilteredSlots.some(
-        (s) => !s.deleted_at && (s.limit - (s.bookings_count || 0) > 0)
+        (s) => !s.deleted_at && s.limit - (s.bookings_count || 0) > 0
       );
       const anyArchived = departmentFilteredSlots.some((s) => !!s.deleted_at);
 
@@ -283,9 +416,12 @@ export default function ExitSubmission() {
           ? "text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700"
           : "text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700";
 
+      const past = isPastDate(cell.date);
+
       return (
         <button
           onClick={() => {
+            if (past) return; // disable selecting past dates
             onChange(
               new Date(
                 cell.date.getFullYear(),
@@ -303,7 +439,7 @@ export default function ExitSubmission() {
             ).toDateString()
               ? "ring-2 ring-yellow-400 bg-yellow-50"
               : "hover:bg-slate-50"
-          } ${anyActiveAvailable ? "" : "opacity-80"} flex flex-col justify-between`}
+          } ${past ? "opacity-50 cursor-not-allowed" : ""} flex flex-col justify-between`}
           title={
             departmentFilteredSlots.length
               ? departmentFilteredSlots
@@ -315,9 +451,10 @@ export default function ExitSubmission() {
                   .join("\n")
               : "No slot"
           }
+          disabled={past}
         >
           <div className="flex items-center justify-between">
-            <div className="text-sm font-semibold">{cell.dayNumber}</div>
+            <div className={`text-sm font-semibold ${past ? "text-slate-400" : ""}`}>{cell.dayNumber}</div>
             <div className={badgeClass}>{dayBadge}</div>
           </div>
 
@@ -327,7 +464,6 @@ export default function ExitSubmission() {
               const colorClass =
                 departmentColors[slot.department] || "bg-gray-300 text-black";
 
-              // If archived, show muted pill
               if (slot.deleted_at) {
                 return (
                   <span
@@ -343,11 +479,7 @@ export default function ExitSubmission() {
               return (
                 <span
                   key={slot.id}
-                  className={`${
-                    available > 0
-                      ? colorClass
-                      : "bg-rose-100 text-rose-800 border border-rose-200"
-                  } text-[10px] px-1 rounded-md font-semibold`}
+                  className={`${available > 0 ? colorClass : "bg-rose-100 text-rose-800 border border-rose-200"} text-[10px] px-1 rounded-md font-semibold ${past ? "opacity-50" : ""}`}
                   style={{ lineHeight: 1 }}
                 >
                   {slot.department[0]} {available > 0 ? available : "Full"}
@@ -369,34 +501,25 @@ export default function ExitSubmission() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-xs text-slate-600">
-              {currentMonth.toLocaleString(undefined, { month: "long" })} {" "}
-              {currentMonth.getFullYear()}
+              {currentMonth.toLocaleString(undefined, { month: "long" })} {currentMonth.getFullYear()}
             </div>
             <div className="text-sm font-semibold">
               {departmentLabels[form.department] || "All Departments"}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={prevMonth} className="px-3 py-1 rounded-lg border">
-              ◀
-            </button>
-            <button onClick={nextMonth} className="px-3 py-1 rounded-lg border">
-              ▶
-            </button>
+            <button onClick={prevMonth} className="px-3 py-1 rounded-lg border">◀</button>
+            <button onClick={nextMonth} className="px-3 py-1 rounded-lg border">▶</button>
           </div>
         </div>
 
         <div className="grid grid-cols-7 gap-1 text-[12px]">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
-            <div key={d} className="text-center text-[11px] font-medium text-slate-600 py-1">
-              {d}
-            </div>
+          { ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((d) => (
+            <div key={d} className="text-center text-[11px] font-medium text-slate-600 py-1">{d}</div>
           ))}
 
           {days.map((cell, idx) => (
-            <div key={idx} className="p-0">
-              {renderDayCell(cell)}
-            </div>
+            <div key={idx} className="p-0">{renderDayCell(cell)}</div>
           ))}
         </div>
       </div>
@@ -417,14 +540,13 @@ export default function ExitSubmission() {
         <header className="w-full mb-6 sm:mb-10">
           <div className="bg-black/20 backdrop-blur-sm rounded-xl shadow p-4 sm:p-6 md:p-8 text-center border border-yellow-500/30">
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-300 flex flex-wrap items-center justify-center gap-2 mb-3">
-              <FaCalendarAlt className="text-yellow-300" /> Exit Interview
-              Booking
+              <FaCalendarAlt className="text-yellow-300" /> Exit Interview Booking
             </h1>
           </div>
         </header>
 
         {/* Main */}
-        <main className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 w-full max-w-6xl mx-auto">
+        <main className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 w-full max-w-7xl mx-auto">
           {/* Form */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -459,43 +581,77 @@ export default function ExitSubmission() {
               <div className="space-y-4 sm:space-y-5">
                 <input
                   placeholder="Last Name"
-                  className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.last_name ? 'border-red-500' : ''}`}
+                  className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.last_name ? "border-red-500" : ""}`}
                   value={form.last_name}
-                  onChange={(e) =>
-                    setForm({ ...form, last_name: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, last_name: e.target.value })}
                 />
-                {errors.last_name && <p className="text-xs text-rose-600">{errors.last_name}</p>}
 
                 <input
                   placeholder="Middle Name"
-                  className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.middle_name ? 'border-red-500' : ''}`}
+                  className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.middle_name ? "border-red-500" : ""}`}
                   value={form.middle_name}
-                  onChange={(e) =>
-                    setForm({ ...form, middle_name: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, middle_name: e.target.value })}
                 />
-                {errors.middle_name && <p className="text-xs text-rose-600">{errors.middle_name}</p>}
 
                 <input
                   placeholder="First Name"
                   required
-                  className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.first_name ? 'border-red-500' : ''}`}
+                  className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.first_name ? "border-red-500" : ""}`}
                   value={form.first_name}
-                  onChange={(e) =>
-                    setForm({ ...form, first_name: e.target.value })
-                  }
+                  onChange={(e) => setForm({ ...form, first_name: e.target.value })}
                 />
-                {errors.first_name && <p className="text-xs text-rose-600">{errors.first_name}</p>}
+
+                {/* If searching, show spinner */}
+                {searching && (
+                  <div className="text-sm text-slate-500 flex items-center gap-2"><FaSpinner className="animate-spin"/> Checking existing booking...</div>
+                )}
+
+                {/* If existing booking found */}
+                {existingBooking && (
+                  <div className="p-3 rounded-lg border border-yellow-200 bg-yellow-50 mt-2 flex items-start gap-3">
+                    <div className="text-yellow-700 text-xl pt-1"><FaExclamationTriangle/></div>
+                    <div>
+                      <div className="font-semibold">Record found</div>
+                      <div className="text-sm">Status: <strong>{existingBooking.status}</strong></div>
+
+                      {existingBooking.status === 'finished' && (
+                        <div className="mt-2 p-2 bg-green-100 border border-green-200 rounded">
+                          ✅ <strong>Already finished exit interview</strong>
+                        </div>
+                      )}
+
+                      {existingBooking.status === 'no_show' && (
+                        <div className="mt-2 p-2 bg-rose-50 border border-rose-100 rounded">
+                          ⚠️ <strong>This student was marked as NO_SHOW.</strong>
+                          <div className="text-xs mt-1">Auto-filled fields are shown below; choose a new schedule and reason to reschedule.</div>
+                        </div>
+                      )}
+
+                      {/* Show link to existing resume if available */}
+                      <div className="mt-2 text-xs">
+                        {existingBooking.resume_link && (
+                          <div>Resume link: <a href={existingBooking.resume_link} target="_blank" rel="noreferrer" className="underline">Open</a></div>
+                        )}
+                        {existingBooking.resume_file && (
+                          <div>Stored resume file: <a href={`/storage/${existingBooking.resume_file}`} target="_blank" rel="noreferrer" className="underline">Open file</a></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-3">
                   <FaUniversity className="text-green-700 text-base sm:text-lg" />
                   <select
-                    className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.department ? 'border-red-500' : ''}`}
+                    className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.department ? "border-red-500" : ""}`}
                     value={form.department}
                     onChange={(e) => {
                       const dept = e.target.value;
-                      setForm({ ...form, department: dept, course: dept === 'College' ? form.course : '' });
+                      setForm({
+                        ...form,
+                        department: dept,
+                        course: dept === "College" ? form.course : "",
+                      });
                     }}
                   >
                     <option value="">Select Department</option>
@@ -505,18 +661,14 @@ export default function ExitSubmission() {
                     <option value="GS">GS</option>
                   </select>
                 </div>
-                {errors.department && <p className="text-xs text-rose-600">{errors.department}</p>}
 
-                {/* 🔽 Show only if College is selected */}
                 {form.department === "College" && (
                   <div className="flex items-center gap-3 mt-3">
                     <FaUniversity className="text-green-700 text-base sm:text-lg" />
                     <select
-                      className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.course ? 'border-red-500' : ''}`}
+                      className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.course ? "border-red-500" : ""}`}
                       value={form.course || ""}
-                      onChange={(e) =>
-                        setForm({ ...form, course: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, course: e.target.value })}
                     >
                       <option value="">Select Department Course</option>
                       <option value="CCS">CCS</option>
@@ -530,13 +682,10 @@ export default function ExitSubmission() {
                     </select>
                   </div>
                 )}
-                {errors.course && <p className="text-xs text-rose-600">{errors.course}</p>}
 
                 {/* Resume Type */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-slate-700">
-                    Resume Input Type
-                  </label>
+                  <label className="text-sm font-medium text-slate-700">Resume Input Type</label>
                   <div className="flex items-center gap-4">
                     <label className="inline-flex items-center gap-2 text-sm">
                       <input
@@ -560,11 +709,20 @@ export default function ExitSubmission() {
                         onChange={() => {
                           setResumeType("url");
                           setForm((prev) => ({ ...prev, resume_file: null }));
-                          if (fileInputRef.current)
-                            fileInputRef.current.value = null;
+                          if (fileInputRef.current) fileInputRef.current.value = null;
                         }}
                       />
                       URL
+                    </label>
+                    <label className="inline-flex items-center gap-2 text-sm">
+                      <input
+                        type="radio"
+                        name="resumeType"
+                        value="file-existing"
+                        checked={resumeType === "file-existing"}
+                        onChange={() => setResumeType("file-existing")}
+                      />
+                      Use previously uploaded
                     </label>
                   </div>
                 </div>
@@ -577,7 +735,7 @@ export default function ExitSubmission() {
                       ref={fileInputRef}
                       type="file"
                       accept="application/pdf"
-                      className={`w-full text-xs sm:text-sm ${errors.resume ? 'border-red-500' : ''}`}
+                      className={`w-full text-xs sm:text-sm ${errors.resume ? "border-red-500" : ""}`}
                       onChange={(e) => {
                         const file = e.target.files[0];
                         setForm({ ...form, resume_file: file });
@@ -588,35 +746,84 @@ export default function ExitSubmission() {
                   {resumeType === "url" && (
                     <input
                       placeholder="Paste resume link (https://...)"
-                      className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.resume ? 'border-red-500' : ''}`}
+                      className={`w-full border rounded-lg p-3 sm:p-4 text-sm sm:text-base ${errors.resume ? "border-red-500" : ""}`}
                       value={form.resume_link}
-                      onChange={(e) =>
-                        setForm({ ...form, resume_link: e.target.value })
-                      }
+                      onChange={(e) => setForm({ ...form, resume_link: e.target.value })}
                     />
+                  )}
+
+                  {resumeType === "file-existing" && existingBooking && existingBooking.resume_file && (
+                    <div className="text-xs">
+                      Using previously uploaded file. <a href={`/storage/${existingBooking.resume_file}`} target="_blank" rel="noreferrer" className="underline">Open</a>
+                    </div>
                   )}
                 </div>
                 {errors.resume && <p className="text-xs text-rose-600">{errors.resume}</p>}
 
                 {form.resume_file && (
-                  <p className="text-xs text-green-700">
-                    Resume link not required when PDF is uploaded.
-                  </p>
+                  <p className="text-xs text-green-700">Resume link not required when PDF is uploaded.</p>
+                )}
+
+                {/* If existing booking is no_show, show additional reschedule fields */}
+                {existingBooking && existingBooking.status === 'no_show' && (
+                  <div className="mt-4 p-4 border rounded-lg bg-rose-50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FaClock/> <div className="font-semibold">Reschedule (NO_SHOW)</div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="text-sm block mb-1">Reason for not attending</label>
+                      <select className="w-full p-2 border rounded" value={reason} onChange={(e) => setReason(e.target.value)}>
+                        <option value="">Select reason</option>
+                        {REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                      {reason === 'Other' && (
+                        <input placeholder="Type other reason" className="mt-2 w-full p-2 border rounded" value={otherReasonText} onChange={(e) => setOtherReasonText(e.target.value)} />
+                      )}
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="text-sm block mb-1">Choose new schedule</label>
+                      {filteredSlots.length > 0 ? (
+                        <select onChange={(e) => setForm({ ...form, slot_id: e.target.value })} value={form.slot_id} className="w-full p-2 border rounded">
+                          <option value="">Select a new slot</option>
+                          {filteredSlots.map((slot) => {
+                            const booked = slot.bookings_count || 0;
+                            const available = slot.limit - booked;
+                            const isArchived = !!slot.deleted_at;
+                            const today = new Date();
+                            today.setHours(0,0,0,0);
+                            const slotDate = new Date(slot.date); slotDate.setHours(0,0,0,0);
+                            const isPast = slotDate < today;
+
+                            return (
+                              <option key={slot.id} value={slot.id} disabled={available <= 0 || isArchived || isPast}>
+                                {new Date(slot.date).toDateString()} {slot.time} ({booked}/{slot.limit} booked)
+                              </option>
+                            );
+                          })}
+                        </select>
+                      ) : (
+                        <div className="text-xs text-slate-600">No available slots on selected date</div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button onClick={updateExistingBooking} disabled={isLoading} className={`px-4 py-2 rounded ${isLoading ? 'opacity-60' : 'bg-yellow-500 text-white'}`}>
+                        {isLoading ? <><FaSpinner className="animate-spin mr-2"/> Updating...</> : 'Save & Reschedule'}
+                      </button>
+
+                      <button onClick={() => { setExistingBooking(null); setReason(''); setOtherReasonText(''); }} className="px-4 py-2 rounded border">Cancel</button>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
           </motion.div>
 
           {/* Calendar */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 md:p-8 text-slate-900 w-full md:col-span-2"
-          >
-            <h2 className="text-lg sm:text-xl font-bold text-green-900 flex items-center gap-2 mb-4">
-              <FaCalendarAlt className="text-green-700" /> Select Date
-            </h2>
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="bg-white rounded-2xl shadow-2xl p-5 sm:p-6 md:p-8 text-slate-900 w-full md:col-span-2">
+            <h2 className="text-lg sm:text-xl font-bold text-green-900 flex items-center gap-2 mb-4"><FaCalendarAlt className="text-green-700"/> Select Date</h2>
             <div className="mt-3 flex gap-3 flex-wrap text-xs sm:text-sm">
               {Object.entries(departmentColors).map(([dept, colorClass]) => (
                 <div key={dept} className="flex items-center gap-1">
@@ -626,134 +833,86 @@ export default function ExitSubmission() {
               ))}
             </div>
 
-            {/* custom calendar component - same visual size as before */}
             <div className="mt-4">
               <CustomCalendar selected={date} onChange={(d) => setDate(d)} />
             </div>
 
             <div className="mt-6">
-              <h3 className="text-sm sm:text-md font-semibold text-green-800 mb-2">
-                Slots on {date.toDateString()}
-              </h3>
-              {filteredSlots.length > 0 ? (
-                <select
-                  onChange={(e) =>
-                    setForm({ ...form, slot_id: e.target.value })
-                  }
-                  value={form.slot_id}
-                  className={`w-full border border-green-300 rounded-lg p-2 sm:p-3 focus:ring-2 focus:ring-green-600 text-sm sm:text-base ${errors.slot_id ? 'border-red-500' : ''}`}
-                >
-                  <option value="">Select a slot</option>
-                  {filteredSlots.map((slot) => {
-                    const booked = slot.bookings_count || 0;
-                    const available = slot.limit - booked;
-                    const isArchived = !!slot.deleted_at;
-                    return (
-                      <option
-                        key={slot.id}
-                        value={slot.id}
-                        disabled={available <= 0 || isArchived}
-                      >
-                        {slot.time} ({booked}/{slot.limit} booked)
-                        {isArchived ? " — Archived" : available > 0 ? ` - Available (${available})` : ` - Full`}
-                      </option>
-                    );
-                  })}
-                </select>
+              <h3 className="text-sm sm:text-md font-semibold text-green-800 mb-2">Slots on {date.toDateString()}</h3>
+
+              {/* IMPORTANT CHANGE: hide the general "Slots on {date}" select when the user has an existing NO_SHOW booking
+                  because the reschedule UI already provides a "Choose new schedule" control. This prevents duplicate/redundant
+                  selects appearing at the same time. */}
+
+              {!(existingBooking && existingBooking.status === 'no_show') ? (
+                filteredSlots.length > 0 ? (
+                  <select onChange={(e) => setForm({ ...form, slot_id: e.target.value })} value={form.slot_id} className={`w-full border border-green-300 rounded-lg p-2 sm:p-3 focus:ring-2 focus:ring-green-600 text-sm sm:text-base ${errors.slot_id ? "border-red-500" : ""}`}>
+                    <option value="">Select a slot</option>
+                    {filteredSlots.map((slot) => {
+                      const booked = slot.bookings_count || 0;
+                      const available = slot.limit - booked;
+                      const isArchived = !!slot.deleted_at;
+
+                      const today = new Date(); today.setHours(0,0,0,0);
+                      const slotDate = new Date(slot.date); slotDate.setHours(0,0,0,0);
+                      const isPast = slotDate < today;
+
+                      return (
+                        <option key={slot.id} value={slot.id} disabled={available <= 0 || isArchived || isPast} className={isPast ? "text-slate-400" : ""}>
+                          {slot.time} ({booked}/{slot.limit} booked){isArchived ? " — Archived" : available > 0 ? ` - Available (${available})` : ` - Full`}
+                        </option>
+                      );
+                    })}
+                  </select>
+                ) : (
+                  <p className="text-xs sm:text-sm text-slate-600">No slot</p>
+                )
               ) : (
-                <p className="text-xs sm:text-sm text-slate-600">No slot</p>
+                <p className="text-xs text-slate-500">Choose new schedule is shown above for NO_SHOW records.</p>
               )}
+
               {errors.slot_id && <p className="text-xs text-rose-600">{errors.slot_id}</p>}
             </div>
-            <button
-              onClick={submitBooking}
-              disabled={isLoading}
-              className={`mt-8 bg-green-700 hover:bg-green-800 text-yellow-300 font-semibold px-6 py-3 sm:py-4 rounded-xl w-full shadow-lg transition text-base sm:text-lg flex items-center justify-center gap-2 ${
-                isLoading ? "opacity-70 cursor-not-allowed" : ""
-              }`}
-            >
-              {isLoading ? (
-                <>
-                  <FaSpinner className="animate-spin" /> Processing...
-                </>
-              ) : (
-                "Confirm Booking"
-              )}
-            </button>
+
+            {/* If no existing booking or not no_show, show normal confirm button */}
+            {!existingBooking && (
+              <button onClick={submitBooking} disabled={isLoading} className={`mt-8 bg-green-700 hover:bg-green-800 text-yellow-300 font-semibold px-6 py-3 sm:py-4 rounded-xl w-full shadow-lg transition text-base sm:text-lg flex items-center justify-center gap-2 ${isLoading ? "opacity-70 cursor-not-allowed" : ""}`}>
+                {isLoading ? (<><FaSpinner className="animate-spin"/> Processing...</>) : ("Confirm Booking")}
+              </button>
+            )}
+
           </motion.div>
         </main>
+
       </div>
 
       {/* Confirmation Modal */}
       {confirmation && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-2xl p-8 w-[90%] max-w-xl text-slate-900 relative animate-fadeIn">
-            {/* Header with Icon */}
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-green-100 p-3 rounded-full">✅</div>
-              <h2 className="text-2xl font-extrabold text-green-800">
-                Successfully Confirmed!
-              </h2>
+              <h2 className="text-2xl font-extrabold text-green-800">Successfully Confirmed!</h2>
             </div>
 
-            {/* Booking Details */}
-            <h3 className="text-lg font-semibold text-slate-700 mb-3 border-b pb-2">
-              Booking Details
-            </h3>
+            <h3 className="text-lg font-semibold text-slate-700 mb-3 border-b pb-2">Booking Details</h3>
             <div className="text-base space-y-2">
-              <p>
-                <strong>Last Name:</strong> {confirmation.last_name}
-              </p>
-              <p>
-                <strong>Middle Name:</strong> {confirmation.middle_name}
-              </p>
-              <p>
-                <strong>First Name:</strong> {confirmation.first_name}
-              </p>
-              <p>
-                <strong>Department:</strong> {confirmation.department}
-              </p>
+              <p><strong>Last Name:</strong> {confirmation.last_name}</p>
+              <p><strong>Middle Name:</strong> {confirmation.middle_name}</p>
+              <p><strong>First Name:</strong> {confirmation.first_name}</p>
+              <p><strong>Department:</strong> {confirmation.department}</p>
 
-  {/* 🔽 Show course only if College */}
-  {confirmation.department === "College" && (
-    <p>
-      <strong>Course:</strong> {confirmation.course}
-    </p>
-  )}
-              <p>
-                <strong>Schedule:</strong> {confirmation.slotDate} at{" "}
-                {confirmation.slotTime}
-              </p>
-              <p>
-                <strong>Venue:</strong> {confirmation.venue}
-              </p>
+              {confirmation.department === "College" && <p><strong>Course:</strong> {confirmation.course}</p>}
+              <p><strong>Schedule:</strong> {confirmation.slotDate} at {confirmation.slotTime}</p>
+              <p><strong>Venue:</strong> {confirmation.venue}</p>
             </div>
 
-            {/* Checkbox */}
             <div className="mt-6 flex items-center gap-3 bg-slate-50 p-3 rounded-lg">
-              <input
-                type="checkbox"
-                id="confirmCheck"
-                checked={confirmChecked}
-                onChange={() => setConfirmChecked(!confirmChecked)}
-                className="w-4 h-4 accent-green-700"
-              />
-              <label htmlFor="confirmCheck" className="text-sm text-slate-700">
-                I have screenshot this for proof
-              </label>
+              <input type="checkbox" id="confirmCheck" checked={confirmChecked} onChange={() => setConfirmChecked(!confirmChecked)} className="w-4 h-4 accent-green-700" />
+              <label htmlFor="confirmCheck" className="text-sm text-slate-700">I have screenshot this for proof</label>
             </div>
 
-            {/* OK Button */}
-            <button
-              onClick={() => setConfirmation(null)}
-              disabled={!confirmChecked}
-              className={`mt-6 w-full py-3 rounded-xl text-lg font-semibold transition 
-          ${
-            confirmChecked
-              ? "bg-green-700 text-yellow-200 hover:bg-green-800 shadow-md"
-              : "bg-green-200 text-slate-400 cursor-not-allowed"
-          }`}
-            >
+            <button onClick={() => setConfirmation(null)} disabled={!confirmChecked} className={`mt-6 w-full py-3 rounded-xl text-lg font-semibold transition ${confirmChecked ? "bg-green-700 text-yellow-200 hover:bg-green-800 shadow-md" : "bg-green-200 text-slate-400 cursor-not-allowed"}`}>
               OK
             </button>
           </div>

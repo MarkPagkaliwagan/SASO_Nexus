@@ -6,10 +6,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class ExitBooking extends Model {
-    protected $fillable = [
-        'slot_id','course','last_name','middle_name','first_name',
-        'department','resume_link','resume_file','status'
-    ];
+protected $fillable = [
+    'slot_id','course','last_name','middle_name','first_name',
+    'department','resume_link','resume_file','status','reason','other_reason'
+  ];
 
     public function slot() {
         return $this->belongsTo(ExitInterviewSlot::class, 'slot_id');

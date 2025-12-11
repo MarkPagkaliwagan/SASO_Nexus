@@ -161,7 +161,7 @@ export default function AdminDashboard() {
                       className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
                     >
                       <Clipboard size={16} />
-                      Exam Schedule Analytics
+                      Applicant By A.Y Analytics
                     </button>
 
                     <button
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
                       className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
                     >
                       <Clipboard size={16} />
-                      Examination Analytics
+                      Over all Applicant Analytics
                     </button>
 
                     <button

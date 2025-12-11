@@ -22,7 +22,16 @@ use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CollegeAnalyticsController;
+
+Route::get('/bookings/search', [ExitBookingController::class, 'search']);
+Route::put('/bookings/{booking}', [ExitBookingController::class, 'update']);
+
+
+
 // routes/api.php
+Route::get('/no-show', [ExitBookingController::class, 'noShowList']);
+Route::post('/book-again/{id}', [ExitBookingController::class, 'bookAgain']);
+
 Route::put('/applications/{id}/update-score', [SubmissionController::class, 'updateScore']);
 
 Route::put('/applications/{id}', [ApplicationController::class, 'update']);

@@ -155,13 +155,22 @@ export default function AdminSchedule() {
         )
       );
       // feedback
-      if (window?.toast) {
-        window.toast("Application approved. Email sent.", { type: "success" });
-      } else {
-        alert("Application approved. Email sent (or will be queued).");
-      }
+// --- MODERN FEEDBACK ---
+const msg = `🎉 Application approved!\n📨 Confirmation email has been sent.`;
+if (window?.toast) {
+  window.toast(msg, { type: "success" });
+} else {
+  alert(msg);
+}
+
     } catch (err) {
-      alert(err.message || "Failed to approve");
+      const errMsg = `❌ Approval failed: ${err.message || "Unknown error"}`;
+if (window?.toast) {
+  window.toast(errMsg, { type: "error" });
+} else {
+  alert(errMsg);
+}
+
     } finally {
       setApprovingId(null);
     }

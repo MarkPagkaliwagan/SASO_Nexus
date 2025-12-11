@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import axios from "axios";
 import {
   ClipboardList,
@@ -7,7 +7,10 @@ import {
   RefreshCw,
   Download,
   ChevronDown,
+  TrendingUp,
+  PieChart as PieIcon,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -16,15 +19,23 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
 } from "recharts";
 
-const ICONS = [ClipboardList, UserCheck, Layers];
+const ICONS = [ClipboardList, UserCheck, Layers, TrendingUp, PieIcon];
 const ACCENT_COLORS = ["#16A34A", "#F59E0B", "#3B82F6", "#EC4899", "#F97316"];
 
-export default function ExitDashboard() {
-  const [data, setData] = useState({ departments: [], statusBreakdown: [] });
-  const [groupMode, setGroupMode] = useState("stack"); // "stack" | "group"
-  const [orientation, setOrientation] = useState("vertical"); // "vertical" | "horizontal"
+export default function ExitDashboardRevamp() {
+  const [data, setData] = useState({
+    departments: [],
+    statusBreakdown: [],
+    courses: [],
+    reasons: [],
+  });
+  const [groupMode, setGroupMode] = useState("stack");
+  const [orientation, setOrientation] = useState("vertical");
   const [loading, setLoading] = useState(false);
 
   const fetchExitData = useCallback(() => {
@@ -42,24 +53,32 @@ export default function ExitDashboard() {
     return () => clearInterval(interval);
   }, [fetchExitData]);
 
-  const totalExit = data.departments.reduce((sum, item) => sum + (item.total || 0), 0);
-
-  // transform breakdown into chart data (keeps original logic)
-  const chartData = Object.values(
-    data.statusBreakdown.reduce((acc, curr) => {
-      if (!acc[curr.department]) acc[curr.department] = { department: curr.department };
-      acc[curr.department][curr.status] = curr.count;
-      return acc;
-    }, {})
+  // --- preserve original transforms ---
+  const totalExit = useMemo(
+    () => data.departments.reduce((sum, item) => sum + (item.total || 0), 0),
+    [data.departments]
   );
 
-  const statusKeys = [...new Set(data.statusBreakdown.map((s) => s.status))];
+  const chartData = useMemo(
+    () =>
+      Object.values(
+        data.statusBreakdown.reduce((acc, curr) => {
+          if (!acc[curr.department]) acc[curr.department] = { department: curr.department };
+          acc[curr.department][curr.status] = curr.count;
+          return acc;
+        }, {})
+      ),
+    [data.statusBreakdown]
+  );
 
-  // small helper to calculate percent
+  const statusKeys = useMemo(() => [...new Set(data.statusBreakdown.map((s) => s.status))], [data.statusBreakdown]);
+
+  const courseData = data.courses.map((c) => ({ name: c.course, total: c.total }));
+  const reasonData = data.reasons.map((r) => ({ name: r.reason || "No Reason", total: r.total }));
+
   const percentOfTotal = (value) => (totalExit > 0 ? Math.round((value / totalExit) * 100) : 0);
 
   function exportCSV() {
-    // simple CSV of departments + totals + statuses
     const headers = ["Department", "Total", ...statusKeys];
     const rows = data.departments.map((d) => {
       const statuses = statusKeys.map((k) => {
@@ -79,6 +98,12 @@ export default function ExitDashboard() {
     URL.revokeObjectURL(url);
   }
 
+  // helper: top department
+  const topDepartment = useMemo(() => {
+    if (!data.departments.length) return { department: "-", total: 0 };
+    return data.departments.reduce((best, cur) => (cur.total > best.total ? cur : best), data.departments[0]);
+  }, [data.departments]);
+
   return (
     <div className="min-h-screen p-6 bg-gradient-to-br from-gray-50 via-white to-emerald-50">
       {/* HEADER */}
@@ -88,8 +113,8 @@ export default function ExitDashboard() {
             <ClipboardList className="w-9 h-9 text-emerald-700" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-emerald-900">Exit Bookings Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">Modern layout — logic kept intact. Responsive & compact.</p>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-emerald-900">Exit Bookings — Analytics</h1>
+            <p className="text-sm text-slate-500 mt-1">Mas visual, modern look. Logic at data intact — plug & play.</p>
           </div>
         </div>
 
@@ -129,40 +154,73 @@ export default function ExitDashboard() {
         </div>
       </div>
 
-      {/* LAYOUT: left summary / right chart on desktop */}
+      {/* GRID: cards + charts */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* SUMMARIES */}
+        {/* LEFT: small cards + department list */}
         <div className="lg:col-span-4 xl:col-span-3 space-y-6">
-          {/* Overview card */}
-          <div className="rounded-2xl bg-white/90 p-4 shadow-md border border-gray-100 backdrop-blur-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-semibold text-slate-700">Total Exit Bookings</div>
-                <div className="text-3xl font-extrabold text-emerald-900">{totalExit}</div>
-                <div className="text-xs text-slate-400 mt-1">Updated: {new Date().toLocaleString()}</div>
+          {/* STAT CARDS */}
+          <div className="grid grid-cols-2 gap-4">
+            <motion.div layout className="col-span-2 rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100 backdrop-blur-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-semibold text-slate-700">Total Exit Bookings</div>
+                  <motion.div
+                    className="text-3xl font-extrabold text-emerald-900"
+                    animate={{ opacity: [0.6, 1], y: [4, 0] }}
+                    transition={{ duration: 0.6 }}
+                  >
+                    {totalExit}
+                  </motion.div>
+                  <div className="text-xs text-slate-400 mt-1">Updated: {new Date().toLocaleString()}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-emerald-50">
+                  <UserCheck className="w-7 h-7 text-emerald-700" />
+                </div>
               </div>
-              <div className="p-3 rounded-lg bg-emerald-50">
-                <UserCheck className="w-7 h-7 text-emerald-700" />
-              </div>
+            </motion.div>
+
+            <div className="rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100">
+              <div className="text-sm text-slate-500">Departments</div>
+              <div className="mt-2 text-xl font-bold text-slate-800">{data.departments.length}</div>
+              <div className="text-xs text-slate-400 mt-1">Unique departments tracked</div>
+            </div>
+
+            <div className="rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100">
+              <div className="text-sm text-slate-500">Courses</div>
+              <div className="mt-2 text-xl font-bold text-slate-800">{data.courses.length}</div>
+              <div className="text-xs text-slate-400 mt-1">Unique courses found</div>
+            </div>
+
+            <div className="rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100">
+              <div className="text-sm text-slate-500">Top Dept</div>
+              <div className="mt-2 text-xl font-bold text-slate-800">{topDepartment.department}</div>
+              <div className="text-xs text-slate-400 mt-1">{topDepartment.total} exits</div>
             </div>
           </div>
 
-          {/* Department list */}
+          {/* Department list with sparklines */}
           <div className="rounded-2xl bg-white/90 p-4 shadow-md border border-gray-100 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-slate-700">Departments</h3>
-              <div className="inline-flex items-center text-xs text-slate-400">{data.departments.length} found <ChevronDown className="w-4 h-4 ml-1" /></div>
+              <div className="inline-flex items-center text-xs text-slate-400">
+                {data.departments.length} found <ChevronDown className="w-4 h-4 ml-1" />
+              </div>
             </div>
 
             <div className="space-y-3 max-h-72 overflow-auto pr-1">
-              {data.departments.length === 0 && (
-                <div className="text-sm text-slate-400">No departments yet</div>
-              )}
+              {data.departments.length === 0 && <div className="text-sm text-slate-400">No departments yet</div>}
 
               {data.departments.map((d, idx) => {
                 const Icon = ICONS[idx % ICONS.length];
                 const color = ACCENT_COLORS[idx % ACCENT_COLORS.length];
                 const pct = percentOfTotal(d.total || 0);
+
+                // build a tiny sparkline: counts per status for this department
+                const sparkData = statusKeys.map((s) => {
+                  const match = data.statusBreakdown.find((x) => x.department === d.department && x.status === s);
+                  return { name: s, value: match ? match.count : 0 };
+                });
+
                 return (
                   <div key={d.department} className="flex items-center gap-3">
                     <div className="flex-shrink-0">
@@ -170,19 +228,24 @@ export default function ExitDashboard() {
                         <Icon className="w-6 h-6" style={{ color }} />
                       </div>
                     </div>
+
                     <div className="flex-1">
                       <div className="flex items-baseline justify-between">
                         <div className="text-sm font-medium text-slate-700">{d.department}</div>
                         <div className="text-sm font-semibold text-emerald-900">{d.total}</div>
                       </div>
 
-                      <div className="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}, rgba(0,0,0,0.05))` }}
-                        />
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="flex-1 h-8">
+                          <ResponsiveContainer width="100%" height={40}>
+                            <LineChart data={sparkData} margin={{ left: -10, right: -10 }}>
+                              <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        <div className="w-20 text-xs text-slate-400">{pct}% of total</div>
                       </div>
-                      <div className="text-xs text-slate-400 mt-1">{pct}% of total</div>
                     </div>
                   </div>
                 );
@@ -204,7 +267,7 @@ export default function ExitDashboard() {
           </div>
         </div>
 
-        {/* CHART AREA */}
+        {/* RIGHT: charts */}
         <div className="lg:col-span-8 xl:col-span-9">
           <div className="rounded-2xl bg-white/90 p-6 shadow-md border border-gray-100 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
@@ -212,38 +275,93 @@ export default function ExitDashboard() {
               <div className="text-sm text-slate-500">Orientation: <span className="font-medium text-slate-700 ml-1">{orientation}</span></div>
             </div>
 
-            <div style={{ width: "100%", height: 460 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  layout={orientation === "horizontal" ? "vertical" : undefined}
-                  barGap={groupMode === "group" ? 6 : 12}
-                  barCategoryGap={groupMode === "group" ? "15%" : "20%"}
-                >
-                  {orientation === "horizontal" ? (
-                    <> 
-                      <XAxis type="number" />
-                      <YAxis dataKey="department" type="category" width={160} />
-                    </>
-                  ) : (
-                    <> 
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div className="lg:col-span-2 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    layout={orientation === "horizontal" ? "vertical" : undefined}
+                    barGap={groupMode === "group" ? 6 : 12}
+                    barCategoryGap={groupMode === "group" ? "15%" : "20%"}
+                  >
+                    {orientation === "horizontal" ? (
+                      <>
+                        <XAxis type="number" />
+                        <YAxis dataKey="department" type="category" width={160} />
+                      </>
+                    ) : (
+                      <>
+                        <XAxis dataKey="department" />
+                        <YAxis />
+                      </>
+                    )}
+
+                    <Tooltip />
+                    <Legend />
+
+                    {statusKeys.map((status, i) => (
+                      <Bar
+                        key={status}
+                        dataKey={status}
+                        stackId={groupMode === "stack" ? "a" : undefined}
+                        fill={ACCENT_COLORS[i % ACCENT_COLORS.length]}
+                        radius={orientation === "horizontal" ? [0, 6, 6, 0] : [6, 6, 0, 0]}
+                      />
+                    ))}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* LINE: statuses as lines across departments */}
+              <div className="h-64 rounded-lg p-3 bg-white/80 border border-gray-100">
+                <div className="text-sm font-medium text-slate-700 mb-2">Status Trends (per department)</div>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="department" />
                       <YAxis />
-                    </>
-                  )}
+                      <Tooltip />
+                      <Legend />
 
+                      {statusKeys.map((status, i) => (
+                        <Line key={status} type="monotone" dataKey={status} stroke={ACCENT_COLORS[i % ACCENT_COLORS.length]} strokeWidth={2} dot={false} />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* COURSE CHART */}
+          <div className="rounded-2xl bg-white/90 p-6 shadow-md border border-gray-100 mt-6">
+            <h2 className="text-lg font-bold text-emerald-900 mb-4">Exit Bookings per Course</h2>
+
+            <div style={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer>
+                <BarChart data={courseData}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
                   <Tooltip />
-                  <Legend />
+                  <Bar dataKey="total" fill="#3B82F6" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
 
-                  {statusKeys.map((status, i) => (
-                    <Bar
-                      key={status}
-                      dataKey={status}
-                      stackId={groupMode === "stack" ? "a" : undefined}
-                      fill={ACCENT_COLORS[i % ACCENT_COLORS.length]}
-                      radius={orientation === "horizontal" ? [0, 6, 6, 0] : [6, 6, 0, 0]}
-                    />
-                  ))}
+          {/* REASON CHART */}
+          <div className="rounded-2xl bg-white/90 p-6 shadow-md border border-gray-100 mt-6">
+            <h2 className="text-lg font-bold text-emerald-900 mb-4">Exit Bookings per Reason</h2>
+
+            <div style={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer>
+                <BarChart data={reasonData}>
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="total" fill="#F97316" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

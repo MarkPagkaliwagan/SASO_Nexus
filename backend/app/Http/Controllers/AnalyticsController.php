@@ -58,21 +58,31 @@ public function payments(Request $request)
 
 public function exitBookings()
 {
-    $departments = DB::table('exit_bookings')
-        ->select('department', DB::raw('COUNT(*) as total'))
+    $departments = \DB::table('exit_bookings')
+        ->select('department', \DB::raw('COUNT(*) as total'))
         ->groupBy('department')
-        ->orderBy('total', 'desc')
         ->get();
 
-    $statusBreakdown = DB::table('exit_bookings')
-        ->select('department', 'status', DB::raw('COUNT(*) as count'))
+    $statusBreakdown = \DB::table('exit_bookings')
+        ->select('department', 'status', \DB::raw('COUNT(*) as count'))
         ->groupBy('department', 'status')
-        ->orderBy('department')
+        ->get();
+
+    $courses = \DB::table('exit_bookings')
+        ->select('course', \DB::raw('COUNT(*) as total'))
+        ->groupBy('course')
+        ->get();
+
+    $reasons = \DB::table('exit_bookings')
+        ->select('reason', \DB::raw('COUNT(*) as total'))
+        ->groupBy('reason')
         ->get();
 
     return response()->json([
-        'departments' => $departments,
-        'statusBreakdown' => $statusBreakdown,
+        'departments'      => $departments,
+        'statusBreakdown'  => $statusBreakdown,
+        'courses'          => $courses,
+        'reasons'          => $reasons,
     ]);
 }
 

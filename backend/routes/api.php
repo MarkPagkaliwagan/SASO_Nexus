@@ -22,6 +22,12 @@ use App\Http\Controllers\SubmissionController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CollegeAnalyticsController;
+use App\Http\Controllers\SHSAnalyticsController;
+
+Route::get('/shs-analytics', [SHSAnalyticsController::class, 'getGradeLevels']);
+Route::get('/analytics/shs/{level}', [SHSAnalyticsController::class, 'getLevelDetail']);
+Route::get('/shs-academic-years', [SHSAnalyticsController::class, 'getAcademicYears']);
+
 
 Route::get('/bookings/search', [ExitBookingController::class, 'search']);
 Route::put('/bookings/{booking}', [ExitBookingController::class, 'update']);

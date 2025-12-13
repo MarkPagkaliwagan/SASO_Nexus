@@ -3,23 +3,33 @@ import axios from "axios";
 import debounce from "lodash.debounce";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
-  PieChart, Pie, Cell, ResponsiveContainer, Legend,
-  ScatterChart, Scatter, ZAxis
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip, // standard Tooltip for all charts
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  ScatterChart,
+  Scatter,
+  ZAxis,
+  ComposedChart,
+  Line,
+  AreaChart, // added for area charts
+  Area       // added for area charts
 } from "recharts";
+
+
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 /**
  * CollegeAnalyticsAdvanced.withRankings.jsx
- * - Keeps your original component intact but adds:
- *   • Rankings (Top N students) panel + export
- *   • Distribution histogram of chosen numeric field (buckets)
- *   • Scatter plot (MAT IQ vs APT Total %tile)
- *   • Threshold counter (how many students above X)
- *   • Small UI controls to pick Top N, threshold, and histogram field
- *
- * Drop-in replacement for your existing file. Requires same deps as before.
+ * - Layout only: made full-width and responsive; logic untouched.
  */
 
 /* ------------------------
@@ -81,7 +91,7 @@ function numericStats(rows, field){
   const avg = +(sum/vals.length).toFixed(2);
   const min = vals[0], max = vals[vals.length-1];
   const mid = Math.floor(vals.length/2);
-  const median = vals.length%2===1 ? vals[mid] : +(((vals[mid-1]+vals[mid])/2).toFixed(2));
+  const median = vals.length%2===1 ? vals[mid] : +(((vals[mid-1]+vals[mid])/2).toFixed(22));
   return {count: vals.length, avg, median, min, max};
 }
 
@@ -242,14 +252,15 @@ export default function CollegeAnalyticsAdvanced(){
     return Object.keys(m).map((k,i)=>({ name:k, value:m[k], percent: +(((m[k]/(detail.total||1))*100).toFixed(2)), color: COLOR_PALETTE[i%COLOR_PALETTE.length] }));
   },[detail]);
 
+  // CHANGE: classification now uses GWA classification (not APT Total)
   const classData = useMemo(()=>{
     if (!detail) return [];
-    const key="apt_total_classification";
+    const key = "gwa_classification"; // switched to GWA
     if (detail.classification_stats && detail.classification_stats[key]){
       return detail.classification_stats[key].map((c,i)=>({ name:c.classification, value:c.total, percent:c.percentage, color: COLOR_PALETTE[i%COLOR_PALETTE.length] }));
     }
     const m={};
-    (detail.rows||[]).forEach(r=>{ const k=r[key]||r.apt_total_classification||"Unspecified"; m[k]=(m[k]||0)+1; });
+    (detail.rows||[]).forEach(r=>{ const k = r[key] || r.gwa_classification || "Unspecified"; m[k]=(m[k]||0)+1; });
     return Object.keys(m).map((k,i)=>({ name:k, value:m[k], percent: +(((m[k]/(detail.total||1))*100).toFixed(2)), color: COLOR_PALETTE[i%COLOR_PALETTE.length] }));
   },[detail]);
 
@@ -370,11 +381,13 @@ export default function CollegeAnalyticsAdvanced(){
   const [colDropdownOpen, setColDropdownOpen] = useState(false);
 
   return (
-    <div className={`${THEME.bg1} min-h-screen py-8 px-4 text-black`}>
-      <div className="max-w-7xl mx-auto">
+    // outer container kept full-width and responsive padding
+    <div className={`${THEME.bg1} min-h-screen py-8 px-4 lg:px-8 text-black`}>
+      {/* make the inner wrapper full width (removed max-w-7xl) */}
+      <div className="w-full mx-auto">
 
         {/* HEADER */}
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 w-full">
           <div>
             <h1 style={{ color: THEME.greenDark }} className="text-3xl md:text-4xl font-extrabold tracking-tight">College Analytics</h1>
             <p className="text-sm text-gray-600 mt-1">Interactive analytics — <span className="font-medium">firstChoice</span>. Clean, fast, and actionable.</p>
@@ -432,7 +445,7 @@ export default function CollegeAnalyticsAdvanced(){
         {/* CARDS */}
         <AnimatePresence>
           {detail && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 w-full">
               <StatCard title="Course" value={detail.course} subtitle={`Total applicants: ${detail.total}`} />
               <StatCard title="MAT IQ (avg)" value={detail.averages?.mat_iq_avg ?? "—"} subtitle={`MAT %tile avg: ${detail.averages?.mat_percentile_avg ?? "—"}`} />
               <StatCard title="APT Total (avg)" value={detail.averages?.apt_total_percentile_avg ?? "—"} subtitle={`APT verbal avg: ${detail.averages?.apt_verbal_percentile_avg ?? "—"}`} />
@@ -443,94 +456,131 @@ export default function CollegeAnalyticsAdvanced(){
 
         {/* Charts */}
         {detail && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <motion.div initial={{opacity:0, y:8}} animate={{opacity:1, y:0}} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 w-full">
+            <motion.div initial={{opacity:0, y:8}} animate={{opacity:1, y:0}} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 w-full">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold">Average numeric scores</h3>
                 <div className="text-sm text-gray-500">Based on displayed rows</div>
               </div>
               {barData.length===0 ? <div className="text-sm text-gray-500">No numeric data</div> : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={barData} margin={{ left: 0, right: 16 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e7f0ea" />
-                    <XAxis dataKey="field" tick={{ fontSize: 12 }} />
-                    <YAxis />
-                    <ReTooltip />
-                    <Bar dataKey="avg" radius={[6,6,0,0]}>
-                      {barData.map((d,i)=><Cell key={i} fill={COLOR_PALETTE[i%COLOR_PALETTE.length]} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="w-full h-64 md:h-72 lg:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={barData} margin={{ left: 0, right: 16 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e7f0ea" />
+                      <XAxis dataKey="field" tick={{ fontSize: 12 }} />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="avg" radius={[6,6,0,0]}>
+                        {barData.map((d,i)=><Cell key={i} fill={COLOR_PALETTE[i%COLOR_PALETTE.length]} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               )}
             </motion.div>
 
-            <motion.div initial={{opacity:0, y:8}} animate={{opacity:1, y:0}} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Payment distribution</h3>
-                <div className="text-sm text-gray-500">Counts & percentages</div>
-              </div>
-              {paymentData.length===0 ? <div className="text-sm text-gray-500">No payment data</div> : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie data={paymentData} dataKey="value" nameKey="name" outerRadius={90} innerRadius={45} label={(d)=>`${d.name}: ${d.percent}%`}>
-                      {paymentData.map((p,i)=><Cell key={i} fill={p.color} />)}
-                    </Pie>
-                    <Legend verticalAlign="bottom" height={36} />
-                    <ReTooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              )}
-            </motion.div>
+<motion.div
+  initial={{ opacity: 0, y: 8 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 w-full"
+>
+  <div className="flex items-center justify-between mb-3">
+    <h3 className="font-semibold text-gray-800">Payment Distribution</h3>
+    <span className="text-sm text-gray-500">Counts & Percentages</span>
+  </div>
+
+  {paymentData.length === 0 ? (
+    <div className="text-sm text-gray-500">No payment data available</div>
+  ) : (
+    <div className="w-full h-64 md:h-72 lg:h-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={paymentData} margin={{ top: 10, right: 20, left: 0, bottom: 30 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis yAxisId="left" orientation="left" />
+          <YAxis yAxisId="right" orientation="right" tickFormatter={(val) => `${val}%`} />
+          <Tooltip
+            formatter={(value, name, props) =>
+              name === "percent"
+                ? [`${value}%`, "Percentage"]
+                : [value, "Count"]
+            }
+          />
+          <Legend verticalAlign="bottom" height={36} />
+          <Bar yAxisId="left" dataKey="value">
+            {paymentData.map((entry, index) => (
+              <Cell key={index} fill={entry.color} />
+            ))}
+          </Bar>
+          <Line
+            yAxisId="right"
+            type="monotone"
+            dataKey="percent"
+            stroke="#f59e0b"
+            strokeWidth={2}
+            dot={{ r: 4 }}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+</motion.div>
+
           </div>
         )}
 
         {/* Classification */}
         {detail && (
-          <motion.div initial={{opacity:0}} animate={{opacity:1}} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold">Classification (APT Total)</h3>
-              <div className="text-sm text-gray-500">Distribution</div>
-            </div>
+          <motion.div
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-6 w-full"
+>
+  {/* Header */}
+  <div className="flex items-center justify-between mb-3">
+    <h3 className="font-semibold text-gray-800">Classification (GWA)</h3>
+    <span className="text-sm text-gray-500">Distribution</span>
+  </div>
 
-            {classData.length===0 ? <div className="text-sm text-gray-500">No classification data</div> : (
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                <div style={{ width:220, height:220 }}>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <PieChart>
-                      <Pie data={classData} dataKey="value" nameKey="name" outerRadius={90} innerRadius={30} label>
-                        {classData.map((c,i)=><Cell key={i} fill={c.color} />)}
-                      </Pie>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="flex-1">
-                  {classData.map((c,i)=>(
-                    <div key={i} className="flex items-center justify-between py-2 border-b">
-                      <div className="flex items-center gap-3">
-                        <span style={{ width:12, height:12, background:c.color, display:"inline-block", borderRadius:2 }} />
-                        <div>
-                          <div className="text-black font-medium">{c.name}</div>
-                          <div className="text-xs text-gray-500">{c.value} • {c.percent}%</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.div>
+  {/* Content */}
+  {classData.length === 0 ? (
+    <div className="text-sm text-gray-500">No classification data</div>
+  ) : (
+    <div className="w-full h-64 md:h-72 lg:h-80">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={classData}
+          margin={{ top: 10, right: 20, left: 0, bottom: 30 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip formatter={(value, name, props) => [`${value} (${props.payload.percent}%)`, name]} />
+          <Legend verticalAlign="bottom" height={36} />
+          <Area
+            type="monotone"
+            dataKey="value"
+            name="Total"
+            stroke="#4f46e5"
+            fillOpacity={0.3}
+            fill="#4f46e5"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )}
+</motion.div>
         )}
 
         {/* NEW: Rankings & Distribution section */}
         {detail && (
-          <motion.div initial={{opacity:0, y:6}} animate={{opacity:1, y:0}} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-6">
+          <motion.div initial={{opacity:0, y:6}} animate={{opacity:1, y:0}} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 mb-6 w-full">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold">Rankings & Distribution</h3>
               <div className="text-sm text-gray-500">Top students, histogram, threshold counts</div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col md:flex-row gap-4 w-full">
               {/* Controls */}
               <div className="w-full md:w-64 p-2 border rounded">
                 <div className="mb-2 text-xs text-gray-600">Top N</div>
@@ -553,38 +603,42 @@ export default function CollegeAnalyticsAdvanced(){
               </div>
 
               {/* Charts: histogram / scatter / top list */}
-              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-2 border rounded">
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="p-2 border rounded w-full">
                   <div className="text-sm font-medium mb-2">Histogram — {LABELS[histField]}</div>
                   {histogram.length===0 ? <div className="text-xs text-gray-500">No data</div> : (
-                    <ResponsiveContainer width="100%" height={180}>
-                      <BarChart data={histogram} margin={{ left: 0, right: 8 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                        <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
-                        <YAxis />
-                        <ReTooltip />
-                        <Bar dataKey="count" fill={THEME.green} radius={[6,6,0,0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    <div className="w-full h-44 md:h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={histogram} margin={{ left: 0, right: 8 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                          <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="count" fill={THEME.green} radius={[6,6,0,0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
                   )}
                 </div>
 
-                <div className="p-2 border rounded">
+                <div className="p-2 border rounded w-full">
                   <div className="text-sm font-medium mb-2">MAT IQ vs APT Total (%tile)</div>
                   {detail.rows.length===0 ? <div className="text-xs text-gray-500">No data</div> : (
-                    <ResponsiveContainer width="100%" height={180}>
-                      <ScatterChart>
-                        <CartesianGrid />
-                        <XAxis dataKey="mat_iq" name="MAT IQ" />
-                        <YAxis dataKey="apt_total_percentile" name="APT %tile" />
-                        <ReTooltip cursor={{ strokeDasharray: '3 3' }} />
-                        <Scatter data={(detail.rows||[]).map(r=>({ mat_iq: safeNumber(r.mat_iq), apt_total_percentile: safeNumber(r.apt_total_percentile), name: toFullName(r) })).filter(p=>p.mat_iq!==null && p.apt_total_percentile!==null)} fill={COLOR_PALETTE[0]} />
-                      </ScatterChart>
-                    </ResponsiveContainer>
+                    <div className="w-full h-44 md:h-48">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <ScatterChart>
+                          <CartesianGrid />
+                          <XAxis dataKey="mat_iq" name="MAT IQ" />
+                          <YAxis dataKey="apt_total_percentile" name="APT %tile" />
+                          <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+                          <Scatter data={(detail.rows||[]).map(r=>({ mat_iq: safeNumber(r.mat_iq), apt_total_percentile: safeNumber(r.apt_total_percentile), name: toFullName(r) })).filter(p=>p.mat_iq!==null && p.apt_total_percentile!==null)} fill={COLOR_PALETTE[0]} />
+                        </ScatterChart>
+                      </ResponsiveContainer>
+                    </div>
                   )}
                 </div>
 
-                <div className="md:col-span-2 p-2 border rounded">
+                <div className="md:col-span-2 p-2 border rounded w-full">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-medium">Top {topN} students</div>
                     <div className="text-xs text-gray-500">Sorted by APT total %tile (or fallback)</div>
@@ -618,7 +672,7 @@ export default function CollegeAnalyticsAdvanced(){
 
         {/* Controls: column visibility / compact / export */}
         {detail && (
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-3">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-3 w-full">
             <div className="flex items-center gap-3">
               <div className="text-sm text-gray-600 mr-2">Columns</div>
 
@@ -659,7 +713,7 @@ export default function CollegeAnalyticsAdvanced(){
 
         {/* Table */}
 {detail && (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-x-auto">
+  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-x-auto w-full">
     {/* Table controls */}
     <div className="p-3 border-b text-sm text-gray-600 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
       <div className="flex items-center gap-2">

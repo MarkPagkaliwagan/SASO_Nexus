@@ -226,10 +226,12 @@ export default function DashboardV2() {
   const labelFormatter = (value) => (value >= Math.max(1, maxValue * 0.04) ? formatNumber(value) : "");
 
   return (
-    <div className="min-h-screen text-gray-900 p-6" style={{ background: THEME.bg }}>
-      <div className="max-w-7xl mx-auto">
+    // Outer container is full width now, with padding. Background preserved.
+    <div className="min-h-screen text-gray-900 w-full px-4 lg:px-6 py-6" style={{ background: THEME.bg }}>
+      {/* Full width inner wrapper (replaced max-w-7xl with w-full) */}
+      <div className="w-full mx-auto">
         {/* Header */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 w-full">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-2xl shadow-md" style={{ background: "linear-gradient(135deg, rgba(5,150,105,0.08), rgba(245,158,11,0.06))" }}>
               <BarChart3 className="w-9 h-9" style={{ color: THEME.green }} />
@@ -290,9 +292,9 @@ export default function DashboardV2() {
         </div>
 
         {/* Content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
           {/* Left column: KPIs and list */}
-          <div className="lg:col-span-3 flex flex-col gap-4">
+          <div className="lg:col-span-3 flex flex-col gap-4 w-full">
             {loadingInitial ? (
               <Skeleton className="h-40" />
             ) : (
@@ -330,7 +332,7 @@ export default function DashboardV2() {
           </div>
 
           {/* Middle: main chart */}
-          <div className="lg:col-span-6 bg-white rounded-2xl shadow p-5">
+          <div className="lg:col-span-6 bg-white rounded-2xl shadow p-5 w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Payment Types per Application</h3>
 
@@ -372,8 +374,11 @@ export default function DashboardV2() {
               ))}
             </div>
 
-            {/* Chart container: when many categories we allow horizontal scroll or switch to horizontal layout */}
-            <div style={{ width: "100%", height: 520, overflowX: categoryCount > 8 ? "auto" : "hidden" }}>
+            {/* Chart container: responsive height and full-width; allow horizontal scroll when many categories */}
+            <div
+              className="w-full h-[420px] md:h-[480px] lg:h-[520px]"
+              style={{ overflowX: categoryCount > 8 ? "auto" : "hidden" }}
+            >
               <div style={{ minWidth: useHorizontal ? chartMinWidth : "100%", height: "100%" }}>
                 {loadingInitial ? (
                   <Skeleton className="w-full h-full" />
@@ -474,7 +479,7 @@ export default function DashboardV2() {
           </div>
 
           {/* Right column: summaries */}
-          <div className="lg:col-span-3 flex flex-col gap-4">
+          <div className="lg:col-span-3 flex flex-col gap-4 w-full">
             <div className="bg-white rounded-2xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <div className="text-sm font-medium">Payments Summary</div>

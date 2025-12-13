@@ -35,6 +35,7 @@ import ExitAnalytics from "../DashboardContent/ExitAnalytics";
 import ExamsAnalytics from "../DashboardContent/ExamsAnalytics";
 import AdminReport from "../components/AdminReport";
 import CollegeAnalytics from "../DashboardContent/CollegeAnalytics";
+import SHSAnalytics from "../DashboardContent/SHSAnalytics";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -489,6 +490,7 @@ export default function AdminDashboard() {
         {activePanel === "ExamsAnalytics" && <ExamsAnalytics />}
         {activePanel === "AdminReport" && <AdminReport />}
         {activePanel === "CollegeAnalytics" && <CollegeAnalytics />}
+        {activePanel === "SHSAnalytics" && <SHSAnalytics />}
       </main>
 
       {/* 🔹 Popup After Login */}

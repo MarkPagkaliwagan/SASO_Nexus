@@ -23,6 +23,12 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\CollegeAnalyticsController;
 use App\Http\Controllers\SHSAnalyticsController;
+use App\Http\Controllers\JHSAnalyticsController;
+
+Route::get('/jhs-analytics', [JHSAnalyticsController::class, 'getGradeLevels']);
+Route::get('/jhs-academic-years', [JHSAnalyticsController::class, 'getAcademicYears']);
+Route::get('/analytics/jhs/{level}', [JHSAnalyticsController::class, 'getLevelDetail']);
+
 
 Route::get('/shs-analytics', [SHSAnalyticsController::class, 'getGradeLevels']);
 Route::get('/analytics/shs/{level}', [SHSAnalyticsController::class, 'getLevelDetail']);

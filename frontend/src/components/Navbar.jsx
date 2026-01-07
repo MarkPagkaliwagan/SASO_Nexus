@@ -269,13 +269,14 @@ export default function Navbar() {
 
               {/* mobile burger */}
               {!isLoggedIn && (
-                <button
-                  onClick={() => setMenuOpen((s) => !s)}
-                  className="lg:hidden p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                  aria-label="Toggle menu"
-                >
-                  {menuOpen ? <X size={22} /> : <Menu size={22} />}
-                </button>
+<button
+  onClick={() => setMenuOpen((s) => !s)}
+className="lg:hidden p-2 rounded-md text-slate-800 dark:text-slate-100 hover:bg-slate-200/40 dark:hover:bg-slate-700/40 transition-colors duration-200"
+  aria-label="Toggle menu"
+>
+  {menuOpen ? <X size={22} /> : <Menu size={22} />}
+</button>
+
               )}
             </div>
           </div>

@@ -55,7 +55,6 @@ const LABELS = {
   last_school_name: "Last school",
   track: "Track",
   strand: "Strand",
-  status: "Status",
 
   cfit_rs: "CFIT RS",
   cfit_iq: "CFIT IQ",
@@ -356,7 +355,6 @@ function exportCSV(){
     "last_school_name",
     "track",
     "strand",
-    "status",
     "cfit_rs",
     "cfit_iq",
     "cfit_pc",
@@ -412,7 +410,6 @@ function exportExcel(){
     "Last School",
     "Track",
     "Strand",
-    "Status",
     "CFIT RS",
     "CFIT IQ",
     "CFIT PC",
@@ -449,7 +446,6 @@ function exportExcel(){
     r.last_school_name,
     r.track,
     r.strand,
-    r.status,
     r.cfit_rs,
     r.cfit_iq,
     r.cfit_pc,
@@ -548,7 +544,7 @@ function exportExcel(){
   const lastSchoolData = useMemo(() => prepareCategoryChartData(detail?.categoryStats?.last_school_name), [detail]);
   const trackData = useMemo(() => prepareCategoryChartData(detail?.categoryStats?.track), [detail]);
   const strandData = useMemo(() => prepareCategoryChartData(detail?.categoryStats?.strand), [detail]);
-  const statusData = useMemo(() => prepareCategoryChartData(detail?.categoryStats?.status), [detail]);
+  const remarksData = useMemo(() => prepareCategoryChartData(detail?.categoryStats?.remarks), [detail]);
 
   // small UI helpers
   const Spinner = () => (
@@ -725,7 +721,7 @@ function exportExcel(){
     { title: "Last School", data: lastSchoolData, type: "bar-horizontal" },
     { title: "Track", data: trackData, type: "pie" },
     { title: "Strand", data: strandData, type: "area" },
-    { title: "Status", data: statusData, type: "scatter" }
+    { title: "Remarks", data: remarksData, type: "scatter" }
   ].map((chart) => (
 <div key={chart.title} className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 min-h-[340px] flex flex-col">
       <h3 className="font-semibold text-sm mb-2">{chart.title}</h3>

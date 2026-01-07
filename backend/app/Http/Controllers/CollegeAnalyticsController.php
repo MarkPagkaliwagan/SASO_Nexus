@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\DB;
 class CollegeAnalyticsController extends Controller
 {
     /**
-     * Return summary for all firstChoice values (courses).
-     * Output: [{ course, totalApplicants, percent_of_all_applicants }]
+     * GET /api/college-analytics
+     * Summary of all firstChoice courses
      */
     public function index()
     {
@@ -21,11 +21,12 @@ class CollegeAnalyticsController extends Controller
             ->groupBy('firstChoice')
             ->orderByDesc('total')
             ->get()
-            ->map(function($row) use ($totalAll) {
+            ->map(function ($row) use ($totalAll) {
                 return [
                     'course' => $row->firstChoice,
                     'totalApplicants' => (int)$row->total,
-                    'percent_of_all_applicants' => $totalAll > 0 ? round(($row->total / $totalAll) * 100, 2) : 0
+                    'percent_of_all_applicants' =>
+                        $totalAll > 0 ? round(($row->total / $totalAll) * 100, 2) : 0
                 ];
             });
 
@@ -36,48 +37,59 @@ class CollegeAnalyticsController extends Controller
     }
 
     /**
-     * Return analytics and paginated detail rows for a single course (firstChoice).
-     * Supports query params: page, per_page, academicYear (optional).
+     * GET /api/analytics/college/{course}
+     * Analytics + paginated rows for a single course
+     * Supports query params: page, per_page, academicYear
      */
     public function courseDetail($course, Request $request)
     {
         $perPage = (int) $request->query('per_page', 50);
         $page = (int) $request->query('page', 1);
-        $academicYear = $request->query('academicYear', null);
+        $academicYear = $request->query('academicYear');
 
-        // Base query
+        /** ----------------------------
+         * BASE QUERY
+         * --------------------------- */
         $baseQuery = Application::where('firstChoice', $course);
-        if ($academicYear) {
-            $baseQuery = $baseQuery->where('academicYear', $academicYear);
-        }
+        if ($academicYear) $baseQuery->where('academicYear', $academicYear);
 
-        $count = $baseQuery->count();
+        $total = (clone $baseQuery)->count();
 
-        if ($count === 0) {
+        if ($total === 0) {
             return response()->json([
                 'course' => $course,
                 'total' => 0,
-                'message' => 'No applicants for this course'
+                'page' => $page,
+                'per_page' => $perPage,
+                'averages' => (object) [],
+                'classification_stats' => [],
+                'payment_stats' => [],
+                'rows' => []
             ]);
         }
 
-        // Averages (rounded) for numeric percent fields
-        $averagesQuery = Application::where('firstChoice', $course);
-        if ($academicYear) $averagesQuery = $averagesQuery->where('academicYear', $academicYear);
+        /** ----------------------------
+         * AVERAGES (numeric fields)
+         * --------------------------- */
+        $avgFields = [
+            'mat_iq',
+            'mat_percentile',
+            'mat_rs',
+            'apt_verbal_percentile',
+            'apt_num_percentile',
+            'apt_total_percentile',
+            'gwa_percentile'
+        ];
 
-        $averages = $averagesQuery
-            ->selectRaw('
-                ROUND(AVG(mat_iq), 2) as mat_iq_avg,
-                ROUND(AVG(mat_percentile), 2) as mat_percentile_avg,
-                ROUND(AVG(mat_rs), 2) as mat_rs_avg,
-                ROUND(AVG(apt_verbal_percentile), 2) as apt_verbal_percentile_avg,
-                ROUND(AVG(apt_num_percentile), 2) as apt_num_percentile_avg,
-                ROUND(AVG(apt_total_percentile), 2) as apt_total_percentile_avg,
-                ROUND(AVG(gwa_percentile), 2) as gwa_percentile_avg
-            ')
-            ->first();
+        $averages = [];
+        foreach ($avgFields as $field) {
+            $val = (clone $baseQuery)->avg($field);
+            $averages[$field.'_avg'] = is_numeric($val) ? round($val, 2) : null;
+        }
 
-        // Classification fields to group
+        /** ----------------------------
+         * CLASSIFICATION STATS
+         * --------------------------- */
         $groupFields = [
             'mat_classification',
             'apt_verbal_classification',
@@ -88,65 +100,63 @@ class CollegeAnalyticsController extends Controller
 
         $classificationStats = [];
         foreach ($groupFields as $field) {
-            $q = Application::where('firstChoice', $course);
-            if ($academicYear) $q = $q->where('academicYear', $academicYear);
-
-            $rows = $q->select($field, DB::raw('COUNT(*) as total'))
+            $rows = (clone $baseQuery)
+                ->select($field, DB::raw('COUNT(*) as total'))
                 ->groupBy($field)
                 ->get()
-                ->map(function($r) use ($count, $field) {
-                    $label = $r->{$field} ?? 'Unspecified';
+                ->map(function($r) use ($total, $field) {
                     return [
-                        'classification' => $label,
-                        'total' => (int) $r->total,
-                        'percentage' => round(($r->total / $count) * 100, 2)
+                        'classification' => $r->{$field} ?? 'Unspecified',
+                        'total' => (int)$r->total,
+                        'percentage' => round(($r->total / $total) * 100, 2)
                     ];
                 });
 
             $classificationStats[$field] = $rows;
         }
 
-        // Payment distribution
-        $payQ = Application::where('firstChoice', $course);
-        if ($academicYear) $payQ = $payQ->where('academicYear', $academicYear);
-
-        $paymentStats = $payQ->select('payment_type', DB::raw('COUNT(*) as total'))
+        /** ----------------------------
+         * PAYMENT STATS
+         * --------------------------- */
+        $paymentStats = (clone $baseQuery)
+            ->select('payment_type', DB::raw('COUNT(*) as total'))
             ->groupBy('payment_type')
             ->get()
-            ->map(function($r) use ($count) {
-                $label = $r->payment_type ?? 'Unspecified';
+            ->map(function($r) use ($total) {
                 return [
-                    'payment_type' => $label,
-                    'total' => (int) $r->total,
-                    'percentage' => round(($r->total / $count) * 100, 2)
+                    'payment_type' => $r->payment_type ?? 'Unspecified',
+                    'total' => (int)$r->total,
+                    'percentage' => round(($r->total / $total) * 100, 2)
                 ];
-            });
+            })->values();
 
-        // Rows (paginated). Select the fields you requested plus personal info.
-$selectFields = [
-    'id',
-    'nameFamily','nameGiven','nameMiddle',
-    'mat_iq','mat_percentile','mat_classification','mat_rs',
-    'apt_verbal_rs','apt_verbal_percentile','apt_verbal_classification',
-    'apt_num_rs','apt_num_percentile','apt_num_classification',
-    'apt_total_rs','apt_total_percentile','apt_total_classification',
-    'gwa_percentile','gwa_classification',
-    'remarks','payment_type','academicYear'
-];
+        /** ----------------------------
+         * ROWS (PAGINATED)
+         * --------------------------- */
+        $selectFields = [
+            'id',
+            'nameFamily','nameGiven','nameMiddle',
+            'mat_iq','mat_percentile','mat_classification','mat_rs',
+            'apt_verbal_rs','apt_verbal_percentile','apt_verbal_classification',
+            'apt_num_rs','apt_num_percentile','apt_num_classification',
+            'apt_total_rs','apt_total_percentile','apt_total_classification',
+            'gwa_percentile','gwa_classification',
+            'remarks','payment_type','academicYear'
+        ];
 
-
-        $rowsQ = Application::where('firstChoice', $course);
-        if ($academicYear) $rowsQ = $rowsQ->where('academicYear', $academicYear);
-
-        $rows = $rowsQ->select($selectFields)
+        $rows = (clone $baseQuery)
+            ->select($selectFields)
             ->orderBy('nameFamily')
             ->skip(($page - 1) * $perPage)
             ->take($perPage)
             ->get();
 
+        /** ----------------------------
+         * RESPONSE
+         * --------------------------- */
         return response()->json([
             'course' => $course,
-            'total' => $count,
+            'total' => $total,
             'page' => $page,
             'per_page' => $perPage,
             'averages' => $averages,

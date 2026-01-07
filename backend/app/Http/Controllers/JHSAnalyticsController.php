@@ -6,24 +6,24 @@ use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class SHSAnalyticsController extends Controller
+class JHSAnalyticsController extends Controller
 {
     /**
-     * GET /api/shs-analytics
-     * List SHS grade levels with totals
+     * GET /api/jhs-analytics
+     * List of grade levels with totals
      */
     public function getGradeLevels()
     {
         $totalAll = Application::count();
 
-        $levels = Application::select('shsGradeLevel', DB::raw('COUNT(*) as total'))
-            ->whereNotNull('shsGradeLevel')
-            ->groupBy('shsGradeLevel')
+        $levels = Application::select('gradeLevel', DB::raw('COUNT(*) as total'))
+            ->whereNotNull('gradeLevel')
+            ->groupBy('gradeLevel')
             ->orderByDesc('total')
             ->get()
             ->map(function ($row) use ($totalAll) {
                 return [
-                    'shsGradeLevel' => $row->shsGradeLevel,
+                    'gradeLevel' => $row->gradeLevel,
                     'totalApplicants' => (int) $row->total,
                     'percent_of_all_applicants' =>
                         $totalAll > 0 ? round(($row->total / $totalAll) * 100, 2) : 0
@@ -37,7 +37,7 @@ class SHSAnalyticsController extends Controller
     }
 
     /**
-     * GET /api/shs-academic-years
+     * GET /api/jhs-academic-years
      */
     public function getAcademicYears()
     {
@@ -51,7 +51,7 @@ class SHSAnalyticsController extends Controller
     }
 
     /**
-     * GET /api/analytics/shs/{level}
+     * GET /api/analytics/jhs/{level}
      */
     public function getLevelDetail($level, Request $request)
     {
@@ -62,7 +62,7 @@ class SHSAnalyticsController extends Controller
         /** ---------------------------
          * BASE QUERY (DO NOT MUTATE)
          * --------------------------*/
-        $baseQuery = Application::where('shsGradeLevel', $level);
+        $baseQuery = Application::where('gradeLevel', $level);
 
         if ($academicYear) {
             $baseQuery->where('academicYear', $academicYear);
@@ -70,19 +70,19 @@ class SHSAnalyticsController extends Controller
 
         $total = (clone $baseQuery)->count();
 
-        if ($total === 0) {
-            return response()->json([
-                'shsGradeLevel' => $level,
-                'total' => 0,
-                'page' => $page,
-                'per_page' => $perPage,
-                'rows' => [],
-                'categoryStats' => [],
-                'payment_stats' => [],
-                'classification_stats' => [],
-                'averages' => (object) []
-            ]);
-        }
+if ($total === 0) {
+    return response()->json([
+        'gradeLevel' => $level,
+        'total' => 0,
+        'page' => $page,
+        'per_page' => $perPage,
+        'rows' => [],
+        'categoryStats' => (object) [],
+        'payment_stats' => [],
+        'averages' => (object) []
+    ]);
+}
+
 
         /** ---------------------------
          * TABLE ROWS (PAGINATED)
@@ -95,30 +95,15 @@ class SHSAnalyticsController extends Controller
             'gender',
             'address',
             'academicYear',
-            'shsGradeLevel',
-            'shsStrand',
+            'gradeLevel',
             'last_school_name',
-            'track',
-            'strand',
-            'cfit_rs',
-            'cfit_iq',
-            'cfit_pc',
-            'cfit_classification',
-            'olsat_verbal_rs',
-            'olsat_verbal_ss',
-            'olsat_verbal_percentile',
-            'olsat_verbal_stanine',
-            'olsat_verbal_classification',
-            'olsat_nonverbal_rs',
-            'olsat_nonverbal_ss',
-            'olsat_nonverbal_pc',
-            'olsat_nonverbal_stanine',
-            'olsat_nonverbal_classification',
-            'olsat_total_rs',
-            'olsat_total_ss',
-            'olsat_total_pc',
-            'olsat_total_stanine',
-            'olsat_total_classification',
+            'vc_rs','vc_pc',
+            'vr_rs','vr_pc',
+            'fr_rs','fr_pc',
+            'qr_rs','qr_pc',
+            'verbal_rs','verbal_pc',
+            'nonverbal_rs','nonverbal_pc',
+            'overall_rs','overall_pc',
             'remarks',
             'payment_type'
         ];
@@ -134,10 +119,10 @@ class SHSAnalyticsController extends Controller
          * AVERAGES (ALL MATCHING DATA)
          * --------------------------*/
         $avgFields = [
-            'cfit_iq' => 'cfit_iq_avg',
-            'cfit_rs' => 'cfit_rs_avg',
-            'olsat_total_ss' => 'olsat_total_ss_avg',
-            'olsat_verbal_ss' => 'olsat_verbal_ss_avg'
+            'overall_rs' => 'overall_rs_avg',
+            'overall_pc' => 'overall_pc_avg',
+            'verbal_rs'  => 'verbal_rs_avg',
+            'verbal_pc'  => 'verbal_pc_avg'
         ];
 
         $averages = [];
@@ -165,36 +150,14 @@ class SHSAnalyticsController extends Controller
             ->values();
 
         /** ---------------------------
-         * CLASSIFICATION STATS
-         * --------------------------*/
-        $classificationStats = (clone $baseQuery)
-            ->select('olsat_total_classification', DB::raw('COUNT(*) as total'))
-            ->groupBy('olsat_total_classification')
-            ->get()
-            ->map(function ($row) use ($total) {
-                $name = $row->olsat_total_classification ?? 'Unspecified';
-                $count = (int) $row->total;
-                return [
-                    'classification' => $name,
-                    'total' => $count,
-                    'percentage' =>
-                        $total > 0 ? round(($count / $total) * 100, 2) : 0
-                ];
-            })
-            ->values();
-
-        /** ---------------------------
-         * CATEGORY STATS (SHS)
+         * CATEGORY STATS (JHS ONLY)
          * --------------------------*/
         $categoricalFields = [
             'gender',
             'address',
             'academicYear',
-            'shsGradeLevel',
-            'shsStrand',
+            'gradeLevel',
             'last_school_name',
-            'track',
-            'strand',
             'remarks'
         ];
 
@@ -219,16 +182,13 @@ class SHSAnalyticsController extends Controller
          * RESPONSE
          * --------------------------*/
         return response()->json([
-            'shsGradeLevel' => $level,
+            'gradeLevel' => $level,
             'total' => $total,
             'page' => $page,
             'per_page' => $perPage,
             'rows' => $rows,
             'categoryStats' => $categoryStats,
             'payment_stats' => $paymentStats,
-            'classification_stats' => [
-                'olsat_total_classification' => $classificationStats
-            ],
             'averages' => $averages
         ]);
     }

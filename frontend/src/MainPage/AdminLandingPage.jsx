@@ -37,6 +37,7 @@ import AdminReport from "../components/AdminReport";
 import CollegeAnalytics from "../DashboardContent/CollegeAnalytics";
 import SHSAnalytics from "../DashboardContent/SHSAnalytics";
 import JHSAnalytics from "../DashboardContent/JHSAnalytics";
+import GSAnalyticsAdvanced from "../DashboardContent/GSAnalyticsAdvanced";
 
 
 
@@ -262,7 +263,7 @@ export default function AdminDashboard() {
 
                     <button
                       onClick={() => {
-                        setActivePanel("GSAnalytics");
+                        setActivePanel("GSAnalyticsAdvanced");
                         setIsMobileMenuOpen(false);
                       }}
                       className={`${baseBtn} ${analyticsHover}`}
@@ -495,6 +496,7 @@ export default function AdminDashboard() {
         {activePanel === "CollegeAnalytics" && <CollegeAnalytics />}
         {activePanel === "SHSAnalytics" && <SHSAnalytics />}
         {activePanel === "JHSAnalytics" && <JHSAnalytics />}
+        {activePanel === "GSAnalyticsAdvanced" && <GSAnalyticsAdvanced />}
       </main>
 
       {/* 🔹 Popup After Login */}

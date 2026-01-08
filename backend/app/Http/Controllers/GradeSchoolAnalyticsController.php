@@ -6,20 +6,23 @@ use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class JHSAnalyticsController extends Controller
+class GradeSchoolAnalyticsController extends Controller
 {
     /**
-     * ✅ ALLOWED JHS GRADE LEVELS ONLY
+     * ✅ ALLOWED GS GRADE LEVELS ONLY
      */
     private array $allowedGradeLevels = [
-        'Grade 7',
-        'Grade 8',
-        'Grade 9',
-        'Grade 10',
+        'Grade 5',
+        'Grade 4',
+        'Grade 3',
+        'Grade 2',
+        'Grade 1',
+        'Kinder',
+        'Nursery',
     ];
 
     /**
-     * GET /api/jhs-analytics
+     * GET /api/gs-analytics
      * List of grade levels with totals
      */
     public function getGradeLevels()
@@ -27,12 +30,12 @@ class JHSAnalyticsController extends Controller
         $totalAll = Application::whereIn('gradeLevel', $this->allowedGradeLevels)->count();
 
         $levels = Application::select('gradeLevel', DB::raw('COUNT(*) as total'))
-            ->whereIn('gradeLevel', $this->allowedGradeLevels) // ✅ FILTER
+            ->whereIn('gradeLevel', $this->allowedGradeLevels)
             ->groupBy('gradeLevel')
             ->orderByRaw("
                 FIELD(
                     gradeLevel,
-                    'Grade 7','Grade 8','Grade 9','Grade 10'
+                    'Grade 5','Grade 4','Grade 3','Grade 2','Grade 1','Kinder','Nursery'
                 )
             ")
             ->get()
@@ -54,7 +57,7 @@ class JHSAnalyticsController extends Controller
     }
 
     /**
-     * GET /api/jhs-academic-years
+     * GET /api/gs-academic-years
      */
     public function getAcademicYears()
     {
@@ -68,7 +71,7 @@ class JHSAnalyticsController extends Controller
     }
 
     /**
-     * GET /api/analytics/jhs/{level}
+     * GET /api/analytics/gs/{level}
      */
     public function getLevelDetail($level, Request $request)
     {
@@ -173,7 +176,7 @@ class JHSAnalyticsController extends Controller
             ->values();
 
         /** ---------------------------
-         * CATEGORY STATS (JHS ONLY)
+         * CATEGORY STATS (GS ONLY)
          * --------------------------*/
         $categoricalFields = [
             'gender',

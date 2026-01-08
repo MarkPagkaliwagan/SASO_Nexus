@@ -74,11 +74,17 @@ export default function ExitDashboardRevamp() {
   const statusKeys = useMemo(() => [...new Set(data.statusBreakdown.map((s) => s.status))], [data.statusBreakdown]);
 
   const courseData = data.courses.map((c) => ({ name: c.course, total: c.total }));
-  const reasonData = data.reasons.map((r) => ({ name: r.reason || "No Reason", total: r.total }));
+
+  // include division (if available) in the reason label and explicitly mark as No-show reason
+  const reasonData = data.reasons.map((r) => ({ name: `${r.division ? r.division + " - " : ""}${r.reason || "No Reason"}`, total: r.total }));
 
   const percentOfTotal = (value) => (totalExit > 0 ? Math.round((value / totalExit) * 100) : 0);
 
+  // export CSV: improved to include all relevant records (departments summary, statusBreakdown raw rows, courses, reasons)
   function exportCSV() {
+    const parts = [];
+
+    // PART 1: Departments summary (keeps previous format)
     const headers = ["Department", "Total", ...statusKeys];
     const rows = data.departments.map((d) => {
       const statuses = statusKeys.map((k) => {
@@ -88,7 +94,56 @@ export default function ExitDashboardRevamp() {
       return [d.department, d.total, ...statuses];
     });
 
-    const csv = [headers, ...rows].map((r) => r.join(",")).join("\n");
+    parts.push([headers, ...rows].map((r) => r.join(",")).join("\n"));
+
+    // an empty line separator
+    parts.push("");
+
+    // PART 2: Raw statusBreakdown (this will include any additional fields like 'ddl', 'division', 'date' if present)
+    if (data.statusBreakdown && data.statusBreakdown.length) {
+      // collect union of keys across all statusBreakdown objects to avoid dropping fields
+      const allKeysSet = new Set();
+      data.statusBreakdown.forEach((obj) => Object.keys(obj).forEach((k) => allKeysSet.add(k)));
+      const sbKeys = Array.from(allKeysSet);
+
+      // prefer an order if typical keys exist
+      const preferred = ["department", "status", "count", "total", "division", "ddl", "date", "reason"];
+      const ordered = [...sbKeys].sort((a, b) => {
+        const ai = preferred.indexOf(a.toLowerCase());
+        const bi = preferred.indexOf(b.toLowerCase());
+        if (ai === -1 && bi === -1) return a.localeCompare(b);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+
+      const sbHeader = ordered.map((k) => k);
+      const sbRows = data.statusBreakdown.map((item) => ordered.map((k) => (item[k] !== undefined ? String(item[k]) : "")));
+
+      parts.push(["STATUS_BREAKDOWN"]); // section title
+      parts.push([sbHeader, ...sbRows].map((r) => r.join(",")).join("\n"));
+      parts.push("");
+    }
+
+    // PART 3: Courses
+    if (data.courses && data.courses.length) {
+      const courseHeader = ["Course", "Total"];
+      const courseRows = data.courses.map((c) => [c.course, c.total]);
+      parts.push(["COURSES"]);
+      parts.push([courseHeader, ...courseRows].map((r) => r.join(",")).join("\n"));
+      parts.push("");
+    }
+
+    // PART 4: Reasons (explicitly labelled as No-show reasons)
+    if (data.reasons && data.reasons.length) {
+      const reasonHeader = ["Division", "Reason", "Total"];
+      const reasonRows = data.reasons.map((r) => [r.division || "", r.reason || "No Reason", r.total]);
+      parts.push(["REASONS (No-show)"]);
+      parts.push([reasonHeader, ...reasonRows].map((r) => r.join(",")).join("\n"));
+      parts.push("");
+    }
+
+    const csv = parts.join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -114,7 +169,6 @@ export default function ExitDashboardRevamp() {
           </div>
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-emerald-900">Exit Bookings — Analytics</h1>
-            <p className="text-sm text-slate-500 mt-1">Mas visual, modern look. Logic at data intact — plug & play.</p>
           </div>
         </div>
 
@@ -163,7 +217,7 @@ export default function ExitDashboardRevamp() {
             <motion.div layout className="col-span-2 rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-slate-700">Total Exit Bookings</div>
+                  <div className="text-sm font-semibold text-slate-700">Total Exit Bookings (All Records)</div>
                   <motion.div
                     className="text-3xl font-extrabold text-emerald-900"
                     animate={{ opacity: [0.6, 1], y: [4, 0] }}
@@ -180,19 +234,19 @@ export default function ExitDashboardRevamp() {
             </motion.div>
 
             <div className="rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100">
-              <div className="text-sm text-slate-500">Departments</div>
+              <div className="text-sm text-slate-500">Departments (Count)</div>
               <div className="mt-2 text-xl font-bold text-slate-800">{data.departments.length}</div>
               <div className="text-xs text-slate-400 mt-1">Unique departments tracked</div>
             </div>
 
             <div className="rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100">
-              <div className="text-sm text-slate-500">Courses</div>
+              <div className="text-sm text-slate-500">Courses (Count)</div>
               <div className="mt-2 text-xl font-bold text-slate-800">{data.courses.length}</div>
               <div className="text-xs text-slate-400 mt-1">Unique courses found</div>
             </div>
 
             <div className="rounded-2xl bg-white/95 p-4 shadow-md border border-gray-100">
-              <div className="text-sm text-slate-500">Top Dept</div>
+              <div className="text-sm text-slate-500">Top Department</div>
               <div className="mt-2 text-xl font-bold text-slate-800">{topDepartment.department}</div>
               <div className="text-xs text-slate-400 mt-1">{topDepartment.total} exits</div>
             </div>
@@ -271,7 +325,7 @@ export default function ExitDashboardRevamp() {
         <div className="lg:col-span-8 xl:col-span-9">
           <div className="rounded-2xl bg-white/90 p-6 shadow-md border border-gray-100 backdrop-blur-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-emerald-900">Exit Bookings by Status per Department</h2>
+              <h2 className="text-lg font-bold text-emerald-900">Exit Bookings by Status per Department (All Records)</h2>
               <div className="text-sm text-slate-500">Orientation: <span className="font-medium text-slate-700 ml-1">{orientation}</span></div>
             </div>
 
@@ -291,8 +345,8 @@ export default function ExitDashboardRevamp() {
                       </>
                     ) : (
                       <>
-                        <XAxis dataKey="department" />
-                        <YAxis />
+                        <XAxis dataKey="department" label={{ value: 'Department', position: 'insideBottom', offset: -5 }} />
+                        <YAxis label={{ value: 'Total Count', angle: -90, position: 'insideLeft' }} />
                       </>
                     )}
 
@@ -314,13 +368,13 @@ export default function ExitDashboardRevamp() {
 
               {/* LINE: statuses as lines across departments */}
               <div className="h-64 rounded-lg p-3 bg-white/80 border border-gray-100">
-                <div className="text-sm font-medium text-slate-700 mb-2">Status Trends (per department)</div>
+                <div className="text-sm font-medium text-slate-700 mb-2">Status Trends per Department</div>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="department" />
-                      <YAxis />
+                      <XAxis dataKey="department" label={{ value: 'Department', position: 'insideBottom', offset: -5 }} />
+                      <YAxis label={{ value: 'Total Count', angle: -90, position: 'insideLeft' }} />
                       <Tooltip />
                       <Legend />
 
@@ -337,13 +391,13 @@ export default function ExitDashboardRevamp() {
 
           {/* COURSE CHART */}
           <div className="rounded-2xl bg-white/90 p-6 shadow-md border border-gray-100 mt-6">
-            <h2 className="text-lg font-bold text-emerald-900 mb-4">Exit Bookings per Course</h2>
+            <h2 className="text-lg font-bold text-emerald-900 mb-4">Exit Bookings per Course (All Records)</h2>
 
             <div style={{ width: "100%", height: 300 }}>
               <ResponsiveContainer>
                 <BarChart data={courseData}>
                   <XAxis dataKey="name" />
-                  <YAxis />
+                  <YAxis label={{ value: 'Total Count', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
                   <Bar dataKey="total" fill="#3B82F6" radius={[6, 6, 0, 0]} />
                 </BarChart>
@@ -351,17 +405,28 @@ export default function ExitDashboardRevamp() {
             </div>
           </div>
 
-          {/* REASON CHART */}
-          <div className="rounded-2xl bg-white/90 p-6 shadow-md border border-gray-100 mt-6">
-            <h2 className="text-lg font-bold text-emerald-900 mb-4">Exit Bookings per Reason</h2>
+          {/* REASON CHART — SEPARATED NO-SHOW SECTION */}
+          <div className="w-full bg-gradient-to-br from-orange-50 via-white to-rose-50 p-6 shadow-lg border-2 border-orange-200 mt-10">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-extrabold text-orange-700">No-show Exit Bookings — Reasons</h2>
+                <p className="text-xs text-orange-500 mt-1">Isolated analytics for students who did not show up</p>
+              </div>
+              <div className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-semibold">
+                No-show Only
+              </div>
+            </div>
 
-            <div style={{ width: "100%", height: 300 }}>
+            <div style={{ width: "100%", height: 320 }}>
               <ResponsiveContainer>
                 <BarChart data={reasonData}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
+                  <XAxis
+                    dataKey="name"
+                    label={{ value: 'Reason (No-show)', position: 'insideBottom', offset: -5 }}
+                  />
+                  <YAxis label={{ value: 'Total No-show Count', angle: -90, position: 'insideLeft' }} />
                   <Tooltip />
-                  <Bar dataKey="total" fill="#F97316" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="total" fill="#F97316" radius={[10, 10, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

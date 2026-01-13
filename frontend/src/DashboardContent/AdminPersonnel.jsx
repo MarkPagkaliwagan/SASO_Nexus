@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {  useState, useEffect, useRef} from 'react';
 import { CheckCircle, Edit, Trash, Printer, Save, User } from 'react-feather';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,7 +26,50 @@ export default function AdminPersonnel() {
   const [sortOrderControl, setSortOrderControl] = useState('asc');
   const [customPosition, setCustomPosition] = useState('');
 
-  const positions = ['Office In Charge', 'Staff', 'Chaplain', 'Student Assistant'];
+ const positions = {
+  'OIC, Student Affairs and Services Office': [
+    'Officer-in-Charge',
+    'Director, Student Affairs and Services',
+    'Assistant Director, Student Affairs and Services',
+    'Student Affairs Officer',
+    'Administrative Staff'
+  ],
+  'Guidance Office': [
+    'Guidance Coordinator',
+    'Guidance Counselor',
+    'Psychological Services Coordinator',
+    'Testing and Assessment Officer',
+    'Guidance Staff'
+  ],
+  'Student Formation and Development Unit (SFDU)': [
+    'Student Development Officer',
+    'Student Welfare Officer',
+    'Discipline Officer',
+    'Leadership and Training Coordinator',
+    'Student Assistant'
+  ],
+  'School Clinic': [
+    'School Physician',
+    'School Nurse',
+    'Health Services Coordinator',
+    'Clinic Staff'
+  ],
+  'Campus Ministry': [
+    'Chaplain',
+    'Campus Ministry Coordinator',
+    'Religious Activities Coordinator',
+    'Campus Ministry Staff',
+    'Student Assistant'
+  ],
+  'Sports Development Unit': [
+    'Sports Development Coordinator',
+    'Athletics Director',
+    'Physical Education Instructor',
+    'Coach',
+    'Sports Staff'
+  ]
+};
+
   const units = [
     'OIC, Student Affairs and Services Office',
     'Guidance Office',
@@ -82,35 +125,46 @@ export default function AdminPersonnel() {
     }
   };
 
-  const handleEdit = (person) => {
-    setEditingId(person.id);
-    setFormData({
-      fullName: person.fullName || '',
-      email: person.email || '',
-      contact: person.contact || '',
-      position: person.position || '',
-      unit: person.unit || '',
-      profile: null,
-    });
+ const handleEdit = (person) => {
+  setEditingId(person.id);
 
-    setExistingProfile(person.profile || null);
+  // Fill input fields
+  setFormData({
+    fullName: person.fullName || '',
+    email: person.email || '',
+    contact: person.contact || '',
+    position: person.position || '',
+    unit: person.unit || '',
+    profile: null, // file input is empty initially
+  });
 
-    let previewUrl = null;
-    if (person.profile) {
-      if (typeof person.profile === 'string' && (person.profile.startsWith('http://') || person.profile.startsWith('https://'))) {
-        previewUrl = person.profile;
-      } else {
-        previewUrl = `http://localhost:8000/storage/${person.profile}`;
-      }
+  // Normalize profile path
+  const existing = person.profile ? person.profile.trim() : null;
+  setExistingProfile(existing);
+
+  // Set preview URL
+  let previewUrl = null;
+  if (existing) {
+    if (existing.startsWith('http://') || existing.startsWith('https://')) {
+      // Already a full URL
+      previewUrl = existing;
+    } else {
+      // Backend returns a relative path
+      previewUrl = `http://localhost:8000/storage/${existing}`;
     }
+  }
 
-    if (preview && typeof preview === 'string' && preview.startsWith('blob:')) {
-      URL.revokeObjectURL(preview);
-    }
+  // Remove previous blob URLs
+  if (preview && typeof preview === 'string' && preview.startsWith('blob:')) {
+    URL.revokeObjectURL(preview);
+  }
 
-    setPreview(previewUrl);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  setPreview(previewUrl);
+
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -150,6 +204,10 @@ export default function AdminPersonnel() {
       if (preview && typeof preview === 'string' && preview.startsWith('blob:')) URL.revokeObjectURL(preview);
       setPreview(null);
       setEditingId(null);
+      // ✅ Reset file input field
+if (fileInputRef.current) {
+  fileInputRef.current.value = null;
+}
       fetchPersonnel();
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2000);
@@ -228,6 +286,8 @@ export default function AdminPersonnel() {
     { label: 'Actions', field: null },
   ];
 
+  const fileInputRef = useRef(null); // ✅ REF for the file input
+
   return (
     <div className="p-4 sm:p-6 w-full space-y-6 text-black">
       {/* Form */}
@@ -251,28 +311,31 @@ export default function AdminPersonnel() {
 
             <div className="flex-1 flex flex-col w-full">
               <label className="font-semibold text-gray-700 mb-1">Profile Picture</label>
-              <input
-                type="file"
-                name="profile"
-                accept="image/*"
-                onChange={handleChange}
-                className="border rounded-md p-1 cursor-pointer w-full"
-              />
+<input
+  type="file"
+  name="profile"
+  accept="image/*"
+  onChange={handleChange}
+  className="border rounded-md p-1 cursor-pointer w-full"
+  ref={fileInputRef} // ✅ attach ref here
+/>
+
 
               {preview && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (preview && typeof preview === 'string' && preview.startsWith('blob:')) {
-                      URL.revokeObjectURL(preview);
-                    }
-                    setFormData({ ...formData, profile: null });
-                    setPreview(existingProfile ? (existingProfile.startsWith('http') ? existingProfile : `http://localhost:8000/storage/${existingProfile}`) : null);
-                  }}
-                  className="mt-2 text-sm text-red-500 self-start"
-                >
-                  Remove selection
-                </button>
+<button
+  type="button"
+  onClick={() => {
+    if (preview && typeof preview === 'string' && preview.startsWith('blob:')) {
+      URL.revokeObjectURL(preview);
+    }
+    setFormData({ ...formData, profile: null });
+    setPreview(existingProfile ? (existingProfile.startsWith('http') ? existingProfile : `http://localhost:8000/storage/${existingProfile}`) : null);
+  }}
+  className="mt-2 text-sm text-red-500 self-start"
+>
+  Remove selection
+</button>
+
               )}
             </div>
           </div>
@@ -316,58 +379,69 @@ export default function AdminPersonnel() {
               />
             </div>
 
-            {/* Position */}
-            <div className="flex flex-col">
-              <label className="font-semibold text-gray-700 mb-1">Position</label>
+{/* Position */}
+<div className="flex flex-col">
+  <label className="font-semibold text-gray-700 mb-1">Position</label>
 
-              <select
-                name="position"
-                value={formData.position}
-                onChange={(e) => {
-                  handleChange(e);
-                  if (e.target.value !== "Others") {
-                    setCustomPosition("");
-                  }
-                }}
-                required
-                className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-              >
-                <option value="">Select Position</option>
-                {positions.map((pos) => (
-                  <option key={pos} value={pos}>{pos}</option>
-                ))}
-                <option value="Others">Others</option>
-              </select>
+  <select
+    name="position"
+    value={formData.position}
+    onChange={(e) => {
+      handleChange(e);
+      if (e.target.value !== "Others") setCustomPosition("");
+    }}
+    required
+    className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+    disabled={!formData.unit} // ✅ disable if no unit selected
+  >
+    <option value="">Select Position</option>
 
-              {formData.position === "Others" && (
-                <input
-                  type="text"
-                  placeholder="Enter custom position"
-                  value={customPosition}
-                  onChange={(e) => setCustomPosition(e.target.value)}
-                  className="mt-2 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-                  required
-                />
-              )}
-            </div>
+    {/* Show positions based on selected unit */}
+    {formData.unit && positions[formData.unit].map((pos) => (
+      <option key={pos} value={pos}>{pos}</option>
+    ))}
+
+    <option value="Others">Others</option>
+  </select>
+
+  {formData.position === "Others" && (
+    <input
+      type="text"
+      placeholder="Enter custom position"
+      value={customPosition}
+      onChange={(e) => setCustomPosition(e.target.value)}
+      className="mt-2 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+      required
+    />
+  )}
+</div>
 
 
-            {/* Unit */}
-            <div className="flex flex-col">
-              <label className="font-semibold text-gray-700 mb-1">Unit</label>
-              <select
-                name="unit"
-                value={formData.unit}
-                onChange={handleChange}
-                required
-                className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
-              >
-                <option value="">Select Unit</option>
-                {units.map((unit) => (
-                  <option key={unit} value={unit}>{unit}</option>
-                ))}
-              </select>
-            </div>
+
+{/* Unit */}
+<div className="flex flex-col">
+  <label className="font-semibold text-gray-700 mb-1">Unit</label>
+  <select
+    name="unit"
+    value={formData.unit}
+    onChange={(e) => {
+      setFormData({
+        ...formData,
+        unit: e.target.value,
+        position: '', // reset position kapag nagbago ang unit
+      });
+      setCustomPosition('');
+    }}
+    required
+    className="border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 w-full"
+  >
+    <option value="">Select Unit</option>
+    {units.map((unit) => (
+      <option key={unit} value={unit}>{unit}</option>
+    ))}
+  </select>
+</div>
+
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 mt-3">
@@ -380,19 +454,24 @@ export default function AdminPersonnel() {
               {editingId ? 'Update Personnel' : 'Add Personnel'}
             </button>
             {editingId && (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingId(null);
-                  setFormData({ profile: null, fullName: '', email: '', contact: '', position: '', unit: '' });
-                  setExistingProfile(null);
-                  if (preview && typeof preview === 'string' && preview.startsWith('blob:')) URL.revokeObjectURL(preview);
-                  setPreview(null);
-                }}
-                className="bg-gray-200 px-3 py-2 rounded-2xl"
-              >
-                Cancel
-              </button>
+<button
+  type="button"
+  onClick={() => {
+    setEditingId(null);
+    setFormData({ profile: null, fullName: '', email: '', contact: '', position: '', unit: '' });
+    setExistingProfile(null);
+    if (preview && typeof preview === 'string' && preview.startsWith('blob:')) URL.revokeObjectURL(preview);
+    setPreview(null);
+
+    // ✅ Reset file input field
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+  }}
+  className="bg-gray-200 px-3 py-2 rounded-2xl"
+>
+  Cancel
+</button>
             )}
           </div>
         </form>

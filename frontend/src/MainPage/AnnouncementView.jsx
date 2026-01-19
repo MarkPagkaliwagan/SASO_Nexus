@@ -80,7 +80,7 @@ export default function Announcements() {
           </div>
         </header>
 
-        {/* Announcements */}
+        {/* Announcements 22 */}
         <main className="space-y-4 w-full max-w-4xl mx-auto">
           {loading && (
             <div className="space-y-4">

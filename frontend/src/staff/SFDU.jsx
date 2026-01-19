@@ -334,7 +334,7 @@ export default function StaffDashboard() {
               </h1>
 
               <h2 className="text-3xl md:text-5xl font-semibold text-gray-700 hover:text-yellow-500 transition-colors duration-300">
-                Department of Sports and Fitness Development Unit
+                Department of Sports and Development Unit
               </h2>
 
               <span className="mt-4 text-2xl md:text-3xl font-medium text-yellow-800 hover:text-yellow-500 transition-colors duration-300">

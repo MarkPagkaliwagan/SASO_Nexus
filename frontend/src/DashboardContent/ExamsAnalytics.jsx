@@ -237,7 +237,7 @@ export default function DashboardV2() {
               <BarChart3 className="w-9 h-9" style={{ color: THEME.green }} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold">Analytics</h1>
+              <h1 className="text-3xl font-bold">Overall Aplication Analytics</h1>
               <div className="text-sm text-gray-600 flex items-center gap-3 mt-1">
                 <div className="flex items-center gap-2">
                   <RefreshCw className="w-4 h-4 text-gray-400" />

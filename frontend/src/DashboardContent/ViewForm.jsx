@@ -800,17 +800,25 @@ export default function ViewForm() {
                       <td>{renderTableInput('overall_rs', { extra: 'border-green-300' })}</td>
                       <td>{renderTableInput('overall_pc', { extra: 'border-green-300' })}</td>
 
-                      <td>
-                        {!isExportView ? (
-                          <select name="remarks" value={results.remarks} onChange={handleChange} disabled={!editMode} className={`${!editMode ? "bg-gray-100" : "bg-white"} w-full p-2 border border-green-300 rounded-md`}>
-                            <option value="">Select</option>
-                            <option value="Waitlisted">Waitlisted</option>
-                            <option value="Passed">Passed</option>
-                          </select>
-                        ) : (
-                          <div className="pdf-value">{results.remarks}</div>
-                        )}
-                      </td>
+<td>
+  {!isExportView ? (
+    <textarea
+      name="remarks"
+      value={results.remarks}
+      onChange={handleChange}
+      disabled={!editMode}
+      placeholder="Enter remarks..."
+      rows={2}
+      className={`
+        w-full p-2 border border-green-300 rounded-md resize-none
+        ${!editMode ? "bg-gray-100" : "bg-white"}
+      `}
+    />
+  ) : (
+    <div className="pdf-value">{results.remarks}</div>
+  )}
+</td>
+
                     </tr>
                   </tbody>
                 </table>

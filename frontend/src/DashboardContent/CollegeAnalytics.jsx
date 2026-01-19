@@ -390,7 +390,6 @@ export default function CollegeAnalyticsAdvanced(){
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 w-full">
           <div>
             <h1 style={{ color: THEME.greenDark }} className="text-3xl md:text-4xl font-extrabold tracking-tight">College Analytics</h1>
-            <p className="text-sm text-gray-600 mt-1">Interactive analytics — <span className="font-medium">firstChoice</span>. Clean, fast, and actionable.</p>
           </div>
 
 <div className="flex flex-wrap gap-3 w-full md:w-auto">

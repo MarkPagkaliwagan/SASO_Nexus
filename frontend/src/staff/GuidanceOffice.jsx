@@ -1,3 +1,4 @@
+// StaffDashboard.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -13,21 +14,36 @@ import {
   LogOut,
   Volume2,
   Calendar,
+  Clipboard,
+  UserCheck,
+  FileText,
+  BarChart2,
+  Book,
 } from "react-feather";
 import { motion, AnimatePresence } from "framer-motion";
 import spcLogo from "../images/SPC.png";
 import sasoLogo from "../images/SASO.png";
 
-// ✅ Only the needed components
-import AdminPersonnel from "../DashboardContent/AdminPersonnel";
+// --- Import ng mga content panels (idaragdag/match sa project mo) ---
 import AdminAnnouncement from "../DashboardContent/AdminAnnouncement";
 import EventPosting from "../DashboardContent/EventPosting";
-import ReportForm from "../components/ReportForm";
+import AdminSchedule from "../DashboardContent/AdminSchedule";
+import AdminExitSchedule from "../DashboardContent/AdminExitSchedule";
+import ExamCreate from "../DashboardContent/ExamCreate";
+import ExamList from "../DashboardContent/ExamList";
+import ExamScheduleAnalytics from "../DashboardContent/ExamScheduleAnalytics";
+import ExitAnalytics from "../DashboardContent/ExitAnalytics";
+import ExamsAnalytics from "../DashboardContent/ExamsAnalytics";
+import CollegeAnalytics from "../DashboardContent/CollegeAnalytics";
+import SHSAnalytics from "../DashboardContent/SHSAnalytics";
+import JHSAnalytics from "../DashboardContent/JHSAnalytics";
+import GSAnalyticsAdvanced from "../DashboardContent/GSAnalyticsAdvanced";
+import ReportForm from "../components/ReportForm"; // your staff report form
 
 export default function StaffDashboard() {
   const navigate = useNavigate();
 
-  // ✅ States
+  // States
   const [showPopup, setShowPopup] = useState(false);
   const [activePanel, setActivePanel] = useState(() => {
     return localStorage.getItem("staffActivePanel") || "Dashboard";
@@ -35,9 +51,10 @@ export default function StaffDashboard() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
+  const [openDashboard, setOpenDashboard] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
 
-  // ✅ Detect touch devices
+  // Detect touch devices
   useEffect(() => {
     const touch =
       "ontouchstart" in window ||
@@ -45,7 +62,7 @@ export default function StaffDashboard() {
     setIsTouch(Boolean(touch));
   }, []);
 
-  // ✅ Check login token
+  // Check login token & show popup logic
   useEffect(() => {
     const token = localStorage.getItem("staffToken");
     const role = localStorage.getItem("role");
@@ -60,14 +77,23 @@ export default function StaffDashboard() {
     }
   }, [navigate]);
 
-  // ✅ Save active panel
+  // Save active panel
   useEffect(() => {
     localStorage.setItem("staffActivePanel", activePanel);
   }, [activePanel]);
 
   const handleClosePopup = () => setShowPopup(false);
 
-  // ✅ Sidebar component
+  // Menu items (shared / similar to admin)
+  const menuItems = [
+    { icon: <Clipboard size={18} />, label: "Admission Schedule", panel: "schedule" },
+    { icon: <LogOut size={18} />, label: "Exit Interview", panel: "exit" },
+    { icon: <UserCheck size={18} />, label: "Create Examination", panel: "ExamCreate" },
+    { icon: <Clipboard size={18} />, label: "Examination List", panel: "ExamList" },
+    { icon: <FileText size={18} />, label: "Report", panel: "ReportForm" },
+  ];
+
+  // Sidebar component
   const SidebarContent = ({ isMobile }) => {
     const itemBase =
       "flex items-center gap-3 text-left px-3 py-2 rounded-lg w-full truncate transition-all";
@@ -75,11 +101,15 @@ export default function StaffDashboard() {
     const dropdownItemBase =
       "text-sm text-left px-2 py-1 rounded w-full text-left";
     const dropdownItemHover = !isTouch ? " hover:bg-yellow-500/60" : "";
+    const baseBtn =
+      "text-sm px-3 py-2 rounded w-full flex items-center gap-2 transition-all duration-200 border border-transparent";
+    const analyticsHover =
+      "hover:bg-green-400/40 hover:border-green-500 hover:scale-[1.03] hover:shadow-md";
     const logoutHover = !isTouch ? " hover:bg-yellow-500" : "";
 
     return (
       <div className="flex flex-col h-full w-full">
-        {/* 🔹 Logo Section */}
+        {/* Logo */}
         <div className="p-4 border-b border-yellow-400/10 flex items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-base font-bold shadow-md">
             GD
@@ -103,78 +133,82 @@ export default function StaffDashboard() {
           </AnimatePresence>
         </div>
 
-        {/* 🔹 Menu Section */}
+        {/* Menu */}
         <div className="flex-1 p-3 mt-3 overflow-y-auto">
           <nav className="flex flex-col space-y-2">
-            {/* 🔹 Dashboard */}
-            <button
-              onClick={() => {
-                setActivePanel("Dashboard");
-                setIsMobileMenuOpen(false);
-              }}
-              className={`${itemBase}${itemHover}`}
-            >
-              <Home size={18} />
+            {/* Dashboard Dropdown */}
+            <div>
+              <button
+                onClick={() => setOpenDashboard(!openDashboard)}
+                className={`${itemBase}${itemHover}`}
+              >
+                <div className="flex items-center gap-3">
+                  <Home size={18} />
+                  <AnimatePresence>
+                    {(isExpanded || isMobile) && (
+                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="truncate">
+                        Dashboard
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {(isExpanded || isMobile) && (openDashboard ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
+              </button>
+
               <AnimatePresence>
-                {(isExpanded || isMobile) && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="truncate"
-                  >
-                    Dashboard
-                  </motion.span>
+                {openDashboard && (isExpanded || isMobile) && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="ml-10 mt-1 flex flex-col space-y-1">
+                    <button onClick={() => { setActivePanel("ExitAnalytics"); setIsMobileMenuOpen(false); }} className={`${baseBtn} hover:bg-blue-400/40 hover:border-blue-500 hover:scale-[1.03] hover:shadow-md`}>
+                      <LogOut size={16} className="text-blue-600" /> Exit Schedule Analytics
+                    </button>
+
+                    <button onClick={() => { setActivePanel("ExamsAnalytics"); setIsMobileMenuOpen(false); }} className={`${baseBtn} hover:bg-orange-400/40 hover:border-orange-500 hover:scale-[1.03] hover:shadow-md`}>
+                      <Clipboard size={16} className="text-orange-600" /> All Applicant Analytics
+                    </button>
+
+                    <button onClick={() => { setActivePanel("ExamScheduleAnalytics"); setIsMobileMenuOpen(false); }} className={`${baseBtn} hover:bg-purple-400/40 hover:border-purple-500 hover:scale-[1.03] hover:shadow-md`}>
+                      <Clipboard size={16} className="text-purple-600" /> Applicant A.Y Analytics
+                    </button>
+
+                    <button onClick={() => { setActivePanel("CollegeAnalytics"); setIsMobileMenuOpen(false); }} className={`${baseBtn} ${analyticsHover}`}>
+                      <BarChart2 size={16} className="text-green-600" /> College Analytics
+                    </button>
+
+                    <button onClick={() => { setActivePanel("SHSAnalytics"); setIsMobileMenuOpen(false); }} className={`${baseBtn} ${analyticsHover}`}>
+                      <Activity size={16} className="text-green-600" /> SHS Analytics
+                    </button>
+
+                    <button onClick={() => { setActivePanel("JHSAnalytics"); setIsMobileMenuOpen(false); }} className={`${baseBtn} ${analyticsHover}`}>
+                      <Book size={16} className="text-green-600" /> JHS Analytics
+                    </button>
+
+                    <button onClick={() => { setActivePanel("GSAnalyticsAdvanced"); setIsMobileMenuOpen(false); }} className={`${baseBtn} ${analyticsHover}`}>
+                      <Clipboard size={16} className="text-green-600" /> GS Analytics
+                    </button>
+                  </motion.div>
                 )}
               </AnimatePresence>
-            </button>
+            </div>
 
-            {/* 🔹 Staff */}
-            <button
-              onClick={() => {
-                setActivePanel("staffs");
-                setIsMobileMenuOpen(false);
-              }}
-              className={`${itemBase}${itemHover}`}
-            >
-              <Users size={18} />
-              <AnimatePresence>
-                {(isExpanded || isMobile) && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="truncate"
-                  >
-                    Staff
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </button>
-{/* 🔹 Reports */}
-<button
-  onClick={() => {
-    setActivePanel("reports");
-    setIsMobileMenuOpen(false);
-  }}
-  className={`${itemBase}${itemHover}`}
->
-  <File size={18} />
-  <AnimatePresence>
-    {(isExpanded || isMobile) && (
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="truncate"
-      >
-        Reports
-      </motion.span>
-    )}
-  </AnimatePresence>
-</button>
+            {/* Other menu items from menuItems array */}
+            {menuItems.map((item, idx) => (
+              <button
+                key={idx}
+                onClick={() => { if (item.panel) setActivePanel(item.panel); setIsMobileMenuOpen(false); }}
+                className={`${itemBase}${itemHover}`}
+              >
+                {item.icon}
+                <AnimatePresence>
+                  {(isExpanded || isMobile) && (
+                    <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="truncate">
+                      {item.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </button>
+            ))}
 
-            {/* 🔹 Posting Dropdown */}
+            {/* Posting Dropdown */}
             <div>
               <button
                 onClick={() => setOpenDropdown(!openDropdown)}
@@ -184,52 +218,23 @@ export default function StaffDashboard() {
                   <Activity size={18} />
                   <AnimatePresence>
                     {(isExpanded || isMobile) && (
-                      <motion.span
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="truncate"
-                      >
+                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="truncate">
                         Posting
                       </motion.span>
                     )}
                   </AnimatePresence>
                 </div>
-                {(isExpanded || isMobile) &&
-                  (openDropdown ? (
-                    <ChevronUp size={16} />
-                  ) : (
-                    <ChevronDown size={16} />
-                  ))}
+                {(isExpanded || isMobile) && (openDropdown ? <ChevronUp size={16} /> : <ChevronDown size={16} />)}
               </button>
 
               <AnimatePresence>
                 {openDropdown && (isExpanded || isMobile) && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="ml-10 mt-1 flex flex-col space-y-1"
-                  >
-                    <button
-                      onClick={() => {
-                        setActivePanel("announcement");
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
-                    >
-                      <Volume2 size={16} />
-                      Announcement
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="ml-10 mt-1 flex flex-col space-y-1">
+                    <button onClick={() => { setActivePanel("announcement"); setIsMobileMenuOpen(false); }} className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}>
+                      <Volume2 size={16} /> Announcement
                     </button>
-                    <button
-                      onClick={() => {
-                        setActivePanel("events");
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}
-                    >
-                      <Calendar size={16} />
-                      Events
+                    <button onClick={() => { setActivePanel("events"); setIsMobileMenuOpen(false); }} className={`${dropdownItemBase}${dropdownItemHover} flex items-center gap-2`}>
+                      <Calendar size={16} /> Events
                     </button>
                   </motion.div>
                 )}
@@ -238,7 +243,7 @@ export default function StaffDashboard() {
           </nav>
         </div>
 
-        {/* 🔹 Logout */}
+        {/* Logout */}
         <div className="p-4 border-t border-yellow-400/10">
           <button
             onClick={() => {
@@ -251,12 +256,7 @@ export default function StaffDashboard() {
             <CheckCircle size={18} />
             <AnimatePresence>
               {(isExpanded || isMobile) && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="truncate"
-                >
+                <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="truncate">
                   Logout
                 </motion.span>
               )}
@@ -269,7 +269,7 @@ export default function StaffDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row overflow-hidden bg-gradient-to-r from-slate-100 via-neutral-50 to-slate-200">
-      {/* 🔹 Topbar (Mobile Only) */}
+      {/* Topbar (Mobile) */}
       <div className="md:hidden fixed top-0 left-0 w-full flex justify-between items-center bg-yellow-700 text-white z-50 h-14 px-4 shadow-md">
         <div className="flex items-center gap-3 truncate">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold shadow-sm">
@@ -282,38 +282,28 @@ export default function StaffDashboard() {
         </button>
       </div>
 
-      {/* 🔹 Sidebar (Desktop) */}
+      {/* Sidebar (Desktop) */}
       <motion.aside
         initial={{ width: 72 }}
         animate={{ width: isExpanded ? 280 : 72 }}
         transition={{ duration: 0.25 }}
-        onMouseEnter={() => {
-          if (!isTouch) setIsExpanded(true);
-        }}
-        onMouseLeave={() => {
-          if (!isTouch) setIsExpanded(false);
-        }}
+        onMouseEnter={() => { if (!isTouch) setIsExpanded(true); }}
+        onMouseLeave={() => { if (!isTouch) setIsExpanded(false); }}
         className="hidden md:flex bg-yellow-700 text-white flex-col h-screen fixed top-0 left-0 z-40 shadow-xl overflow-hidden"
       >
         <SidebarContent isMobile={false} />
       </motion.aside>
 
-      {/* 🔹 Sidebar (Mobile) */}
+      {/* Sidebar (Mobile) */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.aside
-            initial={{ x: "-100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "-100%" }}
-            transition={{ duration: 0.25 }}
-            className="fixed top-0 left-0 w-72 h-full bg-yellow-700 text-white z-50 shadow-xl"
-          >
+          <motion.aside initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ duration: 0.25 }} className="fixed top-0 left-0 w-72 h-full bg-yellow-700 text-white z-50 shadow-xl">
             <SidebarContent isMobile={true} />
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* 🔹 Main Content */}
+      {/* Main Content */}
       <main className="flex-1 p-4 md:p-8 md:ml-20 overflow-auto w-full max-w-full mt-16 md:mt-0 transition">
         {activePanel === "Dashboard" && (
           <div className="relative w-full min-h-screen flex flex-col items-center justify-start text-center overflow-hidden pt-32 md:pt-40">
@@ -321,16 +311,8 @@ export default function StaffDashboard() {
 
             <div className="relative z-10 flex flex-col items-center justify-center gap-8">
               <div className="flex items-center justify-center gap-12">
-                <img
-                  src={spcLogo}
-                  alt="SPC Logo"
-                  className="w-36 md:w-48 object-contain"
-                />
-                <img
-                  src={sasoLogo}
-                  alt="Guidance Logo"
-                  className="w-32 md:w-44 object-contain"
-                />
+                <img src={spcLogo} alt="SPC Logo" className="w-36 md:w-48 object-contain" />
+                <img src={sasoLogo} alt="Guidance Logo" className="w-32 md:w-44 object-contain" />
               </div>
 
               <h1 className="text-6xl md:text-8xl font-extrabold text-yellow-700 tracking-tight hover:text-yellow-500 transition-colors duration-300">
@@ -348,35 +330,32 @@ export default function StaffDashboard() {
           </div>
         )}
 
-        {activePanel === "staffs" && <AdminPersonnel />}
+        {/* Panels (match menu items) */}
+        {activePanel === "schedule" && <AdminSchedule />}
         {activePanel === "announcement" && <AdminAnnouncement />}
         {activePanel === "events" && <EventPosting />}
-        {activePanel === "reports" && <ReportForm />}
+        {activePanel === "exit" && <AdminExitSchedule />}
+        {activePanel === "ExamCreate" && <ExamCreate />}
+        {activePanel === "ExamList" && <ExamList />}
+        {activePanel === "ExamScheduleAnalytics" && <ExamScheduleAnalytics />}
+        {activePanel === "ExitAnalytics" && <ExitAnalytics />}
+        {activePanel === "ExamsAnalytics" && <ExamsAnalytics />}
+        {activePanel === "CollegeAnalytics" && <CollegeAnalytics />}
+        {activePanel === "SHSAnalytics" && <SHSAnalytics />}
+        {activePanel === "JHSAnalytics" && <JHSAnalytics />}
+        {activePanel === "GSAnalyticsAdvanced" && <GSAnalyticsAdvanced />}
+        {activePanel === "ReportForm" && <ReportForm />}
 
       </main>
 
-      {/* 🔹 Popup After Login */}
+      {/* Popup After Login */}
       {showPopup && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="rounded-xl shadow-lg p-6 md:p-8 max-w-md w-full text-center bg-white"
-          >
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ duration: 0.3 }} className="rounded-xl shadow-lg p-6 md:p-8 max-w-md w-full text-center bg-white">
             <CheckCircle size={48} className="text-yellow-600 mx-auto mb-4" />
-            <h2 className="text-xl font-bold truncate text-yellow-700">
-              Login Verified
-            </h2>
-            <p className="text-gray-600 mt-2">
-              You are now logged in as authorized Guidance Staff.
-            </p>
-            <button
-              onClick={handleClosePopup}
-              className="mt-6 bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg transition"
-            >
-              OK
-            </button>
+            <h2 className="text-xl font-bold truncate text-yellow-700">Login Verified</h2>
+            <p className="text-gray-600 mt-2">You are now logged in as authorized Guidance Staff.</p>
+            <button onClick={handleClosePopup} className="mt-6 bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg transition">OK</button>
           </motion.div>
         </div>
       )}

@@ -562,7 +562,6 @@ function exportExcel(){
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 style={{ color: THEME.greenDark }} className="text-3xl md:text-4xl font-extrabold tracking-tight">SHS Analytics</h1>
-            <p className="text-sm text-gray-600 mt-1">Interactive analytics — <span className="font-medium">SHS firstChoice</span>. <span className="text-xs text-gray-400">(UI polished)</span></p>
           </div>
 
           <div className="flex flex-wrap gap-3 w-full md:w-auto items-center">

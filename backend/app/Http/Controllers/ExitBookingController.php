@@ -30,7 +30,7 @@ class ExitBookingController extends Controller
             $validated['resume_file'] = $request->file('resume_file')->store('resumes', 'public');
         }
 
-        $booking = ExitBooking::create(array_merge($validated, ['status' => 'booked']));
+        $booking = ExitBooking::create(array_merge($validated, ['status' => 'pending']));
         return $booking->load('slot');
     }
 

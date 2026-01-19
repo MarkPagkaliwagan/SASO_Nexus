@@ -141,8 +141,7 @@ export default function Dashboard() {
             <BarChart3 className="w-8 h-8 text-amber-500" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-emerald-900">Analytics Dashboard</h1>
-            <p className="text-sm text-slate-500">Clean, modern UI — business logic untouched.</p>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-emerald-900">Analytics Aplicationm By Academic Year</h1>
           </div>
         </div>
 
